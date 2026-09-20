@@ -83,6 +83,8 @@ main{flex:1;padding:12px 14px calc(env(safe-area-inset-bottom) + 86px)}
 /* ---------- generic ---------- */
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
 .card .hd{padding:12px 14px 0;display:flex;align-items:center;gap:8px}
+.card .hd.hdfold{padding:13px 14px}
+.card .hd h2{line-height:26px}
 .card .hd h2{font-size:13px;margin:0;font-weight:700;color:var(--tx2);letter-spacing:.02em;flex:1}
 .card .bd{padding:12px 14px 14px}
 .row{display:flex;align-items:center;gap:10px}
@@ -158,6 +160,8 @@ textarea.inp{min-height:64px;resize:vertical;font-size:15px}
 .tx.xfer .d,.tx.xfer .t,.tx.xfer .a,.tx.xfer .m{color:var(--tx3);font-weight:600}
 .tx.xfer .t,.tx.xfer .a{text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--tx3)}
 .tx .cn{font-weight:700}
+.tx .aic{vertical-align:-2.5px;margin-right:5px;flex:none}
+.tx.fut .aic,.tx.xfer .aic{opacity:.5}
 .tx .badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;
   border-radius:5px;font-size:10.5px;font-weight:800;background:var(--bad);color:#fff;margin-right:5px;vertical-align:1px}
 .tx.adj .a{color:var(--bad) !important;font-size:12.5px;font-weight:700}
@@ -355,7 +359,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.09.20.1224";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.09.20.1246";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -962,7 +966,7 @@ function foldBtn(k) {
   return '<button class="memotog" data-fold="' + k + '" style="margin-left:6px">' + (folded(k) ? "+" : "−") + '</button>';
 }
 function secHd(k, title, sum, addBtn) {
-  return '<div class="hd"><h2 class="ell">' + title +
+  return '<div class="hd' + (folded(k) ? " hdfold" : "") + '"><h2 class="ell">' + title +
     (folded(k) && sum ? ' <span class="num" style="color:var(--tx3)"> · ' + sum + '</span>' : '') + '</h2>' +
     (folded(k) ? '' : (addBtn || '')) + foldBtn(k) + '</div>';
 }
@@ -1243,6 +1247,22 @@ function viewHome() {
 /* ============================================================
    거래 행
    ============================================================ */
+/* 계정 종류별 선 아이콘 */
+function accIcon(acc) {
+  if (!acc) return "";
+  const c = esc(acc.color || "#9fb0c2");
+  const k = acc.kind === "bank" ? (acc.stock ? "stock" : "bank") : acc.kind;
+  const g = {
+    bank: '<path d="M1 6 L9 1.4 L17 6"/><path d="M3.4 6.6 V15 M9 6.6 V15 M14.6 6.6 V15"/><path d="M.6 17 H17.4"/>',
+    card: '<rect x=".8" y="3.4" width="16.4" height="11.8" rx="2.4"/><path d="M.8 8 H17.2"/>',
+    debit: '<path d="M1.4 4 h12.2 a3 3 0 0 1 3 3 v7 a3 3 0 0 1 -3 3 h-12.2 a1 1 0 0 1 -1 -1 v-11 a1 1 0 0 1 1 -1 z"/>' +
+           '<circle cx="12.6" cy="10.5" r="1.5" fill="' + c + '" stroke="none"/>',
+    stock: '<path d="M1 15.6 L6 8.4 L10.2 11.6 L17 2.6"/><path d="M12.2 2.6 H17 V7.2"/>'
+  }[k] || '<circle cx="9" cy="9" r="7.4"/>';
+  return '<svg class="aic" viewBox="0 0 18 18" width="15" height="15" fill="none" stroke="' + c +
+    '" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + g + '</svg>';
+}
+
 function txRow(t) {
   const acc = D.accounts.find(a => a.id === t.acc) || {};
   const c = CATC(t.cat);
@@ -1256,6 +1276,7 @@ function txRow(t) {
       '<div class="d">' + fmtDate(t.date) + '<br><span style="opacity:.7">' + esc(t.time || weekday(t.date)) + '</span></div>' +
       '<div class="grow">' +
         '<div class="t ell' + (isIn ? " in" : "") + '">' +
+          accIcon(acc) +
           (fut ? '<span class="soon">예정</span>' : "") +
           (t.adj ? '<span class="badge">수</span>' : "") +
           (t.inst > 1 ? '<span class="instb">' + (t.instN || 1) + "/" + t.inst + '</span>' : "") +
@@ -1277,13 +1298,28 @@ function visibleTx(list) { return D.settings.hideXfer ? list.filter(t => !t.xfer
 /* ============================================================
    전체 내역
    ============================================================ */
-let LF = { accs: [], cat: "all", q: "" };
+let LF = { accs: [], cats: [], q: "" };
+const catOn = id => LF.cats.indexOf(id) >= 0;
+const KINDS = [["bank", "은행"], ["stock", "주식"], ["debit", "생활비"], ["card", "카드"]];
+const idsOfKind = k => D.accounts.filter(a =>
+  k === "stock" ? (a.kind === "bank" && a.stock)
+  : k === "bank" ? (a.kind === "bank" && !a.stock) : a.kind === k).map(a => a.id);
 const accOn = id => LF.accs.indexOf(id) >= 0;
 const accOne = () => (LF.accs.length === 1 ? LF.accs[0] : null);
 let SCX = {}, KEEPSCROLL = false;
 function viewList() {
-  let h = '<div class="chipscroll" data-sc="acc">' +
+  let h = '<div class="chipscroll" data-sc="kind">' +
     '<button class="chip ' + (!LF.accs.length ? "on" : "") + '" data-fa="all" style="' + (!LF.accs.length ? "background:var(--accent)" : "") + '">전체</button>' +
+    KINDS.map(([k, nm]) => {
+      const ids = idsOfKind(k);
+      if (!ids.length) return "";
+      const on = ids.every(accOn);
+      return '<button class="chip ' + (on ? "on" : "") + '" data-fk="' + k + '" style="' +
+        (on ? "background:var(--tx2);color:#fff" : "") + '">' + (on ? "✓ " : "") + nm + ' 모두</button>';
+    }).join("") +
+    (LF.accs.length ? '<button class="chip" data-fa="all" style="border-color:var(--bad);color:var(--bad)">선택 해제</button>' : '') +
+    '</div>' +
+    '<div class="chipscroll" data-sc="acc">' +
     D.accounts.map(a => '<button class="chip ' + (accOn(a.id) ? "on" : "") + '" data-fa="' + a.id + '" style="' +
       (accOn(a.id) ? "background:" + esc(a.color) + ";color:" + onColor(a.color) : "") + '">' +
       (accOn(a.id) ? '<span style="font-weight:900">✓</span>' : '<span class="dot" style="background:' + esc(a.color) + '"></span>') +
@@ -1292,10 +1328,13 @@ function viewList() {
     '</div>';
 
   h += '<div class="chipscroll" data-sc="cat">' +
-    '<button class="chip ' + (LF.cat === "all" ? "on" : "") + '" data-fc="all" style="' + (LF.cat === "all" ? "background:var(--accent)" : "") + '">분류 전체</button>' +
-    '<button class="chip ' + (LF.cat === "none" ? "on" : "") + '" data-fc="none" style="' + (LF.cat === "none" ? "background:var(--tx3)" : "") + '">미분류</button>' +
-    D.cats.map(c => '<button class="chip ' + (LF.cat === c.id ? "on" : "") + '" data-fc="' + c.id + '" style="' +
-      (LF.cat === c.id ? "background:" + esc(c.color) + ";color:" + onColor(c.color) : "") + '"><span class="dot" style="background:' + esc(c.color) + '"></span>' + esc(c.name) + '</button>').join("") +
+    '<button class="chip ' + (!LF.cats.length ? "on" : "") + '" data-fc="all" style="' + (!LF.cats.length ? "background:var(--accent)" : "") + '">분류 전체</button>' +
+    '<button class="chip ' + (catOn("_none") ? "on" : "") + '" data-fc="_none" style="' + (catOn("_none") ? "background:var(--tx3);color:#fff" : "") + '">' +
+      (catOn("_none") ? '<span style="font-weight:900">✓</span>' : '') + '미분류</button>' +
+    D.cats.map(c => '<button class="chip ' + (catOn(c.id) ? "on" : "") + '" data-fc="' + c.id + '" style="' +
+      (catOn(c.id) ? "background:" + esc(c.color) + ";color:" + onColor(c.color) : "") + '">' +
+      (catOn(c.id) ? '<span style="font-weight:900">✓</span>' : '<span class="dot" style="background:' + esc(c.color) + '"></span>') +
+      esc(c.name) + '</button>').join("") +
     '</div>';
 
   h += '<div class="card"><div class="bd" style="padding-bottom:10px">' +
@@ -1312,8 +1351,7 @@ function viewList() {
 
   let list = SP.slice();
   if (LF.accs.length) list = list.filter(t => accOn(t.acc));
-  if (LF.cat === "none") list = list.filter(t => !t.cat);
-  else if (LF.cat !== "all") list = list.filter(t => t.cat === LF.cat);
+  if (LF.cats.length) list = list.filter(t => catOn(t.cat || "_none"));
   if (LF.q) { const q = LF.q.toLowerCase(); list = list.filter(t => ((t.desc || "") + (t.memo || "")).toLowerCase().includes(q)); }
 
   /* 기준월 기간: 선택한 계좌가 있으면 그 계좌 기간, 없으면 달력 월 */
@@ -3099,10 +3137,16 @@ function bind() {
   $$("[data-bal]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editBal(b.dataset.bal); });
   $$("[data-stock]", v).forEach(b => b.onclick = () => showStock(b.dataset.stock));
   $$("[data-pay]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editPay(b.dataset.pay); });
-  $$("[data-open]", v).forEach(b => b.onclick = () => { LF.accs = [b.dataset.open]; LF.cat = "all"; LF.q = ""; go("list"); });
+  $$("[data-open]", v).forEach(b => b.onclick = () => { LF.accs = [b.dataset.open]; LF.cats = []; LF.q = ""; go("list"); });
   $$("[data-tabgo]", v).forEach(b => b.onclick = () => go(b.dataset.tabgo));
   bindTx(v);
 
+  $$("[data-fk]", v).forEach(b => b.onclick = () => {
+    const ids = idsOfKind(b.dataset.fk);
+    if (ids.every(accOn)) LF.accs = LF.accs.filter(x => ids.indexOf(x) < 0);
+    else ids.forEach(x => { if (!accOn(x)) LF.accs.push(x); });
+    KEEPSCROLL = true; render();
+  });
   $$("[data-fa]", v).forEach(b => b.onclick = () => {
     const id = b.dataset.fa;
     if (id === "all") LF.accs = [];
@@ -3112,8 +3156,13 @@ function bind() {
     }
     KEEPSCROLL = true; render();
   });
-  $$("[data-fc]", v).forEach(b => b.onclick = () => { LF.cat = b.dataset.fc; KEEPSCROLL = true; render(); });
-  $$("[data-fcat]", v).forEach(b => b.onclick = () => { LF.cat = b.dataset.fcat === "_none" ? "none" : b.dataset.fcat; LF.accs = []; go("list"); });
+  $$("[data-fc]", v).forEach(b => b.onclick = () => {
+    const id = b.dataset.fc;
+    if (id === "all") LF.cats = [];
+    else { const i = LF.cats.indexOf(id); if (i >= 0) LF.cats.splice(i, 1); else LF.cats.push(id); }
+    KEEPSCROLL = true; render();
+  });
+  $$("[data-fcat]", v).forEach(b => b.onclick = () => { LF.cats = [b.dataset.fcat]; LF.accs = []; go("list"); });
   $$("[data-cmode]", v).forEach(b => b.onclick = () => {
     D.settings.catYear = b.dataset.cmode === "year"; persist(); render();
   });
