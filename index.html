@@ -355,7 +355,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.09.20.1211";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.09.20.1224";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -899,6 +899,7 @@ function askText(title, label, value, onOk) {
 let TAB = "home";
 $$(".tabbar button").forEach(b => b.onclick = () => go(b.dataset.tab));
 function go(tab) {
+  if (tab !== TAB) SCX = {};
   TAB = tab;
   $$(".tabbar button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
   const t = { home: "요약", list: "전체 내역", cat: "분류별 지출", set: "설정" }[tab];
@@ -937,12 +938,19 @@ function pickPeriod() {
 
 function render() {
   const v = $("#view");
-  v.scrollTop = 0;
+  const keep = KEEPSCROLL; KEEPSCROLL = false;
+  const top = keep ? v.scrollTop : 0;
   rebuildV();
   if (TAB === "home") v.innerHTML = viewHome();
   else if (TAB === "list") v.innerHTML = viewList();
   else if (TAB === "cat") v.innerHTML = viewCat();
   else v.innerHTML = viewSet();
+  $$(".chipscroll", v).forEach(sc => {
+    const k = sc.dataset.sc;
+    if (k && SCX[k]) sc.scrollLeft = SCX[k];
+    sc.addEventListener("scroll", () => { if (k) SCX[k] = sc.scrollLeft; }, { passive: true });
+  });
+  v.scrollTop = top;
   bind();
 }
 
@@ -1269,15 +1277,21 @@ function visibleTx(list) { return D.settings.hideXfer ? list.filter(t => !t.xfer
 /* ============================================================
    전체 내역
    ============================================================ */
-let LF = { acc: "all", cat: "all", q: "" };
+let LF = { accs: [], cat: "all", q: "" };
+const accOn = id => LF.accs.indexOf(id) >= 0;
+const accOne = () => (LF.accs.length === 1 ? LF.accs[0] : null);
+let SCX = {}, KEEPSCROLL = false;
 function viewList() {
-  let h = '<div class="chipscroll">' +
-    '<button class="chip ' + (LF.acc === "all" ? "on" : "") + '" data-fa="all" style="' + (LF.acc === "all" ? "background:var(--accent)" : "") + '">전체</button>' +
-    D.accounts.map(a => '<button class="chip ' + (LF.acc === a.id ? "on" : "") + '" data-fa="' + a.id + '" style="' +
-      (LF.acc === a.id ? "background:" + esc(a.color) + ";color:" + onColor(a.color) : "") + '"><span class="dot" style="background:' + esc(a.color) + '"></span>' + esc(a.name) + '</button>').join("") +
+  let h = '<div class="chipscroll" data-sc="acc">' +
+    '<button class="chip ' + (!LF.accs.length ? "on" : "") + '" data-fa="all" style="' + (!LF.accs.length ? "background:var(--accent)" : "") + '">전체</button>' +
+    D.accounts.map(a => '<button class="chip ' + (accOn(a.id) ? "on" : "") + '" data-fa="' + a.id + '" style="' +
+      (accOn(a.id) ? "background:" + esc(a.color) + ";color:" + onColor(a.color) : "") + '">' +
+      (accOn(a.id) ? '<span style="font-weight:900">✓</span>' : '<span class="dot" style="background:' + esc(a.color) + '"></span>') +
+      esc(a.name) + '</button>').join("") +
+    (LF.accs.length > 1 ? '<span class="chip" style="background:var(--panel2);color:var(--tx3)">' + LF.accs.length + '곳 선택</span>' : '') +
     '</div>';
 
-  h += '<div class="chipscroll">' +
+  h += '<div class="chipscroll" data-sc="cat">' +
     '<button class="chip ' + (LF.cat === "all" ? "on" : "") + '" data-fc="all" style="' + (LF.cat === "all" ? "background:var(--accent)" : "") + '">분류 전체</button>' +
     '<button class="chip ' + (LF.cat === "none" ? "on" : "") + '" data-fc="none" style="' + (LF.cat === "none" ? "background:var(--tx3)" : "") + '">미분류</button>' +
     D.cats.map(c => '<button class="chip ' + (LF.cat === c.id ? "on" : "") + '" data-fc="' + c.id + '" style="' +
@@ -1297,15 +1311,17 @@ function viewList() {
     '</div></div></div>';
 
   let list = SP.slice();
-  if (LF.acc !== "all") list = list.filter(t => t.acc === LF.acc);
+  if (LF.accs.length) list = list.filter(t => accOn(t.acc));
   if (LF.cat === "none") list = list.filter(t => !t.cat);
   else if (LF.cat !== "all") list = list.filter(t => t.cat === LF.cat);
   if (LF.q) { const q = LF.q.toLowerCase(); list = list.filter(t => ((t.desc || "") + (t.memo || "")).toLowerCase().includes(q)); }
 
   /* 기준월 기간: 선택한 계좌가 있으면 그 계좌 기간, 없으면 달력 월 */
-  if (LF.acc !== "all") {
-    const acc = D.accounts.find(a => a.id === LF.acc);
-    if (acc) list = list.filter(t => inPeriod(t, acc, D.anchor));
+  if (LF.accs.length) {
+    list = list.filter(t => {
+      const acc = D.accounts.find(a => a.id === t.acc);
+      return acc ? inPeriod(t, acc, D.anchor) : true;
+    });
   } else {
     list = list.filter(t => (t.date || "").slice(0, 7) === D.anchor);
   }
@@ -1325,6 +1341,25 @@ function viewList() {
      [xferN ? '내 계좌 이동 ' + xferN + '건' + (D.settings.hideXfer ? '(숨김)' : '') : '',
       futN ? '예정 ' + futN + '건' : '', adjN ? '잔액 수정 ' + adjN + '건' : '']
      .filter(Boolean).join(' · ') + '</p>' : '');
+
+  if (LF.accs.length > 1) {
+    h += '<div class="card"><div class="hd"><h2>선택한 곳별 합계</h2></div>';
+    LF.accs.forEach(id => {
+      const a = D.accounts.find(x => x.id === id); if (!a) return;
+      const L = list.filter(t => t.acc === id);
+      const o = L.filter(t => t.flow !== "in" && counts(t)).reduce((s, t) => s + t.amt, 0);
+      const i2 = L.filter(t => t.flow === "in" && counts(t)).reduce((s, t) => s + t.amt, 0);
+      h += '<div class="acc" style="padding:10px 14px">' +
+        '<span class="dot" style="background:' + esc(a.color) + ';width:10px;height:10px"></span>' +
+        '<div class="grow"><div class="b sm ell">' + esc(a.name) + '</div>' +
+          '<div class="tiny muted num">' + L.length + '건' +
+          (a.kind === "card" ? ' · ' + periodLabel(a, D.anchor) : '') + '</div></div>' +
+        '<div style="text-align:right"><div class="num b c-bad">-' + won(o) + '</div>' +
+          (i2 ? '<div class="tiny num c-inc b">+' + won(i2) + '</div>' : '') + '</div>' +
+      '</div>';
+    });
+    h += '</div>';
+  }
 
   if (!list.length) {
     h += '<div class="card"><div class="empty"><b>내역이 없습니다</b>캡처를 올리거나 직접 입력해 보세요.</div></div>';
@@ -3064,13 +3099,21 @@ function bind() {
   $$("[data-bal]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editBal(b.dataset.bal); });
   $$("[data-stock]", v).forEach(b => b.onclick = () => showStock(b.dataset.stock));
   $$("[data-pay]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editPay(b.dataset.pay); });
-  $$("[data-open]", v).forEach(b => b.onclick = () => { LF.acc = b.dataset.open; LF.cat = "all"; LF.q = ""; go("list"); });
+  $$("[data-open]", v).forEach(b => b.onclick = () => { LF.accs = [b.dataset.open]; LF.cat = "all"; LF.q = ""; go("list"); });
   $$("[data-tabgo]", v).forEach(b => b.onclick = () => go(b.dataset.tabgo));
   bindTx(v);
 
-  $$("[data-fa]", v).forEach(b => b.onclick = () => { LF.acc = b.dataset.fa; render(); });
-  $$("[data-fc]", v).forEach(b => b.onclick = () => { LF.cat = b.dataset.fc; render(); });
-  $$("[data-fcat]", v).forEach(b => b.onclick = () => { LF.cat = b.dataset.fcat === "_none" ? "none" : b.dataset.fcat; LF.acc = "all"; go("list"); });
+  $$("[data-fa]", v).forEach(b => b.onclick = () => {
+    const id = b.dataset.fa;
+    if (id === "all") LF.accs = [];
+    else {
+      const i = LF.accs.indexOf(id);
+      if (i >= 0) LF.accs.splice(i, 1); else LF.accs.push(id);
+    }
+    KEEPSCROLL = true; render();
+  });
+  $$("[data-fc]", v).forEach(b => b.onclick = () => { LF.cat = b.dataset.fc; KEEPSCROLL = true; render(); });
+  $$("[data-fcat]", v).forEach(b => b.onclick = () => { LF.cat = b.dataset.fcat === "_none" ? "none" : b.dataset.fcat; LF.accs = []; go("list"); });
   $$("[data-cmode]", v).forEach(b => b.onclick = () => {
     D.settings.catYear = b.dataset.cmode === "year"; persist(); render();
   });
@@ -3089,11 +3132,11 @@ function bind() {
     let tm;
     q.oninput = () => { clearTimeout(tm); tm = setTimeout(() => { LF.q = q.value; const p = q.selectionStart; render(); const n = $("#q"); if (n) { n.focus(); n.setSelectionRange(p, p); } }, 350); };
   }
-  $$("[data-import]", v).forEach(b => b.onclick = () => importFlow(LF.acc !== "all" ? LF.acc : null));
-  $$("[data-paste]", v).forEach(b => b.onclick = () => pasteFlow(LF.acc !== "all" ? LF.acc : null));
+  $$("[data-import]", v).forEach(b => b.onclick = () => importFlow(accOne()));
+  $$("[data-paste]", v).forEach(b => b.onclick = () => pasteFlow(accOne()));
   $$("[data-voice]", v).forEach(b => b.onclick = voiceInput);
-  $$("[data-new]", v).forEach(b => b.onclick = () => importFlow(LF.acc !== "all" ? LF.acc : null));
-  $$("[data-new2]", v).forEach(b => b.onclick = () => editTxn(null, LF.acc !== "all" ? LF.acc : null));
+  $$("[data-new]", v).forEach(b => b.onclick = () => importFlow(accOne()));
+  $$("[data-new2]", v).forEach(b => b.onclick = () => editTxn(null, accOne()));
 
   $$("[data-rename]", v).forEach(b => b.onclick = () => askText(
     "가정 이름 변경", "이름", D.home, n => { D.home = n; persist(); go(TAB); }));
@@ -3430,7 +3473,7 @@ function voiceInput() {
           flow: $("#vF", el).value
         };
         stop(); close();
-        editTxn(null, LF.acc !== "all" ? LF.acc : null, false, p);
+        editTxn(null, accOne(), false, p);
       };
     }
   });
