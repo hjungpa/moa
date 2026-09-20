@@ -271,6 +271,14 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .tourdots i.on{background:var(--accent);width:20px;border-radius:99px}
 .tournav{display:flex;gap:8px}
 .tournav .btn{padding:13px}
+.memotog{background:none;border:1px solid var(--line);color:var(--tx3);border-radius:7px;
+  width:26px;height:26px;flex:none;font-size:16px;font-weight:800;line-height:1;padding:0;
+  display:grid;place-items:center}
+.memotog:active{background:var(--panel2)}
+.updbar{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 66px);z-index:250;
+  margin:0 12px;background:var(--panel);border:1px solid var(--accent);border-radius:12px;
+  padding:10px 12px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow);
+  font-size:13.5px;font-weight:700;max-width:696px;margin-left:auto;margin-right:auto}
 .toast{
   position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 78px);
   background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:999px;
@@ -347,6 +355,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
+const APP_VERSION = "2026.09.20.1203";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -548,35 +557,43 @@ function stockLog(a) {
   return AL.filter(t => t.acc === a.id && t.adj)
     .sort((x, y) => (y.date + (y.time || "")).localeCompare(x.date + (x.time || "")));
 }
-/* 삼색 고양이 — 보일 때는 눈 뜬 얼굴, 가릴 때는 앞발로 가린 얼굴 */
-function catIcon(hidden) {
-  const head =
-    '<path d="M4.6 9.2 L5.4 2.6 L10.6 5.6 Z" fill="#e8933f"/>' +
-    '<path d="M19.4 9.2 L18.6 2.6 L13.4 5.6 Z" fill="#454545"/>' +
-    '<ellipse cx="12" cy="13.2" rx="8.6" ry="7.4" fill="#fffaf2" stroke="#e2d6c7" stroke-width="1"/>' +
-    '<path d="M12 5.8 C8 5.9 4.8 8.2 3.7 11.4 L12 11.4 Z" fill="#f0a css"/>'.replace("#f0a css", "#f0a75e") +
-    '<path d="M20.3 11.4 C19.2 8.2 16 5.9 12 5.8 L12 11.4 Z" fill="#4d4d4d"/>' +
-    '<path d="M9.2 20.2 C10.1 20.5 13.9 20.5 14.8 20.2" stroke="#e2d6c7" stroke-width="0" fill="none"/>';
-  const face = hidden
-    ? '<path d="M7.6 12.6 q1.6 1.5 3.2 0" stroke="#3a3a3a" stroke-width="1.3" fill="none" stroke-linecap="round"/>' +
-      '<path d="M13.2 12.6 q1.6 1.5 3.2 0" stroke="#3a3a3a" stroke-width="1.3" fill="none" stroke-linecap="round"/>'
-    : '<ellipse cx="9.2" cy="13" rx="1.15" ry="1.45" fill="#2f2f2f"/>' +
-      '<ellipse cx="14.8" cy="13" rx="1.15" ry="1.45" fill="#2f2f2f"/>' +
-      '<ellipse cx="9.55" cy="12.5" rx=".38" ry=".45" fill="#fff"/>' +
-      '<ellipse cx="15.15" cy="12.5" rx=".38" ry=".45" fill="#fff"/>';
-  const nose = '<path d="M12 15.5 L10.9 14.5 L13.1 14.5 Z" fill="#e89aa6"/>' +
-    '<path d="M12 15.6 q-1.1 1.5 -2.2 .5 M12 15.6 q1.1 1.5 2.2 .5" stroke="#c9b9a8" stroke-width=".9" fill="none" stroke-linecap="round"/>';
-  const paw = hidden
-    ? '<g transform="translate(0,.6)">' +
-      '<ellipse cx="12" cy="17.6" rx="5.6" ry="4.1" fill="#f6e3cf" stroke="#dcc7ae" stroke-width="1"/>' +
-      '<ellipse cx="12" cy="18.4" rx="2.7" ry="2.1" fill="#e89aa6"/>' +
-      '<ellipse cx="7.7" cy="15.6" rx="1.35" ry="1.15" fill="#e89aa6"/>' +
-      '<ellipse cx="10.5" cy="14.4" rx="1.35" ry="1.15" fill="#e89aa6"/>' +
-      '<ellipse cx="13.5" cy="14.4" rx="1.35" ry="1.15" fill="#e89aa6"/>' +
-      '<ellipse cx="16.3" cy="15.6" rx="1.35" ry="1.15" fill="#e89aa6"/></g>'
-    : '';
-  return '<svg viewBox="0 0 24 24" width="21" height="21" style="vertical-align:-5px">' +
-    head + face + (hidden ? "" : nose) + paw + '</svg>';
+/* 삼색 고양이 — 눈 뜬 얼굴 / 눈 감은 얼굴 */
+let CATN_ID = 0;
+function catIcon(closed) {
+  const id = "ct" + (++CATN_ID);
+  const eyes = closed
+    ? '<path d="M7.6 13.1 q1.7 -1.9 3.4 0" stroke="#3b3128" stroke-width="1.35" fill="none" stroke-linecap="round"/>' +
+      '<path d="M13 13.1 q1.7 -1.9 3.4 0" stroke="#3b3128" stroke-width="1.35" fill="none" stroke-linecap="round"/>'
+    : '<circle cx="9.3" cy="13.3" r="1.75" fill="#3b3128"/>' +
+      '<circle cx="14.7" cy="13.3" r="1.75" fill="#3b3128"/>' +
+      '<circle cx="9.85" cy="12.7" r=".62" fill="#fff"/>' +
+      '<circle cx="15.25" cy="12.7" r=".62" fill="#fff"/>';
+  return '<svg viewBox="0 0 24 24" width="22" height="22" style="vertical-align:-5px">' +
+    '<defs><clipPath id="' + id + '"><circle cx="12" cy="13.4" r="8.3"/></clipPath></defs>' +
+    /* 귀 */
+    '<path d="M4.6 10.2 C4 6.4 5 4.6 6 4.4 C7.2 4.2 9 5.6 10 7.2 Z" fill="#ef9f4e"/>' +
+    '<path d="M6.1 8.6 C5.8 6.8 6.2 6 6.7 5.9 C7.3 5.8 8 6.5 8.5 7.4 Z" fill="#f4b9b0"/>' +
+    '<path d="M19.4 10.2 C20 6.4 19 4.6 18 4.4 C16.8 4.2 15 5.6 14 7.2 Z" fill="#4a4139"/>' +
+    '<path d="M17.9 8.6 C18.2 6.8 17.8 6 17.3 5.9 C16.7 5.8 16 6.5 15.5 7.4 Z" fill="#f4b9b0"/>' +
+    /* 얼굴 */
+    '<circle cx="12" cy="13.4" r="8.3" fill="#fff7ec"/>' +
+    '<g clip-path="url(#' + id + ')">' +
+      '<circle cx="6.6" cy="8.4" r="4.3" fill="#ef9f4e"/>' +
+      '<circle cx="17.6" cy="9.4" r="3.5" fill="#4a4139"/>' +
+      '<circle cx="18.6" cy="17.8" r="2.4" fill="#ef9f4e" opacity=".85"/>' +
+    '</g>' +
+    '<circle cx="12" cy="13.4" r="8.3" fill="none" stroke="#e0d2c0" stroke-width=".9"/>' +
+    /* 볼 */
+    '<circle cx="6.8" cy="15.9" r="1.35" fill="#f2a7ae" opacity=".55"/>' +
+    '<circle cx="17.2" cy="15.9" r="1.35" fill="#f2a7ae" opacity=".55"/>' +
+    eyes +
+    /* 코·입 */
+    '<path d="M12 16.1 L10.85 15.1 L13.15 15.1 Z" fill="#ef8f9e"/>' +
+    '<path d="M12 16.2 q-1.15 1.5 -2.2 .35 M12 16.2 q1.15 1.5 2.2 .35" stroke="#c9b49c" stroke-width=".85" fill="none" stroke-linecap="round"/>' +
+    /* 수염 */
+    '<path d="M2.9 12.6 L6 13.1 M2.9 15.1 L6 14.7 M21.1 12.6 L18 13.1 M21.1 15.1 L18 14.7" ' +
+      'stroke="#d9c7b2" stroke-width=".8" stroke-linecap="round"/>' +
+    '</svg>';
 }
 function daysLeft() {                                      // 기준 월의 남은 날짜
   const [y, m] = D.anchor.split("-").map(Number);
@@ -960,10 +977,14 @@ function viewHome() {
     D.txns.forEach(t => { if (t.date <= T0 && (!last[t.acc] || t.date > last[t.acc])) last[t.acc] = t.date; });
     const ago = iso => Math.round((dParse(T0) - dParse(iso)) / 86400000);
     const stale = D.accounts.filter(a => !last[a.id] || ago(last[a.id]) >= 7).length;
-    h += '<div class="card" data-memo style="border-left:4px solid var(--warn)"><div class="bd">' +
-      '<div class="row" style="margin-bottom:8px">' +
-        '<span class="tiny b grow" style="color:var(--warn)">📝 어디까지 기록했나</span>' +
-        '<span class="tiny muted">눌러서 메모</span></div>' +
+    const mOpen = D.settings.memoOpen !== false;
+    h += '<div class="card" style="border-left:4px solid var(--warn)"><div class="bd" style="padding-bottom:' + (mOpen ? 14 : 11) + 'px">' +
+      '<div class="row"' + (mOpen ? ' style="margin-bottom:8px"' : '') + '>' +
+        '<span class="tiny b grow" data-memotog style="color:var(--warn)">📝 마지막 기록일자' +
+          (!mOpen && stale ? ' <span class="c-warn">· ' + stale + '곳 밀림</span>' : '') + '</span>' +
+        (mOpen ? '<span class="tiny muted" data-memo style="padding:2px 6px">눌러서 메모</span>' : '') +
+        '<button class="memotog" data-memotog>' + (mOpen ? "−" : "+") + '</button></div>' +
+      (!mOpen ? '' :
       D.accounts.map(a => {
         const d = last[a.id];
         const n = d ? ago(d) : null;
@@ -976,8 +997,8 @@ function viewHome() {
         '</div>';
       }).join("") +
       (stale ? '<div class="tiny c-warn b" style="margin-top:7px">' + stale + '곳이 일주일 넘게 비어 있습니다.</div>' : '') +
-      (D.memo ? '<div class="sm" style="white-space:pre-wrap;line-height:1.65;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)">' +
-        esc(D.memo) + '</div>' : '') +
+      (D.memo ? '<div class="sm" data-memo style="white-space:pre-wrap;line-height:1.65;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)">' +
+        esc(D.memo) + '</div>' : '')) +
     '</div></div>';
   }
 
@@ -1243,7 +1264,7 @@ function viewList() {
     '<input id="q" class="inp" placeholder="내용 · 메모 검색" value="' + esc(LF.q) + '">' +
     '<div class="row" style="margin-top:9px;gap:8px">' +
       '<button class="btn pri grow" data-paste>📋 붙여넣기</button>' +
-      (canVoice() ? '<button class="btn grow" data-voice>🎤 말로</button>' : '') +
+      (canVoice() ? '<button class="btn grow" data-voice>🎤 음성</button>' : '') +
       (canPhoto() ? '<button class="btn grow" data-import>📷 캡처</button>' : '') +
       '<button class="btn grow" data-new2>+ 입력</button>' +
     '</div>' +
@@ -1559,7 +1580,10 @@ function viewSet() {
     '</div></div></div>';
 
   h += '<div class="card"><div class="bd">' +
-    '<button class="btn wide" data-tour>❓ 사용법 다시 보기</button></div></div>';
+    '<button class="btn wide" data-tour>❓ 사용법 다시 보기</button>' +
+    '<button class="btn wide" data-upd style="margin-top:8px">🔄 업데이트 확인</button>' +
+    '<p class="tiny muted" style="margin:8px 0 0;text-align:center">버전 ' + APP_VERSION + '</p>' +
+  '</div></div>';
 
   h += '<div class="card"><div class="hd"><h2>계정 보안</h2></div><div class="bd">' +
     '<button class="btn wide" data-chpw>비밀번호 변경</button>' +
@@ -2993,8 +3017,14 @@ function bindTx(root, closeFn) {
 function bind() {
   const v = $("#view");
 
-  $$("[data-memo]", v).forEach(b => b.onclick = editMemo);
+  $$("[data-memo]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editMemo(); });
+  $$("[data-memotog]", v).forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    D.settings.memoOpen = D.settings.memoOpen === false;
+    persist(); render();
+  });
   $$("[data-tour]", v).forEach(b => b.onclick = () => showTour(true));
+  $$("[data-upd]", v).forEach(b => b.onclick = () => checkUpdate(true));
   $$("[data-eye]", v).forEach(b => b.onclick = e => {
     e.stopPropagation(); D.settings.hideBal = !D.settings.hideBal; persist(); render();
   });
@@ -3287,7 +3317,7 @@ function voiceInput() {
   let rec = null, heard = "", parsed = null;
 
   modal({
-    title: "🎤 말로 입력하기",
+    title: "🎤 음성으로 입력하기",
     body:
       '<div class="card" style="margin:0 0 12px"><div class="bd">' +
         '<div class="b sm" style="margin-bottom:6px">이렇게 말하면 됩니다</div>' +
@@ -3679,7 +3709,7 @@ const TOUR = [
   { art: "hi", t: "우리집 가계부에 오신 걸 환영합니다", d: "기록은 <b>이 폰 안에만</b> 저장됩니다. 서버로 올라가지 않아서 다른 사람이 볼 수 없습니다. 대신 폰을 바꾸면 안 따라오니 가끔 백업을 받아두세요." },
   { art: "acc", t: "먼저 은행과 카드를 등록하세요", d: "요약 화면의 <b>+ 버튼</b>으로 추가합니다. 이름은 직접 정하면 됩니다. 카드는 정산 기간과 실적 목표를, 지역화폐는 생활비 예산을 같이 넣을 수 있습니다." },
   { art: "paste", t: "카드 내역은 복사해서 붙여넣으면 끝", d: "카드사·은행 앱에서 이용내역을 복사한 뒤, 내역 화면의 <b>📋 붙여넣기</b>에 그대로 넣으세요. 날짜·가맹점·금액을 알아서 나눠 담습니다. 엑셀 파일도 됩니다." },
-  { art: "voice", t: "말로도 넣을 수 있습니다", d: "<b>🎤 말로</b>를 누르고 “커피값 3000원”처럼 말하면 됩니다. “어제 점심 만이천원”처럼 날짜를 붙여도 되고, 빼면 오늘로 들어갑니다. 확인을 거쳐 저장합니다." },
+  { art: "voice", t: "음성으로도 넣을 수 있습니다", d: "<b>🎤 음성</b>을 누르고 “커피값 3000원”처럼 말하면 됩니다. “어제 점심 만이천원”처럼 날짜를 붙여도 되고, 빼면 오늘로 들어갑니다. 확인을 거쳐 저장합니다." },
   { art: "cat", t: "색으로 분류하면 한눈에 보입니다", d: "내역을 눌러 분류를 지정하면 그 색이 줄에 깔립니다. <b>분류 탭</b>에서 어디에 얼마를 썼는지, 지난달보다 늘었는지 줄었는지 바로 보입니다." },
   { art: "goal", t: "카드 실적은 신호등으로", d: "카드마다 실적 목표를 넣어두면 초록·노랑·빨강으로 표시됩니다. 눌러보면 얼마가 남았는지 알려줍니다. 할부는 월 납입액으로 나눠서 잡힙니다." },
   { art: "backup", t: "한 달에 한 번, 백업만 챙기세요", d: "<b>설정 → 백업 내보내기</b>로 파일을 받아 메일이나 클라우드에 보관하세요. 폰을 바꾸거나 기록이 지워져도 그대로 되살릴 수 있습니다. 연말정산용 엑셀도 여기서 받습니다." }
@@ -3753,6 +3783,49 @@ function editMemo() {
     }
   });
 }
+
+/* ============================================================
+   자동 갱신 — 새 파일이 올라오면 알아서 받아온다
+   ============================================================ */
+let UPD_AT = 0, UPD_SHOWN = false;
+function applyUpdate(v) {
+  const base = location.pathname;
+  location.replace(base + "?v=" + encodeURIComponent(v));
+}
+function updateBar(v) {
+  if (UPD_SHOWN) return;
+  UPD_SHOWN = true;
+  const busy = !!$(".mask") || /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || "");
+  if (!busy) {                                  // 조용할 때는 알아서 갱신
+    toast("새 버전으로 업데이트합니다");
+    setTimeout(() => applyUpdate(v), 1100);
+    return;
+  }
+  const bar = document.createElement("div");    // 뭔가 쓰고 있으면 물어본다
+  bar.className = "updbar";
+  bar.innerHTML = '<span class="grow">새 버전이 나왔습니다</span>' +
+    '<button class="btn sm pri" id="updGo">지금 갱신</button>' +
+    '<button class="btn sm gho" id="updNo">나중에</button>';
+  document.body.appendChild(bar);
+  $("#updGo", bar).onclick = () => applyUpdate(v);
+  $("#updNo", bar).onclick = () => bar.remove();
+}
+async function checkUpdate(manual) {
+  if (!/^https?:$/.test(location.protocol)) { if (manual) toast("여기서는 확인할 수 없습니다"); return; }
+  if (!manual && Date.now() - UPD_AT < 6e5) return;      // 10분에 한 번
+  UPD_AT = Date.now();
+  try {
+    const r = await fetch(location.pathname + "?_=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("http");
+    const t = await r.text();
+    const m = t.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+    if (!m) { if (manual) toast("갱신 정보를 찾지 못했습니다"); return; }
+    if (m[1] === APP_VERSION) { if (manual) toast("이미 최신입니다 (" + APP_VERSION + ")"); return; }
+    if (manual) applyUpdate(m[1]); else updateBar(m[1]);
+  } catch (e) { if (manual) toast("인터넷 연결을 확인해 주세요"); }
+}
+setTimeout(() => checkUpdate(false), 2500);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) checkUpdate(false); });
 
 /* ============================================================
    테마 / 시작
