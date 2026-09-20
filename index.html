@@ -431,6 +431,58 @@ async function saveFile(filename, data, mime) {
   } catch (e2) {}
   return "fail";
 }
+/* 만든 파일을 어디로 보낼지 고르게 한다 (공유 시트 / 다운로드 / 복사) */
+function offerFile(filename, data, mime, note) {
+  const isText = typeof data === "string";
+  let canShare = false;
+  try {
+    const f = new File([data], filename, { type: mime });
+    canShare = !!(navigator.canShare && navigator.share && navigator.canShare({ files: [f] }));
+  } catch (e) { canShare = false; }
+
+  modal({
+    title: "파일 저장",
+    body:
+      '<div class="card" style="margin:0 0 12px"><div class="bd">' +
+        '<div class="b sm ell">' + esc(filename) + '</div>' +
+        '<div class="tiny muted" style="margin-top:3px">' + esc(note || "") + '</div>' +
+      '</div></div>' +
+      (canShare
+        ? '<p class="tiny muted" style="margin:0 0 10px;line-height:1.6"><b>공유하기</b>를 누르면 구글 드라이브, 메일, 카카오톡 등으로 바로 보낼 수 있습니다. 드라이브에 올려두면 폰이 바뀌어도 안전합니다.</p>'
+        : '<p class="tiny muted" style="margin:0 0 10px;line-height:1.6">파일로 저장하면 <b>파일 앱 → 다운로드</b> 폴더에 들어갑니다.</p>') +
+      '<div id="ofMsg" class="sm" style="min-height:18px"></div>',
+    foot:
+      (canShare ? '<button class="btn pri grow" id="ofShare">📤 공유하기</button>' : '') +
+      '<button class="btn grow" id="ofDown">⬇ 파일로 저장</button>' +
+      (isText ? '<button class="btn grow" id="ofCopy">📋 복사</button>' : ''),
+    onOpen(el, close) {
+      const msg = $("#ofMsg", el);
+      const sh = $("#ofShare", el);
+      if (sh) sh.onclick = async () => {
+        try {
+          const f = new File([data], filename, { type: mime });
+          await navigator.share({ files: [f], title: filename });
+          close(); toast("보냈습니다");
+        } catch (e) {
+          if (e && e.name === "AbortError") return;
+          msg.innerHTML = '<span class="c-bad b">공유에 실패했습니다. 파일로 저장을 눌러보세요.</span>';
+        }
+      };
+      $("#ofDown", el).onclick = async () => {
+        const r = await saveFile(filename, data, mime);
+        if (r === "ok") { close(); toast("저장했습니다 (파일 앱 → 다운로드)"); }
+        else if (r === "declined") msg.textContent = "저장을 취소했습니다.";
+        else msg.innerHTML = '<span class="c-bad b">이 화면에서는 저장이 막혀 있습니다. 복사를 써주세요.</span>';
+      };
+      const cp = $("#ofCopy", el);
+      if (cp) cp.onclick = async () => {
+        try { await navigator.clipboard.writeText(data); toast("복사했습니다"); close(); }
+        catch (e) { msg.innerHTML = '<span class="c-bad b">복사가 막혀 있습니다.</span>'; }
+      };
+    }
+  });
+}
+
 function toast(msg) {
   const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
   document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
@@ -3019,9 +3071,9 @@ function bind() {
 async function doExport() {
   const payload = JSON.stringify({ app: "ledger.v1", at: new Date().toISOString(), user: ME, data: D }, null, 1);
   const name = "가계부백업_" + todayISO() + ".json";
-  const r = await saveFile(name, payload, "application/json");
-  if (r === "ok") { toast("백업 파일을 저장했습니다"); return; }
-  if (r === "declined") { toast("저장을 취소했습니다"); return; }
+  offerFile(name, payload, "application/json",
+    D.home + " · 내역 " + D.txns.length + "건 · 계정 " + D.accounts.length + "개");
+  return;
   modal({
     title: "백업 내용",
     body: '<p class="tiny muted">아래 내용을 전체 복사해서 메모앱 등에 보관하세요. 나중에 “백업 불러오기”에 붙여넣으면 됩니다.</p>' +
@@ -3490,19 +3542,21 @@ function doExcel() {
             ws["!freeze"] = { xSplit: 0, ySplit: 1 };
             X.utils.book_append_sheet(wb, ws, sh.name);
           });
-          const buf = X.write(wb, { bookType: "xlsx", type: "array" });
-          const r = await saveFile(base + ".xlsx", buf,
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-          if (r === "declined") { msg.textContent = "저장을 취소했습니다."; btn.disabled = false; return; }
-          if (r === "fail") throw new Error("save-failed");
-          close(); toast(n + "건을 엑셀로 저장했습니다");
+          const buf2 = X.write(wb, { bookType: "xlsx", type: "array" });
+          close();
+          offerFile(base + ".xlsx", new Blob([buf2],
+            { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            label + " · " + n + "건 · 시트 5장");
           return;
         } catch (e) {
           /* 엑셀 생성이 안 되면 CSV로 */
           const csv = toCSV(sheets);
-          const r2 = await saveFile(base + ".csv", csv, "text/csv;charset=utf-8");
-          if (r2 === "ok") { close(); toast(n + "건을 CSV로 저장했습니다 (엑셀에서 열립니다)"); return; }
-          if (r2 === "declined") { msg.textContent = "저장을 취소했습니다."; btn.disabled = false; return; }
+          if (typeof Blob !== "undefined") {
+            close();
+            offerFile(base + ".csv", csv, "text/csv;charset=utf-8", label + " · " + n + "건 (엑셀에서 열립니다)");
+            return;
+          }
           btn.disabled = false;
           msg.innerHTML = '<span class="c-bad b">이 화면에서는 파일 저장을 쓸 수 없습니다.</span><br>' +
             '<span class="tiny muted">아래 내용을 복사해 메모장에 붙여넣고 .csv로 저장하면 엑셀에서 열립니다.</span>' +
