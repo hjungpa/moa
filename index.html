@@ -355,7 +355,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.09.20.1203";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.09.20.1211";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -949,6 +949,15 @@ function render() {
 /* ============================================================
    요약 화면
    ============================================================ */
+const folded = k => !!(D.settings.fold || {})[k];
+function foldBtn(k) {
+  return '<button class="memotog" data-fold="' + k + '" style="margin-left:6px">' + (folded(k) ? "+" : "−") + '</button>';
+}
+function secHd(k, title, sum, addBtn) {
+  return '<div class="hd"><h2 class="ell">' + title +
+    (folded(k) && sum ? ' <span class="num" style="color:var(--tx3)"> · ' + sum + '</span>' : '') + '</h2>' +
+    (folded(k) ? '' : (addBtn || '')) + foldBtn(k) + '</div>';
+}
 function viewHome() {
   const banks = D.accounts.filter(a => a.kind === "bank" && !a.stock);
   const stocks = D.accounts.filter(a => a.kind === "bank" && a.stock);
@@ -1003,7 +1012,10 @@ function viewHome() {
   }
 
   /* 총괄 */
-  h += '<div class="card"><div class="bd">' +
+  h += '<div class="card">' +
+    secHd("top", "이번 달 한눈에",
+      (D.settings.hideBal ? "잔고 ••••" : "잔고 " + won(bankSum)) + " · 카드 " + won(cardSum)) +
+    (folded("top") ? '' : '<div class="bd" style="padding-top:4px">' +
     '<div class="row" style="gap:0">' +
       '<div class="grow"><div class="tiny muted b">은행 잔고 합계 ' +
         '<button data-eye style="background:none;border:0;padding:0 0 0 4px;line-height:1" aria-label="잔액 가리기">' +
@@ -1037,12 +1049,13 @@ function viewHome() {
       '<div class="grow"><div class="tiny muted b">📈 투자 평가액</div>' +
         '<div class="tiny num ' + (stockPLSum >= 0 ? "c-inc" : "c-bad") + ' b" style="margin-top:2px">누적 손익 ' + signWon(stockPLSum) + '</div></div>' +
       '<span class="num b" style="font-size:17px">' + mb(stockSum) + '</span></div>' : '') +
-    '</div></div>';
+    '</div>') + '</div>';
 
   /* 은행 */
-  h += '<div class="card"><div class="hd"><h2>은행</h2>' +
-       '<button class="btn sm" data-add="bank">+ 은행 추가</button></div>';
-  if (!banks.length) h += '<div class="empty"><b>등록된 은행이 없습니다</b>은행을 추가하고 잔고를 적어두세요.</div>';
+  h += '<div class="card">' + secHd("bank", "은행", mb(bankSum),
+       '<button class="btn sm" data-add="bank">+ 은행 추가</button>');
+  if (folded("bank")) h += '';
+  else if (!banks.length) h += '<div class="empty"><b>등록된 은행이 없습니다</b>은행을 추가하고 잔고를 적어두세요.</div>';
   else {
     h += '<div style="margin-top:10px">';
     let tInc = 0, tOut = 0, tNet = 0;
@@ -1071,8 +1084,11 @@ function viewHome() {
 
   /* 주식 · 투자 */
   if (stocks.length) {
-    h += '<div class="card"><div class="hd"><h2>📈 주식 · 투자</h2>' +
-         '<button class="btn sm" data-add="bank">+ 추가</button></div><div style="margin-top:10px">';
+    h += '<div class="card">' + secHd("stock", "📈 주식 · 투자", mb(stockSum),
+         '<button class="btn sm" data-add="bank">+ 추가</button>');
+    if (folded("stock")) h += '</div>';
+    else {
+    h += '<div style="margin-top:10px">';
     stocks.forEach(a => {
       const pl = stockPL(a), seed = stockSeed(a);
       const rate = seed ? (pl / seed * 100) : 0;
@@ -1095,12 +1111,14 @@ function viewHome() {
         '<div class="tiny ' + (stockPLSum >= 0 ? "c-inc" : "c-bad") + ' b num">누적 손익 ' + signWon(stockPLSum) + '</div></div>' +
         '<div class="v num">' + mb(stockSum) + '</div></div>';
     h += '</div></div>';
+    }
   }
 
   /* 직불 · 충전카드 */
-  h += '<div class="card"><div class="hd"><h2>생활비 · 지역화폐</h2>' +
-       '<button class="btn sm" data-add="debit">+ 추가</button></div>';
-  if (!debits.length) h += '<div class="empty"><b>등록된 것이 없습니다</b>지역화폐·선불카드처럼 충전해서 쓰는 것, 또는 이번 달 생활비 예산을 여기에 넣으세요.</div>';
+  h += '<div class="card">' + secHd("debit", "생활비 · 지역화폐", mb(debitSum),
+       '<button class="btn sm" data-add="debit">+ 추가</button>');
+  if (folded("debit")) h += '';
+  else if (!debits.length) h += '<div class="empty"><b>등록된 것이 없습니다</b>지역화폐·선불카드처럼 충전해서 쓰는 것, 또는 이번 달 생활비 예산을 여기에 넣으세요.</div>';
   else {
     h += '<div style="margin-top:10px">';
     debits.forEach(a => {
@@ -1141,9 +1159,10 @@ function viewHome() {
   h += '</div>';
 
   /* 카드 */
-  h += '<div class="card"><div class="hd"><h2>카드 · 실적</h2>' +
-       '<button class="btn sm" data-add="card">+ 카드 추가</button></div>';
-  if (!cards.length) h += '<div class="empty"><b>등록된 카드가 없습니다</b>카드사 이름과 정산 기간, 실적 목표를 직접 정하세요.</div>';
+  h += '<div class="card">' + secHd("card", "카드 · 실적", wonS(cardSum),
+       '<button class="btn sm" data-add="card">+ 카드 추가</button>');
+  if (folded("card")) h += '';
+  else if (!cards.length) h += '<div class="empty"><b>등록된 카드가 없습니다</b>카드사 이름과 정산 기간, 실적 목표를 직접 정하세요.</div>';
   else {
     h += '<div style="margin-top:10px">';
     let paySum = 0, payAny = false;
@@ -1181,7 +1200,10 @@ function viewHome() {
 
   /* 실적 신호등 요약 */
   if (cards.some(a => +a.goal)) {
-    h += '<div class="card"><div class="hd"><h2>실적 신호등</h2></div><div class="bd">';
+    h += '<div class="card">' + secHd("light", "실적 신호등", "");
+    if (folded("light")) h += '</div>';
+    else {
+    h += '<div class="bd">';
     cards.filter(a => +a.goal).forEach(a => {
       const L = lightOf(a, D.anchor);
       const rest = Math.max(0, L.goal - L.used);
@@ -1197,13 +1219,15 @@ function viewHome() {
       '</div>';
     });
     h += '</div></div>';
+    }
   }
 
   /* 최근 입력 */
   const recent = visibleTx(SP.filter(t => t.date <= todayISO())).sort((a, b) => (b.date + (b.time || "")).localeCompare(a.date + (a.time || ""))).slice(0, 6);
   if (recent.length) {
-    h += '<div class="card"><div class="hd"><h2>최근 기록</h2><button class="btn sm gho" data-tabgo="list">전체보기</button></div>' +
-         '<div style="margin-top:8px">' + recent.map(txRow).join("") + '</div></div>';
+    h += '<div class="card">' + secHd("recent", "최근 기록", recent.length + "건",
+      '<button class="btn sm gho" data-tabgo="list">전체보기</button>') +
+      (folded("recent") ? '' : '<div style="margin-top:8px">' + recent.map(txRow).join("") + '</div>') + '</div>';
   }
   return h;
 }
@@ -3018,6 +3042,12 @@ function bind() {
   const v = $("#view");
 
   $$("[data-memo]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editMemo(); });
+  $$("[data-fold]", v).forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    D.settings.fold = D.settings.fold || {};
+    D.settings.fold[b.dataset.fold] = !D.settings.fold[b.dataset.fold];
+    persist(); render();
+  });
   $$("[data-memotog]", v).forEach(b => b.onclick = e => {
     e.stopPropagation();
     D.settings.memoOpen = D.settings.memoOpen === false;
