@@ -255,6 +255,22 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .catrow:first-child{border-top:0}
 .legend{display:flex;height:11px;border-radius:99px;overflow:hidden;background:var(--line);margin-bottom:12px}
 .legend i{display:block;height:100%}
+.tourwrap{position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;align-items:center;justify-content:center;
+  padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px)}
+.tourbox{width:100%;max-width:440px;display:flex;flex-direction:column;height:100%;max-height:640px}
+.tourskip{align-self:flex-end;background:none;border:0;color:var(--tx3);font-size:13px;font-weight:700;padding:6px 4px}
+.tourview{flex:1;overflow:hidden;display:flex;align-items:center}
+.tourtrack{display:flex;width:100%;transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.tourpage{min-width:100%;padding:0 6px;text-align:center}
+.tourart{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 10px;margin-bottom:22px;box-shadow:var(--shadow)}
+.tourart svg{width:100%;max-width:230px;height:auto}
+.tourpage h3{margin:0 0 10px;font-size:19px;letter-spacing:-.03em;line-height:1.35}
+.tourpage p{margin:0;font-size:14px;line-height:1.7;color:var(--tx2)}
+.tourdots{display:flex;justify-content:center;gap:7px;margin:20px 0 14px}
+.tourdots i{width:7px;height:7px;border-radius:50%;background:var(--line);display:block;transition:all .2s}
+.tourdots i.on{background:var(--accent);width:20px;border-radius:99px}
+.tournav{display:flex;gap:8px}
+.tournav .btn{padding:13px}
 .toast{
   position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 78px);
   background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:999px;
@@ -311,6 +327,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <h1 id="tbTitle">이번 달 요약</h1>
       <button class="sub" id="btnHome" style="background:none;border:0;padding:0;font-size:12px;text-align:left"></button>
     </div>
+    <button class="btn sm gho" id="btnMemo" style="padding:7px 9px">📝</button>
     <button class="btn sm gho" id="btnPeriod">기간</button>
   </div>
   <main id="view"></main>
@@ -478,6 +495,36 @@ function stockPL(a) { return (+a.bal || 0) - stockSeed(a); }
 function stockLog(a) {
   return AL.filter(t => t.acc === a.id && t.adj)
     .sort((x, y) => (y.date + (y.time || "")).localeCompare(x.date + (x.time || "")));
+}
+/* 삼색 고양이 — 보일 때는 눈 뜬 얼굴, 가릴 때는 앞발로 가린 얼굴 */
+function catIcon(hidden) {
+  const head =
+    '<path d="M4.6 9.2 L5.4 2.6 L10.6 5.6 Z" fill="#e8933f"/>' +
+    '<path d="M19.4 9.2 L18.6 2.6 L13.4 5.6 Z" fill="#454545"/>' +
+    '<ellipse cx="12" cy="13.2" rx="8.6" ry="7.4" fill="#fffaf2" stroke="#e2d6c7" stroke-width="1"/>' +
+    '<path d="M12 5.8 C8 5.9 4.8 8.2 3.7 11.4 L12 11.4 Z" fill="#f0a css"/>'.replace("#f0a css", "#f0a75e") +
+    '<path d="M20.3 11.4 C19.2 8.2 16 5.9 12 5.8 L12 11.4 Z" fill="#4d4d4d"/>' +
+    '<path d="M9.2 20.2 C10.1 20.5 13.9 20.5 14.8 20.2" stroke="#e2d6c7" stroke-width="0" fill="none"/>';
+  const face = hidden
+    ? '<path d="M7.6 12.6 q1.6 1.5 3.2 0" stroke="#3a3a3a" stroke-width="1.3" fill="none" stroke-linecap="round"/>' +
+      '<path d="M13.2 12.6 q1.6 1.5 3.2 0" stroke="#3a3a3a" stroke-width="1.3" fill="none" stroke-linecap="round"/>'
+    : '<ellipse cx="9.2" cy="13" rx="1.15" ry="1.45" fill="#2f2f2f"/>' +
+      '<ellipse cx="14.8" cy="13" rx="1.15" ry="1.45" fill="#2f2f2f"/>' +
+      '<ellipse cx="9.55" cy="12.5" rx=".38" ry=".45" fill="#fff"/>' +
+      '<ellipse cx="15.15" cy="12.5" rx=".38" ry=".45" fill="#fff"/>';
+  const nose = '<path d="M12 15.5 L10.9 14.5 L13.1 14.5 Z" fill="#e89aa6"/>' +
+    '<path d="M12 15.6 q-1.1 1.5 -2.2 .5 M12 15.6 q1.1 1.5 2.2 .5" stroke="#c9b9a8" stroke-width=".9" fill="none" stroke-linecap="round"/>';
+  const paw = hidden
+    ? '<g transform="translate(0,.6)">' +
+      '<ellipse cx="12" cy="17.6" rx="5.6" ry="4.1" fill="#f6e3cf" stroke="#dcc7ae" stroke-width="1"/>' +
+      '<ellipse cx="12" cy="18.4" rx="2.7" ry="2.1" fill="#e89aa6"/>' +
+      '<ellipse cx="7.7" cy="15.6" rx="1.35" ry="1.15" fill="#e89aa6"/>' +
+      '<ellipse cx="10.5" cy="14.4" rx="1.35" ry="1.15" fill="#e89aa6"/>' +
+      '<ellipse cx="13.5" cy="14.4" rx="1.35" ry="1.15" fill="#e89aa6"/>' +
+      '<ellipse cx="16.3" cy="15.6" rx="1.35" ry="1.15" fill="#e89aa6"/></g>'
+    : '';
+  return '<svg viewBox="0 0 24 24" width="21" height="21" style="vertical-align:-5px">' +
+    head + face + (hidden ? "" : nose) + paw + '</svg>';
 }
 function daysLeft() {                                      // 기준 월의 남은 날짜
   const [y, m] = D.anchor.split("-").map(Number);
@@ -668,6 +715,7 @@ function enter(id) {
   $("#auth").classList.add("hidden");
   $("#app").classList.remove("hidden");
   go(TAB);
+  if (!D.settings.tourDone) setTimeout(() => showTour(false), 250);
 }
 function toAuth(mode) {
   ROOT.session = null; saveAll(); ME = null; D = null;
@@ -788,9 +836,11 @@ function go(tab) {
   $("#tbTitle").textContent = t;
   $("#btnHome").innerHTML = '<b>' + esc(D.home) + '</b> ▾ · ' + D.anchor.replace("-", "년 ") + "월 기준";
   $("#btnPeriod").classList.toggle("hidden", tab === "set");
+  $("#btnMemo").classList.toggle("hidden", tab !== "home");
   render();
 }
 $("#btnPeriod").onclick = pickPeriod;
+$("#btnMemo").onclick = editMemo;
 function pickPeriod() {
   let a = D.anchor;
   const m = modal({
@@ -851,12 +901,40 @@ function viewHome() {
 
   let h = "";
 
+  /* 계정별 마지막 기록 날짜 */
+  if (D.accounts.length) {
+    const T0 = todayISO();
+    const last = {};
+    D.txns.forEach(t => { if (t.date <= T0 && (!last[t.acc] || t.date > last[t.acc])) last[t.acc] = t.date; });
+    const ago = iso => Math.round((dParse(T0) - dParse(iso)) / 86400000);
+    const stale = D.accounts.filter(a => !last[a.id] || ago(last[a.id]) >= 7).length;
+    h += '<div class="card" data-memo style="border-left:4px solid var(--warn)"><div class="bd">' +
+      '<div class="row" style="margin-bottom:8px">' +
+        '<span class="tiny b grow" style="color:var(--warn)">📝 어디까지 기록했나</span>' +
+        '<span class="tiny muted">눌러서 메모</span></div>' +
+      D.accounts.map(a => {
+        const d = last[a.id];
+        const n = d ? ago(d) : null;
+        const c = n == null ? "c-bad" : n >= 14 ? "c-bad" : n >= 7 ? "c-warn" : n >= 3 ? "" : "muted";
+        return '<div class="row" style="padding:3px 0">' +
+          '<span class="dot" style="background:' + esc(a.color) + ';width:8px;height:8px"></span>' +
+          '<span class="sm grow ell">' + esc(a.name) + '</span>' +
+          '<span class="tiny num ' + c + ' b">' + (d ? fmtDate(d) + ' · ' +
+            (n === 0 ? "오늘" : n === 1 ? "어제" : n + "일 전") : "기록 없음") + '</span>' +
+        '</div>';
+      }).join("") +
+      (stale ? '<div class="tiny c-warn b" style="margin-top:7px">' + stale + '곳이 일주일 넘게 비어 있습니다.</div>' : '') +
+      (D.memo ? '<div class="sm" style="white-space:pre-wrap;line-height:1.65;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)">' +
+        esc(D.memo) + '</div>' : '') +
+    '</div></div>';
+  }
+
   /* 총괄 */
   h += '<div class="card"><div class="bd">' +
     '<div class="row" style="gap:0">' +
       '<div class="grow"><div class="tiny muted b">은행 잔고 합계 ' +
-        '<button data-eye style="background:none;border:0;padding:0 0 0 3px;font-size:13px;line-height:1;vertical-align:-1px">' +
-        (D.settings.hideBal ? "🙈" : "🐵") + '</button></div>' +
+        '<button data-eye style="background:none;border:0;padding:0 0 0 4px;line-height:1" aria-label="잔액 가리기">' +
+        catIcon(!!D.settings.hideBal) + '</button></div>' +
         '<div class="num b" style="font-size:24px;letter-spacing:-.03em">' + mb(bankSum) + '</div></div>' +
       '<div style="text-align:right"><div class="tiny muted b">카드 사용 합계</div>' +
         '<div class="num b c-bad" style="font-size:24px;letter-spacing:-.03em">' + wonS(cardSum) + '</div>' +
@@ -1427,6 +1505,9 @@ function viewSet() {
       ['auto:자동', 'light:라이트', 'dark:다크'].map(s => { const [k, n] = s.split(":");
         return '<button data-theme="' + k + '" class="' + ((localStorage.getItem("ledger.theme") || "auto") === k ? "on" : "") + '">' + n + '</button>'; }).join("") +
     '</div></div></div>';
+
+  h += '<div class="card"><div class="bd">' +
+    '<button class="btn wide" data-tour>❓ 사용법 다시 보기</button></div></div>';
 
   h += '<div class="card"><div class="hd"><h2>계정 보안</h2></div><div class="bd">' +
     '<button class="btn wide" data-chpw>비밀번호 변경</button>' +
@@ -2860,6 +2941,8 @@ function bindTx(root, closeFn) {
 function bind() {
   const v = $("#view");
 
+  $$("[data-memo]", v).forEach(b => b.onclick = editMemo);
+  $$("[data-tour]", v).forEach(b => b.onclick = () => showTour(true));
   $$("[data-eye]", v).forEach(b => b.onclick = e => {
     e.stopPropagation(); D.settings.hideBal = !D.settings.hideBal; persist(); render();
   });
@@ -3480,6 +3563,142 @@ function doExcel() {
     document.head.appendChild(tc);
   } catch (e) {}
 })();
+
+
+/* ============================================================
+   처음 쓰는 사람을 위한 안내 (옆으로 넘기는 슬라이드)
+   ============================================================ */
+function tourArt(k) {
+  const W = 'viewBox="0 0 220 140" xmlns="http://www.w3.org/2000/svg"';
+  const box = (x, y, w, h, c, r) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (r || 6) + '" fill="' + c + '"/>';
+  const ln = (x, y, w, c) => box(x, y, w, 5, c || "var(--line)", 2.5);
+  if (k === "hi") return '<svg ' + W + '>' +
+    box(68, 18, 84, 108, "var(--panel2)", 14) + box(68, 18, 84, 108, "none") +
+    '<rect x="68" y="18" width="84" height="108" rx="14" fill="none" stroke="var(--line)" stroke-width="2"/>' +
+    box(84, 36, 52, 8, "var(--accent)", 4) + ln(84, 56, 52) + ln(84, 70, 36) + ln(84, 84, 44) +
+    '<circle cx="110" cy="108" r="9" fill="var(--accent-soft)"/>' +
+    '<text x="110" y="113" text-anchor="middle" font-size="12">🧾</text></svg>';
+  if (k === "acc") return '<svg ' + W + '>' +
+    box(22, 30, 80, 46, "var(--accent)", 10) + box(32, 44, 40, 6, "#fff", 3) + box(32, 58, 24, 5, "rgba(255,255,255,.6)", 2.5) +
+    box(118, 30, 80, 46, "#f0a68f", 10) + box(128, 44, 40, 6, "#fff", 3) + box(128, 58, 30, 5, "rgba(255,255,255,.6)", 2.5) +
+    box(22, 90, 176, 34, "var(--panel2)", 10) +
+    '<text x="110" y="112" text-anchor="middle" font-size="15" font-weight="800" fill="var(--tx2)">+ 은행 · 카드 추가</text></svg>';
+  if (k === "paste") return '<svg ' + W + '>' +
+    box(14, 20, 86, 100, "var(--panel2)", 10) +
+    '<rect x="14" y="20" width="86" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="2"/>' +
+    ln(26, 34, 50, "var(--tx3)") + ln(26, 48, 62, "var(--tx3)") + ln(26, 62, 44, "var(--tx3)") + ln(26, 76, 58, "var(--tx3)") + ln(26, 90, 40, "var(--tx3)") +
+    '<path d="M104 70 L128 70" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>' +
+    '<path d="M120 62 L130 70 L120 78" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>' +
+    box(136, 20, 70, 100, "var(--panel)", 10) +
+    '<rect x="136" y="20" width="70" height="100" rx="10" fill="none" stroke="var(--accent)" stroke-width="2"/>' +
+    box(146, 34, 34, 6, "var(--accent)", 3) + box(146, 48, 50, 5, "var(--line)", 2.5) +
+    box(146, 62, 34, 6, "var(--accent)", 3) + box(146, 76, 50, 5, "var(--line)", 2.5) +
+    box(146, 90, 34, 6, "var(--accent)", 3) + '</svg>';
+  if (k === "voice") return '<svg ' + W + '>' +
+    '<circle cx="110" cy="62" r="34" fill="var(--accent-soft)"/>' +
+    '<rect x="101" y="42" width="18" height="30" rx="9" fill="var(--accent)"/>' +
+    '<path d="M94 66 a16 16 0 0 0 32 0" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>' +
+    '<path d="M110 82 v8" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>' +
+    '<text x="110" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="var(--tx2)">“커피값 3000원”</text></svg>';
+  if (k === "cat") return '<svg ' + W + '>' +
+    box(20, 26, 180, 20, "#f0a68f", 6) + box(20, 54, 132, 20, "#7fa9e8", 6) +
+    box(20, 82, 96, 20, "#8fcf9a", 6) + box(20, 110, 58, 20, "#b7a3e6", 6) +
+    '<text x="206" y="41" text-anchor="end" font-size="11" font-weight="800" fill="#fff">식비</text>' +
+    '<text x="146" y="69" text-anchor="end" font-size="11" font-weight="800" fill="#fff">교통</text>' +
+    '<text x="110" y="97" text-anchor="end" font-size="11" font-weight="800" fill="#fff">생활</text></svg>';
+  if (k === "goal") return '<svg ' + W + '>' +
+    '<circle cx="62" cy="70" r="24" fill="#17a34a"/><text x="62" y="76" text-anchor="middle" font-size="18">✓</text>' +
+    '<circle cx="124" cy="70" r="24" fill="#e0a411"/>' +
+    '<circle cx="186" cy="70" r="24" fill="#e23b3b"/>' +
+    '<text x="62" y="118" text-anchor="middle" font-size="11" font-weight="800" fill="var(--tx2)">달성</text>' +
+    '<text x="124" y="118" text-anchor="middle" font-size="11" font-weight="800" fill="var(--tx2)">거의</text>' +
+    '<text x="186" y="118" text-anchor="middle" font-size="11" font-weight="800" fill="var(--tx2)">부족</text></svg>';
+  return '<svg ' + W + '>' +
+    box(58, 24, 104, 78, "var(--panel2)", 10) +
+    '<rect x="58" y="24" width="104" height="78" rx="10" fill="none" stroke="var(--line)" stroke-width="2"/>' +
+    '<path d="M110 44 v34" stroke="var(--ok)" stroke-width="6" stroke-linecap="round"/>' +
+    '<path d="M98 68 L110 80 L122 68" fill="none" stroke="var(--ok)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>' +
+    box(78, 112, 64, 8, "var(--ok)", 4) + '</svg>';
+}
+
+const TOUR = [
+  { art: "hi", t: "우리집 가계부에 오신 걸 환영합니다", d: "기록은 <b>이 폰 안에만</b> 저장됩니다. 서버로 올라가지 않아서 다른 사람이 볼 수 없습니다. 대신 폰을 바꾸면 안 따라오니 가끔 백업을 받아두세요." },
+  { art: "acc", t: "먼저 은행과 카드를 등록하세요", d: "요약 화면의 <b>+ 버튼</b>으로 추가합니다. 이름은 직접 정하면 됩니다. 카드는 정산 기간과 실적 목표를, 지역화폐는 생활비 예산을 같이 넣을 수 있습니다." },
+  { art: "paste", t: "카드 내역은 복사해서 붙여넣으면 끝", d: "카드사·은행 앱에서 이용내역을 복사한 뒤, 내역 화면의 <b>📋 붙여넣기</b>에 그대로 넣으세요. 날짜·가맹점·금액을 알아서 나눠 담습니다. 엑셀 파일도 됩니다." },
+  { art: "voice", t: "말로도 넣을 수 있습니다", d: "<b>🎤 말로</b>를 누르고 “커피값 3000원”처럼 말하면 됩니다. “어제 점심 만이천원”처럼 날짜를 붙여도 되고, 빼면 오늘로 들어갑니다. 확인을 거쳐 저장합니다." },
+  { art: "cat", t: "색으로 분류하면 한눈에 보입니다", d: "내역을 눌러 분류를 지정하면 그 색이 줄에 깔립니다. <b>분류 탭</b>에서 어디에 얼마를 썼는지, 지난달보다 늘었는지 줄었는지 바로 보입니다." },
+  { art: "goal", t: "카드 실적은 신호등으로", d: "카드마다 실적 목표를 넣어두면 초록·노랑·빨강으로 표시됩니다. 눌러보면 얼마가 남았는지 알려줍니다. 할부는 월 납입액으로 나눠서 잡힙니다." },
+  { art: "backup", t: "한 달에 한 번, 백업만 챙기세요", d: "<b>설정 → 백업 내보내기</b>로 파일을 받아 메일이나 클라우드에 보관하세요. 폰을 바꾸거나 기록이 지워져도 그대로 되살릴 수 있습니다. 연말정산용 엑셀도 여기서 받습니다." }
+];
+
+function showTour(fromSettings) {
+  let i = 0;
+  const host = document.createElement("div");
+  host.className = "tourwrap";
+  host.innerHTML =
+    '<div class="tourbox">' +
+      '<button class="tourskip" id="tSkip">건너뛰기</button>' +
+      '<div class="tourview"><div class="tourtrack" id="tTrack">' +
+        TOUR.map(s => '<div class="tourpage">' +
+          '<div class="tourart">' + tourArt(s.art) + '</div>' +
+          '<h3>' + s.t + '</h3><p>' + s.d + '</p></div>').join("") +
+      '</div></div>' +
+      '<div class="tourdots" id="tDots">' + TOUR.map((_, k) => '<i data-go="' + k + '"></i>').join("") + '</div>' +
+      '<div class="tournav">' +
+        '<button class="btn" id="tPrev">이전</button>' +
+        '<button class="btn pri grow" id="tNext">다음</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(host);
+
+  const track = $("#tTrack", host), dots = $$("#tDots i", host);
+  const go = k => {
+    i = Math.max(0, Math.min(TOUR.length - 1, k));
+    track.style.transform = "translateX(" + (-i * 100) + "%)";
+    dots.forEach((d, n) => d.classList.toggle("on", n === i));
+    $("#tPrev", host).style.visibility = i ? "visible" : "hidden";
+    $("#tNext", host).textContent = i === TOUR.length - 1 ? "시작하기" : "다음";
+  };
+  const done = () => {
+    host.remove();
+    if (!fromSettings && D) { D.settings.tourDone = true; persist(); }
+  };
+  go(0);
+  dots.forEach(d => d.onclick = () => go(+d.dataset.go));
+  $("#tPrev", host).onclick = () => go(i - 1);
+  $("#tNext", host).onclick = () => { if (i === TOUR.length - 1) done(); else go(i + 1); };
+  $("#tSkip", host).onclick = done;
+
+  let x0 = null;
+  track.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; }, { passive: true });
+  track.addEventListener("touchend", e => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 42) go(i + (dx < 0 ? 1 : -1));
+    x0 = null;
+  }, { passive: true });
+}
+
+/* ============================================================
+   메모 — 마지막 기록일자 같은 걸 적어두는 칸
+   ============================================================ */
+function editMemo() {
+  modal({
+    title: "메모",
+    body:
+      '<p class="tiny muted" style="margin:0 0 8px;line-height:1.6">계정별 마지막 기록 날짜는 앱이 알아서 보여줍니다. 여기에는 그 밖에 적어둘 것을 쓰세요. 요약 화면 맨 위에 그대로 보입니다.</p>' +
+      '<textarea id="mTa" class="inp" style="min-height:150px;line-height:1.7" placeholder="예)&#10;지역화폐 10월 1일에 충전하기&#10;현대카드 실적 이번 달 아슬아슬함&#10;보험료 인상 확인할 것">' +
+        esc(D.memo || "") + '</textarea>',
+    foot: (D.memo ? '<button class="btn dan" id="mDel">비우기</button>' : '') + '<button class="btn pri" id="mOk">저장</button>',
+    onOpen(el, close) {
+      const ta = $("#mTa", el);
+      ta.focus();
+      $("#mOk", el).onclick = () => { D.memo = ta.value.trim(); persist(); close(); render(); };
+      const d = $("#mDel", el);
+      if (d) d.onclick = () => { D.memo = ""; persist(); close(); render(); };
+    }
+  });
+}
 
 /* ============================================================
    테마 / 시작
