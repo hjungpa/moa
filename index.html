@@ -156,9 +156,15 @@ textarea.inp{min-height:64px;resize:vertical;font-size:15px}
 .tx .a{font-weight:800;font-size:14.5px;text-align:right;flex:none}
 .tx .a.in{color:var(--inc);font-weight:900;font-size:17px;letter-spacing:-.02em}
 .tx .t.in{color:var(--inc);font-weight:800;font-size:15px}
-.tx.xfer .body{opacity:.72}
-.tx.xfer .d,.tx.xfer .t,.tx.xfer .a,.tx.xfer .m{color:var(--tx3);font-weight:600}
-.tx.xfer .t,.tx.xfer .a{text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--tx3)}
+.tx.xfer .d,.tx.xfer .t,.tx.xfer .a,.tx.xfer .m{color:var(--tx2);font-weight:600}
+.tx.xfer.xout .t,.tx.xfer.xout .a{text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--tx3)}
+.tx .xtag{font-size:10px;font-weight:800;border-radius:5px;padding:0 5px;margin-left:5px;vertical-align:1px;
+  background:var(--accent-soft);color:var(--accent)}
+.xbox{background:var(--accent-soft);border-radius:12px;padding:12px;margin:0 0 12px}
+.xtog{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);
+  border-radius:11px;padding:9px 12px;margin:-2px 0 10px;font-size:12.5px}
+.xtog input{width:19px;height:19px;accent-color:var(--accent);flex:none}
+.stat i.xin{font-style:normal;font-size:9.5px;font-weight:800;color:var(--accent);display:block}
 .tx .cn{font-weight:700}
 .tx .aic{vertical-align:-2.5px;margin-right:5px;flex:none}
 .tx.fut .aic,.tx.xfer .aic{opacity:.5}
@@ -240,6 +246,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .pflow{font-size:11px;font-weight:800;border:1px solid var(--line);background:var(--panel2);
   color:var(--tx3);border-radius:6px;padding:2px 7px;flex:none}
 .pflow.in{background:var(--inc);border-color:var(--inc);color:#fff}
+.pflow.xf{background:var(--tx2);border-color:var(--tx2);color:#fff}
 .stat{display:flex;gap:8px;margin-bottom:10px}
 .stat>div{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:9px;text-align:center}
 .stat b{display:block;font-size:17px;font-weight:800}
@@ -359,7 +366,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.09.20.1246";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.09.22.0804";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -392,7 +399,7 @@ function emptyData(homeName) {
       { id: uid(), name: "기타",   color: "#9fb0c2" }
     ],
     rules: [],
-    settings: { hideXfer: false, tint: 16, instMode: "monthly", hideBal: false, catIncFuture: false, catYear: false },
+    settings: { tint: 16, instMode: "monthly", hideBal: false, catIncFuture: false, catYear: false, xferExcl: true },
     anchor: null   // 'YYYY-MM' 보고 있는 기준 월
   };
 }
@@ -538,15 +545,17 @@ function txnsIn(list, accId, anchor) {
 function txnsOf(accId, anchor) { return txnsIn(SP, accId, anchor); }
 const isFut = t => t.date > todayISO();            // 아직 오지 않은 예정 건
 const accExcl = id => { const a = D.accounts.find(x => x.id === id); return !!(a && a.excl); };
-const counts = t => !t.xfer && !t.adj && !isFut(t) && !accExcl(t.acc); // 합계에 들어가는 건
+const xferOut = () => D.settings.xferExcl !== false;           // 계좌간 이동을 합계에서 뺄까
+const counts = t => !t.adj && !isFut(t) && !accExcl(t.acc) && !(t.xfer && xferOut()); // 합계에 들어가는 건
+const spendable = t => !t.xfer && !t.adj && !isFut(t) && !accExcl(t.acc);          // 실적·카드값용
 /* 실적: 승인 총액 기준, 승인한 달에만 잡힌다 (할부 잔여 회차는 실적에 안 들어감) */
 function usedOf(accId, anchor) {
-  return txnsIn(AL, accId, anchor).filter(counts)
+  return txnsIn(AL, accId, anchor).filter(spendable)
     .reduce((s, t) => s + (t.flow === "in" ? -t.amt : t.amt), 0);
 }
 /* 실제 이번 기간 지출: 설정에 따라 월 납입액 또는 승인 총액 */
 function spendOf(accId, anchor) {
-  return txnsIn(SP, accId, anchor).filter(counts)
+  return txnsIn(SP, accId, anchor).filter(spendable)
     .reduce((s, t) => s + (t.flow === "in" ? -t.amt : t.amt), 0);
 }
 const payOf = (acc, anchor) => (acc.pays || {})[anchor];
@@ -606,10 +615,36 @@ function daysLeft() {                                      // 기준 월의 남�
   if (D.anchor > t.slice(0, 7)) return ld;
   return Math.max(1, ld - +t.slice(8, 10) + 1);
 }
-/* 직불(충전)카드: 시작 잔액 + 충전 - 사용, 예정 건 제외 */
-function debitBal(a) {
-  return SP.filter(t => t.acc === a.id && !isFut(t))
-    .reduce((s, t) => s + (t.flow === "in" ? t.amt : -t.amt), +a.bal || 0);
+/* 오늘까지 이 계정에 들어오고 나간 합 (직접 입력 + 반복 일정 전체 + 이체 + 잔액수정) */
+function accFlowToDate(id) {
+  const T = todayISO();
+  const sg = t => (t.flow === "in" ? t.amt : -t.amt);
+  let s = 0;
+  D.txns.forEach(t => { if (t.acc === id && t.date <= T) s += sg(t); });
+  (D.rules || []).forEach(r => {
+    if (r.acc !== id && r.xfrom !== id && r.xto !== id) return;
+    try { ruleTxns(r, r.start, T).forEach(t => { if (t.acc === id && t.date <= T) s += sg(t); }); } catch (e) {}
+  });
+  return s;
+}
+/* 생활비·지역화폐: a.bal = 시작 잔액 */
+function debitBal(a) { return (+a.bal || 0) + accFlowToDate(a.id); }
+/* 은행(주식 제외): a.seed = 시작 잔액, 입력한 기록이 알아서 반영된다 */
+function bankBal(a) {
+  if (a.stock) return +a.bal || 0;
+  if (!a.auto) return +a.bal || 0;
+  return (+a.seed || 0) + accFlowToDate(a.id);
+}
+/* 예전 방식(직접 적은 잔고) → 자동 계산으로 옮기기. 옮기는 순간 잔고는 그대로 */
+function migrateBanks() {
+  let changed = false;
+  D.accounts.forEach(a => {
+    if (a.kind === "bank" && !a.stock && !a.auto) {
+      a.seed = (+a.bal || 0) - accFlowToDate(a.id);
+      a.auto = true; changed = true;
+    }
+  });
+  return changed;
 }
 const KINDN = { bank: "은행", card: "카드", debit: "생활비" };
 function signWon(n) { return (n > 0 ? "+" : n < 0 ? "-" : "") + won(Math.abs(n)) + "원"; }
@@ -617,8 +652,8 @@ function signWon(n) { return (n > 0 ? "+" : n < 0 ? "-" : "") + won(Math.abs(n))
 function bankFlow(accId, anchor) {
   const L = txnsOf(accId, anchor);
   const f = (p) => L.filter(p).reduce((s, t) => s + t.amt, 0);
-  const inc = f(t => t.flow === "in" && counts(t));
-  const out = f(t => t.flow !== "in" && counts(t));
+  const inc = f(t => t.flow === "in" && spendable(t));
+  const out = f(t => t.flow !== "in" && spendable(t));
   const xin = f(t => t.flow === "in" && t.xfer && !isFut(t));
   const xout = f(t => t.flow !== "in" && t.xfer && !isFut(t));
   const adj = f(t => t.flow === "in" && t.adj && !isFut(t)) - f(t => t.flow !== "in" && t.adj && !isFut(t));
@@ -782,8 +817,10 @@ function enter(id) {
   D = ROOT.data[id] || emptyData();
   if (!D.anchor) D.anchor = thisMonth();
   if (!Array.isArray(D.cats)) D.cats = emptyData().cats;
-  D.settings = Object.assign({ hideXfer: false, tint: 16, instMode: "monthly", hideBal: false, catIncFuture: false, catYear: false }, D.settings || {});
+  D.settings = Object.assign({ tint: 16, instMode: "monthly", hideBal: false, catIncFuture: false, catYear: false, xferExcl: true }, D.settings || {});
   if (!Array.isArray(D.rules)) D.rules = [];
+  delete D.settings.hideXfer;
+  if (migrateBanks()) persist();
   persist();
   $("#auth").classList.add("hidden");
   $("#app").classList.remove("hidden");
@@ -975,7 +1012,7 @@ function viewHome() {
   const stocks = D.accounts.filter(a => a.kind === "bank" && a.stock);
   const cards = D.accounts.filter(a => a.kind === "card");
   const debits = D.accounts.filter(a => a.kind === "debit");
-  const bankSum = banks.reduce((s, a) => s + (+a.bal || 0), 0);
+  const bankSum = banks.reduce((s, a) => s + bankBal(a), 0);
   const stockSum = stocks.reduce((s, a) => s + (+a.bal || 0), 0);
   const stockPLSum = stocks.reduce((s, a) => s + stockPL(a), 0);
   const cardSum = cards.reduce((s, a) => s + spendOf(a.id, D.anchor), 0);
@@ -1082,7 +1119,7 @@ function viewHome() {
           (F.xin || F.xout ? '<span class="muted"> · 이체 ' + won(F.xin - F.xout) + '</span>' : '') +
           (F.adj ? '<span class="c-bad b"> · 수 ' + signWon(F.adj) + '</span>' : '') +
           (F.soon ? '<span class="muted"> · 예정 ' + F.soon + '건</span>' : '') + '</div></div>' +
-        '<div class="rt"><div class="v num">' + mb(+a.bal || 0) + '</div>' +
+        '<div class="rt"><div class="v num">' + mb(bankBal(a)) + '</div>' +
           '<div class="tiny num ' + (F.net >= 0 ? "c-inc" : "muted") + '">' + (F.net >= 0 ? "+" : "") + won(F.net) + '</div></div>' +
         '<button class="btn sm gho" data-bal="' + a.id + '" style="flex:none;padding:6px 9px;font-weight:800">수</button>' +
       '</div>';
@@ -1269,7 +1306,12 @@ function txRow(t) {
   const fut = isFut(t);
   const tint = (c && !t.xfer && !t.adj && !fut) ? rgba(c, Math.max(0, Math.min(40, +D.settings.tint || 0)) / 100) : "";
   const isIn = t.flow === "in" && !t.xfer && !t.adj;
-  return '<div class="tx' + (t.xfer ? " xfer" : "") + (t.adj ? " adj" : "") + (fut ? " fut" : "") + '" data-tx="' + t.id + '"' +
+  const xo = t.xfer && xferOut();
+  const accN = id => (D.accounts.find(a => a.id === id) || {}).name || "";
+  const xTitle = t.xfer && (t.xfrom || t.xto)
+    ? esc(accN(t.xfrom) || "?") + " > " + esc(accN(t.xto) || "?") + " 내 계좌간 이동"
+    : null;
+  return '<div class="tx' + (t.xfer ? " xfer" : "") + (xo ? " xout" : "") + (t.adj ? " adj" : "") + (fut ? " fut" : "") + '" data-tx="' + t.id + '"' +
       (tint ? ' style="background:' + tint + '"' : '') + '>' +
     '<div class="stripe" style="background:' + (t.xfer ? "transparent" : (c || "transparent")) + '"></div>' +
     '<div class="body">' +
@@ -1280,20 +1322,26 @@ function txRow(t) {
           (fut ? '<span class="soon">예정</span>' : "") +
           (t.adj ? '<span class="badge">수</span>' : "") +
           (t.inst > 1 ? '<span class="instb">' + (t.instN || 1) + "/" + t.inst + '</span>' : "") +
-          (t.virt ? "🔁 " : "") + (t.xfer ? "↔ " : "") + esc(t.desc || "(내용 없음)") + '</div>' +
+          (t.virt ? "🔁 " : "") + (t.xfer ? "↔ " : "") +
+          (xTitle || esc(t.desc || "(내용 없음)")) +
+          (t.xfer && !xo ? '<span class="xtag">합계 포함</span>' : "") + '</div>' +
         '<div class="m ell">' + esc(acc.name || "") +
           (t.cat && !t.xfer && !t.adj ? ' · <span class="cn" style="color:' + c + '">' + esc(CATN(t.cat)) + '</span>' : "") +
           (t.inst > 1 ? ' · ' + (t.instN || 1) + '회납/' + t.inst + '개월할부 · 남은 ' +
             Math.max(0, t.inst - (t.instN || 1)) + '개월' +
             (t.islice ? '' : ' · 월 ' + won(Math.round(t.amt / t.inst))) : "") +
           (t.adj && t.b0 != null ? ' · ' + won(t.b0) + ' → ' + won(t.b1) : "") +
-          (t.xfer ? ' · 내 계좌 이동' : "") + (t.memo ? ' · ' + esc(t.memo) : "") + '</div>' +
+          (t.xfer ? (xTitle ? (t.desc && !/내 계좌간 이동/.test(t.desc) ? ' · ' + esc(t.desc) : '') : ' · 내 계좌간 이동') +
+            (xo ? ' · 합계 제외' : '') : "") +
+          (t.memo ? ' · ' + esc(t.memo) : "") + '</div>' +
       '</div>' +
       '<div class="a num ' + (isIn ? "in" : "") + '">' +
-        (t.adj ? '(' + (t.flow === "in" ? "+" : "-") + won(t.amt) + '원)' : (isIn ? "+" : "") + won(t.amt)) + '</div>' +
+        (t.adj ? '(' + (t.flow === "in" ? "+" : "-") + won(t.amt) + '원)'
+          : t.xfer ? (t.flow === "in" ? "+" : "-") + won(t.amt)
+          : (isIn ? "+" : "") + won(t.amt)) + '</div>' +
     '</div></div>';
 }
-function visibleTx(list) { return D.settings.hideXfer ? list.filter(t => !t.xfer) : list; }
+function visibleTx(list) { return list; }   /* 계좌간 이동도 항상 보인다 */
 
 /* ============================================================
    전체 내역
@@ -1370,14 +1418,20 @@ function viewList() {
   const out = list.filter(t => t.flow !== "in" && counts(t)).reduce((s, t) => s + t.amt, 0);
   const inc = list.filter(t => t.flow === "in" && counts(t)).reduce((s, t) => s + t.amt, 0);
   const futN = list.filter(isFut).length, adjN = list.filter(t => t.adj).length;
+  const xOut = xferOut();
+  const xSum = list.filter(t => t.xfer && !isFut(t)).reduce((s, t) => s + t.amt, 0);
   h += '<div class="stat">' +
     '<div><b class="num">' + list.length + '</b><span>건</span></div>' +
-    '<div><b class="num c-bad">' + won(out) + '</b><span>지출</span></div>' +
-    '<div><b class="num c-inc">' + won(inc) + '</b><span>수입</span></div>' +
+    '<div><b class="num c-bad">' + won(out) + '</b><span>지출' + (!xOut && xferN ? ' <i class="xin">이동포함</i>' : '') + '</span></div>' +
+    '<div><b class="num c-inc">' + won(inc) + '</b><span>수입' + (!xOut && xferN ? ' <i class="xin">이동포함</i>' : '') + '</span></div>' +
   '</div>' +
-  ((xferN || futN || adjN) ? '<p class="tiny muted" style="margin:-4px 0 10px">합계 제외: ' +
-     [xferN ? '내 계좌 이동 ' + xferN + '건' + (D.settings.hideXfer ? '(숨김)' : '') : '',
-      futN ? '예정 ' + futN + '건' : '', adjN ? '잔액 수정 ' + adjN + '건' : '']
+  '<label class="xtog">' +
+    '<input type="checkbox" id="lsXfer"' + (xOut ? " checked" : "") + '>' +
+    '<span class="grow"><b>내 계좌간 이동 합계 제외</b>' +
+      (xferN ? ' <span class="muted">(' + xferN + '건 · ' + won(xSum) + '원 ' + (xOut ? "빠짐" : "포함됨") + ')</span>' : '') + '</span>' +
+  '</label>' +
+  ((futN || adjN) ? '<p class="tiny muted" style="margin:0 0 10px">합계 제외: ' +
+     [futN ? '예정 ' + futN + '건' : '', adjN ? '잔액 수정 ' + adjN + '건' : '']
      .filter(Boolean).join(' · ') + '</p>' : '');
 
   if (LF.accs.length > 1) {
@@ -1611,7 +1665,7 @@ function viewSet() {
       '<div class="acc">' +
         '<div class="ic" style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
         '<div class="grow"><div class="nm ell">' + esc(a.name) + '</div>' +
-          '<div class="tiny muted">' + (a.kind === "bank" ? (a.stock ? "주식·투자 · 평가 " + wonS(+a.bal || 0) + " · 손익 " + signWon(stockPL(a)) : "은행 · 잔고 " + wonS(+a.bal || 0))
+          '<div class="tiny muted">' + (a.kind === "bank" ? (a.stock ? "주식·투자 · 평가 " + wonS(+a.bal || 0) + " · 손익 " + signWon(stockPL(a)) : "은행 · 잔고 " + wonS(bankBal(a)))
             : a.kind === "debit" ? "생활비·지역화폐 · 잔액 " + wonS(debitBal(a)) + (a.budget ? " · 예산 " + wonS(a.budget) : "") + (a.excl ? " · 합계 제외" : "")
             : "카드 · " + (a.ds || 1) + "일~" + (a.de ? a.de + "일" : "말일") + (a.goal ? " · 실적 " + wonS(a.goal) : "")) + '</div></div>' +
         '<button class="btn sm gho" data-edit="' + a.id + '">수정</button>' +
@@ -1647,10 +1701,16 @@ function viewSet() {
     }).join("") : '<div class="empty"><b>반복 일정이 없습니다</b>월급·월세·구독료처럼 되풀이되는 항목을 등록해 두세요.</div>') +
     '</div>';
 
+  h += '<div class="card"><div class="hd"><h2>내 이름 (계좌간 이체 알아보기)</h2></div><div class="bd">' +
+    '<input id="myName" class="inp" placeholder="예: 이윤성" value="' + esc(D.settings.myName || "") + '">' +
+    '<p class="tiny muted" style="margin:8px 0 0;line-height:1.6">은행 내역을 붙여넣을 때 이 이름이 적힌 이체는 <b>내 계좌간 이동</b>으로 표시해 둡니다. ' +
+    '동명이인일 수 있으니 미리보기에서 한 번 확인하세요. 이름이 여럿이면 쉼표로 나눠 적으세요.</p>' +
+  '</div></div>';
+
   h += '<div class="card"><div class="hd"><h2>표시 설정</h2></div><div class="bd">' +
-    '<label class="tog"><input type="checkbox" id="swXfer"' + (D.settings.hideXfer ? " checked" : "") + '>' +
-      '<span class="grow"><span class="b sm">내 계좌 이동(이체) 숨기기</span>' +
-      '<span class="tiny muted" style="display:block">끄면 회색 취소선으로 표시됩니다. 어느 쪽이든 지출·수입 합계에는 들어가지 않습니다.</span></span></label>' +
+    '<label class="tog"><input type="checkbox" id="swXfer"' + (xferOut() ? " checked" : "") + '>' +
+      '<span class="grow"><span class="b sm">내 계좌간 이동 합계 제외</span>' +
+      '<span class="tiny muted" style="display:block">내역 화면의 체크박스와 같은 설정입니다. 켜두면 계좌간 이동은 취소선으로 보이고 수입·지출 합계에서 빠집니다. 잔고에는 어느 쪽이든 반영됩니다.</span></span></label>' +
     '<div class="tog" style="display:block">' +
       '<div class="row" style="margin-bottom:6px"><span class="b sm grow">할부 계산 방식</span></div>' +
       '<div class="seg" style="margin:0 0 6px">' +
@@ -1712,7 +1772,9 @@ function editAccount(kind, id) {
       '<input id="eNm" class="inp" placeholder="' + (k === "bank" ? "예: 국민은행 생활비통장" : k === "debit" ? "예: 지역화폐, 생활비" : "예: 신한 딥드림") + '" value="' + esc(cur.name || "") + '"></div>' +
     (k === "bank"
       ? '<div class="field"><label>' + (cur.stock ? "현재 평가금액" : "현재 잔고") + '</label>' +
-          '<input id="eBal" class="inp" inputmode="numeric" placeholder="0" value="' + (cur.bal || "") + '"></div>' +
+          '<input id="eBal" class="inp" inputmode="numeric" placeholder="0" value="' + (a && !cur.stock ? bankBal(cur) : (cur.bal || "")) + '">' +
+          (a && !cur.stock ? '<p class="tiny muted" style="margin:6px 0 0;line-height:1.6">입력한 입금·출금·이체가 잔고에 자동 반영됩니다. 여기서 숫자를 바꾸면 그 금액이 지금 잔고가 됩니다.</p>' : '') +
+          '</div>' +
         '<label class="tog" style="border:0"><input type="checkbox" id="eStock"' + (cur.stock ? " checked" : "") + '>' +
           '<span class="grow"><span class="b sm">📈 주식 · 투자 계좌</span>' +
           '<span class="tiny muted" style="display:block">평가금액만 적어두고, 생각날 때 <b>수</b> 버튼으로 그날 기준 금액을 고치면 차액이 수익·손실로 쌓입니다. 현금 잔고 합계와는 따로 계산됩니다.</span></span></label>'
@@ -1764,13 +1826,18 @@ function editAccount(kind, id) {
         } else {
           const nb = +String($("#eBal", el).value).replace(/[^\d-]/g, "") || 0;
           if (k === "bank") {
+            const wasStock = !!o.stock;
             o.stock = !!($("#eStock", el) || {}).checked;
             if (o.stock) {                       // 원금을 같이 옮겨 손익이 흔들리지 않게
-              if (o.seed == null) o.seed = nb;
-              else o.seed += nb - (+o.bal || 0);
-            } else delete o.seed;
-          }
-          o.bal = nb;
+              if (wasStock && o.seed != null) o.seed += nb - (+o.bal || 0);
+              else o.seed = nb;
+              o.auto = false; o.bal = nb;
+            } else {                             // 적은 금액이 지금 잔고가 되도록 시작 잔액을 맞춘다
+              o.auto = true;
+              o.seed = nb - (a ? accFlowToDate(o.id) : 0);
+              o.bal = nb;
+            }
+          } else o.bal = nb;
           if (k === "debit") {
             o.budget = +String(($("#eBud", el) || {}).value || "").replace(/[^\d]/g, "") || 0;
             o.excl = !!($("#eExcl", el) || {}).checked;
@@ -1930,7 +1997,7 @@ function ruleTxns(r, from, to) {
   occDates(r, from, to).forEach(date => {
     if (ex.has(date)) return;
     const o = (r.ov || {})[date] || {};
-    out.push({
+    const base = {
       id: "r:" + r.id + ":" + date, rid: r.id, occ: date, virt: true,
       date: o.date || date, time: o.time != null ? o.time : (r.time || ""),
       desc: o.desc != null ? o.desc : r.desc,
@@ -1938,8 +2005,12 @@ function ruleTxns(r, from, to) {
       amt: o.amt != null ? o.amt : r.amt,
       flow: o.flow || r.flow, xfer: o.xfer != null ? o.xfer : !!r.xfer,
       cat: o.cat != null ? o.cat : (r.cat || ""),
-      acc: o.acc || r.acc
-    });
+      acc: o.acc || r.acc, xfrom: r.xfrom, xto: r.xto
+    };
+    if (r.xfer && r.xboth && r.xfrom && r.xto && r.xfrom !== r.xto) {
+      out.push(Object.assign({}, base, { acc: r.xfrom, flow: "out", xfer: true, cat: "", pair: "r" + r.id + date }));
+      out.push(Object.assign({}, base, { id: base.id + ":b", acc: r.xto, flow: "in", xfer: true, cat: "", pair: "r" + r.id + date }));
+    } else out.push(base);
   });
   return out;
 }
@@ -2059,12 +2130,18 @@ function editTxn(txId, presetAcc, forceRep, preset) {
   } else if (txId) { mode = "txn"; t = D.txns.find(x => x.id === txId); if (!t) return; }
 
   const base = mode === "rule"
-    ? { date: r.start, time: r.time || "", desc: r.desc, memo: r.memo || "", amt: r.amt, flow: r.flow, acc: r.acc, cat: r.cat || "", xfer: !!r.xfer }
+    ? { date: r.start, time: r.time || "", desc: r.desc, memo: r.memo || "", amt: r.amt, flow: r.flow, acc: r.acc, cat: r.cat || "",
+        xfer: !!r.xfer, xfrom: r.xfrom, xto: r.xto, xboth: !!r.xboth }
     : (t || Object.assign({ date: todayISO(), time: "", desc: "", memo: "", amt: "", flow: "out",
         acc: presetAcc || (D.accounts[0] || {}).id, cat: "", xfer: false, inst: 1, instN: 1 }, preset || {}));
   const rep0 = (mode === "rule" || mode === "occ") ? r
     : { freq: "month", gap: 1, dows: [dParse(base.date).getDay()], mmode: "date", mday: dParse(base.date).getDate(), nth: 1, ndow: dParse(base.date).getDay(), ymon: +base.date.slice(5, 7), end: { type: "none", count: 12, date: "" } };
   const repOn0 = (mode === "rule" || mode === "occ" || !!forceRep);
+  if (base.xboth == null) base.xboth = t ? !!(t.pair) : true;     /* 새 이체는 기본으로 양쪽 반영 */
+  const moveAccs = D.accounts.filter(a => a.kind !== "card");
+  const defFrom = base.xfrom || (base.flow !== "in" ? base.acc : "") || (moveAccs[0] || {}).id || "";
+  const defTo = base.xto || (base.flow === "in" ? base.acc : "") ||
+    ((moveAccs.find(a => a.id !== defFrom) || {}).id || "");
 
   const sel = (id, opts, cur, extra) => '<select id="' + id + '" class="inp"' + (extra || "") + '>' +
     opts.map(o => '<option value="' + o[0] + '"' + (String(cur) === String(o[0]) ? " selected" : "") + '>' + o[1] + '</option>').join("") + '</select>';
@@ -2072,6 +2149,11 @@ function editTxn(txId, presetAcc, forceRep, preset) {
   const body =
     (mode === "occ" ? '<div class="pill" style="margin-bottom:10px;background:var(--accent-soft);border-color:transparent">🔁 반복 일정 중 ' + occ + '</div>' : '') +
     (mode === "rule" ? '<div class="pill" style="margin-bottom:10px;background:var(--accent-soft);border-color:transparent">🔁 반복 규칙 전체 수정</div>' : '') +
+    (preset && preset.heard ? '<div class="card" style="margin:0 0 12px;border-color:var(--accent)"><div class="bd" style="padding:10px 12px">' +
+      '<div class="tiny muted">🎤 들은 말</div><div class="sm b">“' + esc(preset.heard) + '”</div>' +
+      (preset.hadDate ? '' : '<div class="tiny muted" style="margin-top:3px">날짜를 말하지 않아 오늘로 넣었습니다.</div>') +
+      (preset.amt ? '' : '<div class="tiny c-bad b" style="margin-top:3px">금액을 못 알아들었습니다. 아래에서 넣어주세요.</div>') +
+      '</div></div>' : '') +
     '<div class="two">' +
       '<div class="field"><label>' + (mode === "rule" ? "시작 날짜" : "날짜") + '</label><input id="tDate" class="inp" type="date" value="' + esc(base.date) + '"></div>' +
       '<div class="field"><label>시간</label><input id="tTime" class="inp" type="time" value="' + esc(base.time || "") + '"></div>' +
@@ -2079,11 +2161,26 @@ function editTxn(txId, presetAcc, forceRep, preset) {
     '<div class="field"><label>이용 내역</label><input id="tDesc" class="inp" value="' + esc(base.desc) + '" placeholder="가맹점 / 적요 / 월급 등"></div>' +
     '<div class="two">' +
       '<div class="field"><label>금액</label><input id="tAmt" class="inp" inputmode="numeric" value="' + (base.amt || "") + '"></div>' +
-      '<div class="field"><label>구분</label>' + sel("tFlow", [["out", "지출 / 출금"], ["in", "입금 / 수입"]], base.flow === "in" ? "in" : "out") + '</div>' +
+      '<div class="field" id="tFlowF"><label>구분</label>' + sel("tFlow", [["out", "지출 / 출금"], ["in", "입금 / 수입"]], base.flow === "in" ? "in" : "out") + '</div>' +
     '</div>' +
-    '<div class="field"><label>은행 · 카드</label>' +
+    '<label class="tog xbox-t" style="margin-bottom:8px;border:0"><input type="checkbox" id="tXfer"' + (base.xfer ? " checked" : "") + '>' +
+      '<span class="grow"><span class="b sm">↔ 내 계좌간 이동</span>' +
+      '<span class="tiny muted" style="display:block">내 통장끼리 옮긴 돈. 잔고에는 반영되고, 수입·지출 합계에서는 내역 화면 설정에 따라 빠집니다</span></span></label>' +
+    '<div id="tXBox" class="xbox' + (base.xfer ? "" : " hidden") + '">' +
+      '<div class="row" style="gap:6px;align-items:flex-end">' +
+        '<div class="field grow" style="margin:0"><label>보낸 곳</label>' +
+          sel("tXFrom", moveAccs.map(a => [a.id, a.name]), defFrom) + '</div>' +
+        '<div style="padding-bottom:11px;font-weight:900;color:var(--accent)">→</div>' +
+        '<div class="field grow" style="margin:0"><label>받은 곳</label>' +
+          sel("tXTo", moveAccs.map(a => [a.id, a.name]), defTo) + '</div>' +
+      '</div>' +
+      '<label class="tog" style="border:0;padding:10px 0 0"><input type="checkbox" id="tXBoth"' + (base.xboth ? " checked" : "") + '>' +
+        '<span class="grow"><span class="b sm">양쪽 모두 반영</span>' +
+        '<span class="tiny muted" style="display:block" id="tXHint"></span></span></label>' +
+    '</div>' +
+    '<div class="field" id="tAccF"><label>은행 · 카드</label>' +
       sel("tAcc", D.accounts.map(a => [a.id, a.name + " (" + (KINDN[a.kind] || "카드") + ")"]), base.acc) + '</div>' +
-    '<label class="tog" style="margin-bottom:8px;border:0"><input type="checkbox" id="tInstOn"' + ((base.inst || 1) > 1 ? " checked" : "") + '>' +
+    '<label class="tog" id="tInstL" style="margin-bottom:8px;border:0"><input type="checkbox" id="tInstOn"' + ((base.inst || 1) > 1 ? " checked" : "") + '>' +
       '<span class="grow"><span class="b sm">할부로 결제</span>' +
       '<span class="tiny muted" style="display:block">체크하면 개월수와 회차를 정할 수 있습니다</span></span></label>' +
     '<div id="tInstBox" class="' + ((base.inst || 1) > 1 ? "" : "hidden") + '">' +
@@ -2095,9 +2192,7 @@ function editTxn(txId, presetAcc, forceRep, preset) {
       '</div>' +
       '<div id="tInstInfo" class="tiny muted" style="margin:-4px 0 10px"></div>' +
     '</div>' +
-    '<label class="tog" style="margin-bottom:10px;border:0"><input type="checkbox" id="tXfer"' + (base.xfer ? " checked" : "") + '>' +
-      '<span class="grow"><span class="b sm">내 계좌 간 이동(이체)</span>' +
-      '<span class="tiny muted" style="display:block">내 돈이 옮겨간 것이라 지출·수입 합계에서 빠집니다</span></span></label>' +
+
     '<div class="field"><label>메모</label><input id="tMemo" class="inp" value="' + esc(base.memo || "") + '" placeholder="자유 메모"></div>' +
     '<div class="field"><label>분류 (색상)</label><div class="chips" id="tCat">' +
       '<button class="chip" data-cat="">없음</button>' +
@@ -2175,6 +2270,33 @@ function editTxn(txId, presetAcc, forceRep, preset) {
           (amt ? " · 월 " + won(Math.round(amt / n)) + "원" : "");
       };
       iOn.onchange = iUp; iSel.onchange = iUp; iN.onchange = iUp;
+
+      /* 계좌간 이동 */
+      const xOn = $("#tXfer", el), xBox = $("#tXBox", el), xBoth = $("#tXBoth", el);
+      const xFrom = $("#tXFrom", el), xTo = $("#tXTo", el), xHint = $("#tXHint", el);
+      const nm = id => (D.accounts.find(a => a.id === id) || {}).name || "";
+      const xUp = () => {
+        const on = xOn.checked, both = on && xBoth.checked;
+        xBox.classList.toggle("hidden", !on);
+        $("#tAccF", el).classList.toggle("hidden", both);
+        $("#tFlowF", el).style.visibility = both ? "hidden" : "visible";
+        $("#tInstL", el).classList.toggle("hidden", on);
+        if (on) $("#tInstBox", el).classList.add("hidden"); else iUp();
+        const amt = String($("#tAmt", el).value || "0");
+        xHint.textContent = xBoth.checked
+          ? nm(xFrom.value) + " −" + amt + " / " + nm(xTo.value) + " +" + amt + " 두 건이 생깁니다"
+          : "아래 은행·카드와 구분에서 고른 한 곳에만 기록합니다";
+        if (on && !xBoth.checked && !xOn.dataset.touched) {
+          $("#tAcc", el).value = xFrom.value; $("#tFlow", el).value = "out";
+        }
+      };
+      xOn.onchange = () => { if (xOn.checked && !$("#tDesc", el).value.trim()) $("#tDesc", el).placeholder = "비워두면 ‘내 계좌간 이동’"; xUp(); };
+      xBoth.onchange = xUp;
+      xFrom.onchange = () => { if (xFrom.value === xTo.value) { const o2 = moveAccs.find(a => a.id !== xFrom.value); if (o2) xTo.value = o2.id; } xUp(); };
+      xTo.onchange = xUp;
+      $("#tAcc", el).addEventListener("change", () => { xOn.dataset.touched = "1"; });
+      $("#tAmt", el).addEventListener("input", xUp);
+      xUp();
       $("#tAmt", el).addEventListener("input", iUp);
       iUp();
 
@@ -2208,10 +2330,15 @@ function editTxn(txId, presetAcc, forceRep, preset) {
       };
       const buildRule = () => ({
         id: (mode === "rule" || mode === "occ") ? r.id : uid(),
-        acc: $("#tAcc", el).value, desc: $("#tDesc", el).value.trim(),
+        acc: $("#tXfer", el).checked && $("#tXBoth", el).checked ? $("#tXFrom", el).value : $("#tAcc", el).value,
+        desc: $("#tDesc", el).value.trim() || ($("#tXfer", el).checked ? "내 계좌간 이동" : ""),
         memo: $("#tMemo", el).value.trim(),
         amt: +String($("#tAmt", el).value).replace(/[^\d]/g, "") || 0,
-        flow: $("#tFlow", el).value, xfer: $("#tXfer", el).checked, cat,
+        flow: $("#tXfer", el).checked && $("#tXBoth", el).checked ? "out" : $("#tFlow", el).value,
+        xfer: $("#tXfer", el).checked, cat: $("#tXfer", el).checked ? "" : cat,
+        xfrom: $("#tXfer", el).checked ? $("#tXFrom", el).value : null,
+        xto: $("#tXfer", el).checked ? $("#tXTo", el).value : null,
+        xboth: $("#tXfer", el).checked && $("#tXBoth", el).checked,
         time: $("#tTime", el).value || "",
         start: $("#tDate", el).value || todayISO(),
         freq: rFreq.value, gap: Math.max(1, +$("#rGap", el).value || 1),
@@ -2289,8 +2416,28 @@ function editTxn(txId, presetAcc, forceRep, preset) {
           D.rules.push(buildRule());
           return done("반복 일정을 만들었습니다");
         }
+        const xon = $("#tXfer", el).checked, xb = xon && $("#tXBoth", el).checked;
+        const xf = $("#tXFrom", el).value, xt = $("#tXTo", el).value;
+        if (xon) {
+          fields.xfrom = xf; fields.xto = xt; fields.cat = ""; fields.inst = 1; fields.instN = 1;
+          if (!fields.desc) fields.desc = "내 계좌간 이동";
+        } else { delete fields.xfrom; delete fields.xto; }
+        if (xb) {
+          if (!xf || !xt || xf === xt) return toast("보낸 곳과 받은 곳을 다르게 골라주세요");
+          const pair = (t && t.pair) || uid();
+          if (mode === "txn") D.txns = D.txns.filter(x => x.id !== t.id && !(t.pair && x.pair === t.pair));
+          const common = Object.assign({}, fields, { pair, xfer: true });
+          D.txns.push(Object.assign({}, common, { id: uid(), acc: xf, flow: "out" }));
+          D.txns.push(Object.assign({}, common, { id: uid(), acc: xt, flow: "in" }));
+          return done("두 계좌에 모두 기록했습니다");
+        }
         const o = (mode === "txn") ? t : { id: uid() };
+        if (mode === "txn" && t.pair) {                 /* 양쪽 반영을 끄면 짝은 지운다 */
+          D.txns = D.txns.filter(x => !(x.pair === t.pair && x.id !== t.id));
+          delete t.pair;
+        }
         Object.assign(o, fields);
+        if (!xon) { delete o.xfrom; delete o.xto; }
         if (mode === "new") D.txns.push(o);
         done();
       };
@@ -2299,7 +2446,20 @@ function editTxn(txId, presetAcc, forceRep, preset) {
       const del = $("#tDel", el);
       if (del) del.onclick = () => {
         const done = m => { persist(); close(); render(); toast(m || "삭제했습니다"); };
-        if (mode === "txn") { D.txns = D.txns.filter(x => x.id !== t.id); return done(); }
+        if (mode === "txn") {
+          const mate = t.pair ? D.txns.find(x => x.pair === t.pair && x.id !== t.id) : null;
+          if (!mate) { D.txns = D.txns.filter(x => x.id !== t.id); return done(); }
+          const mn = (D.accounts.find(a => a.id === mate.acc) || {}).name || "다른 계좌";
+          return modal({
+            title: "이체 기록 삭제",
+            body: '<p class="sm" style="line-height:1.7;margin:2px 0">이 이체는 <b>' + esc(mn) + '</b> 쪽에도 짝으로 기록돼 있습니다. 같이 지울까요?</p>',
+            foot: '<button class="btn" id="dOne">이 쪽만</button><button class="btn dan" id="dBoth">양쪽 다</button>',
+            onOpen(el2, close2) {
+              $("#dOne", el2).onclick = () => { close2(); delete mate.pair; D.txns = D.txns.filter(x => x.id !== t.id); done(); };
+              $("#dBoth", el2).onclick = () => { close2(); D.txns = D.txns.filter(x => x.pair !== t.pair); done("양쪽 모두 지웠습니다"); };
+            }
+          });
+        }
         if (mode === "rule") {
           return ask("이 반복 일정을 완전히 지웁니다. 과거 기록도 함께 사라집니다.", () => {
             D.rules = D.rules.filter(x => x.id !== r.id); done();
@@ -2324,7 +2484,8 @@ function editBal(accId) {
   const a = D.accounts.find(x => x.id === accId); if (!a) return;
   const deb = a.kind === "debit";
   const stk = !!a.stock;
-  const old = deb ? debitBal(a) : (+a.bal || 0);
+  const auto = deb || (a.kind === "bank" && !stk && a.auto);
+  const old = deb ? debitBal(a) : stk ? (+a.bal || 0) : bankBal(a);
   modal({
     title: a.name + (stk ? " 평가금액 수정" : deb ? " 충전 잔액 수정" : " 잔액 수정"),
     body:
@@ -2374,7 +2535,7 @@ function editBal(accId) {
           amt: Math.abs(d), flow: d > 0 ? "in" : "out", cat: "",
           princ: stk && princ, b0: old, b1: nv
         });
-        if (!deb) a.bal = nv;     // 직불은 조정 기록만으로 자동 반영
+        if (!auto) a.bal = nv;    // 자동 계산 계정은 조정 기록만으로 반영
         persist(); close(); render();
         toast((stk ? "평가금액을 " : "잔액을 ") + wonS(nv) + "로 수정했습니다 (" + signWon(d) + ")");
       };
@@ -2553,7 +2714,14 @@ const OCR_RULES =
 
 function rules() { return OCR_RULES.replace(/\{Y\}/g, D.anchor.split("-")[0]); }
 
-const XFER_RE = /(이체|송금|타행|자동납부|자동이체|내계좌|계좌이체|ATM|CD출금|출금이체|입금이체)/i;
+/* 설정의 '내 이름'이 적힌 이체만 내 계좌간 이동 후보로 본다 (동명이인이 있어 확인은 사람이) */
+function myNames() {
+  return String(D.settings.myName || "").split(/[,\s]+/).map(s => s.trim()).filter(s => s.length >= 2);
+}
+function isMine(desc) {
+  const d = String(desc || "").replace(/\s/g, "");
+  return myNames().some(n => d.indexOf(n) >= 0);
+}
 function normRows(arr, accId) {
   const y = D.anchor.split("-")[0];
   const accX = D.accounts.find(a => a.id === accId) || {};
@@ -2574,7 +2742,8 @@ function normRows(arr, accId) {
       desc: String(r.desc || r.memo || "").trim().slice(0, 60),
       memo: "", amt, flow: r.flow === "in" ? "in" : "out", cat: "",
       inst: Math.max(1, Math.min(36, +r.inst || 1)), instN: 1,
-      xfer: accX.kind === "bank" && XFER_RE.test(String(r.desc || ""))
+      xfer: accX.kind !== "card" && isMine(r.desc),
+      xcand: accX.kind !== "card" && isMine(r.desc)
     });
   });
   return out;
@@ -3038,6 +3207,9 @@ function showPreview(el, prev, run, found, accId, closeAll) {
 
   prev.innerHTML =
     '<div class="stat" id="pvStat" style="margin-top:14px"></div>' +
+    (items.some(i => i.t.xcand) ? '<p class="tiny b" style="margin:0 0 8px;line-height:1.6;color:var(--accent)">내 이름(' +
+      esc(myNames().join(", ")) + ')이 적힌 이체 ' + items.filter(i => i.t.xcand).length + '건을 <b>내 계좌이동</b>으로 표시했습니다. ' +
+      '다른 사람에게 보낸 거라면 버튼을 눌러 끄세요.</p>' : '') +
     '<p class="tiny muted" style="margin:0 0 8px;line-height:1.6">잘못 읽힌 곳은 <b>바로 눌러 고치세요.</b> 내용·금액·날짜·시간·구분 모두 수정됩니다. ' +
     '날짜와 시간, 금액이 이미 있는 기록과 같으면 중복으로 표시하고 체크를 꺼둡니다.</p>' +
     '<div class="row" style="gap:6px;margin-bottom:8px">' +
@@ -3055,6 +3227,8 @@ function showPreview(el, prev, run, found, accId, closeAll) {
             '<input type="time" class="pin xs" data-tm="' + i + '" value="' + esc(it.t.time || "") + '">' +
             '<button class="pflow' + (it.t.flow === "in" ? " in" : "") + '" data-fl="' + i + '">' +
               (it.t.flow === "in" ? "수입" : "지출") + '</button>' +
+            '<button class="pflow' + (it.t.xfer ? " xf" : "") + '" data-xf="' + i + '" title="내 계좌간 이동">' +
+              (it.t.xfer ? "✓ 내 계좌이동" : "내 계좌이동?") + '</button>' +
             '<span class="pvtag tiny c-bad b" style="margin-left:auto"></span>' +
           '</div>' +
         '</div>' +
@@ -3082,6 +3256,13 @@ function showPreview(el, prev, run, found, accId, closeAll) {
   $$("[data-tm]", prev).forEach(x => x.onchange = () => {
     items[+x.dataset.tm].t.time = x.value || "";
     recalc(); stats();
+  });
+  $$("[data-xf]", prev).forEach(b => b.onclick = () => {
+    const it = items[+b.dataset.xf];
+    it.t.xfer = !it.t.xfer;
+    if (!it.t.xfer) it.t.cat = it.t.cat || "";
+    b.textContent = it.t.xfer ? "✓ 내 계좌이동" : "내 계좌이동?";
+    b.classList.toggle("xf", it.t.xfer);
   });
   $$("[data-fl]", prev).forEach(b => b.onclick = () => {
     const it = items[+b.dataset.fl];
@@ -3205,8 +3386,12 @@ function bind() {
   $$("[data-inst]", v).forEach(b => b.onclick = () => {
     D.settings.instMode = b.dataset.inst; persist(); render();
   });
+  const mn = $("#myName", v);
+  if (mn) mn.onchange = () => { D.settings.myName = mn.value.trim(); persist(); toast("저장했습니다"); };
+  const lx = $("#lsXfer", v);
+  if (lx) lx.onchange = () => { D.settings.xferExcl = lx.checked; persist(); KEEPSCROLL = true; render(); };
   const sx = $("#swXfer", v);
-  if (sx) sx.onchange = () => { D.settings.hideXfer = sx.checked; persist(); render(); };
+  if (sx) sx.onchange = () => { D.settings.xferExcl = sx.checked; persist(); render(); };
   const st = $("#swTint", v);
   if (st) {
     st.oninput = () => { $("#tintVal", v).textContent = st.value + "%"; };
@@ -3299,7 +3484,9 @@ function doImportJSON() {
         D = Object.assign(emptyData(d.home), d);
         if (!D.anchor) D.anchor = thisMonth();
         if (!Array.isArray(D.rules)) D.rules = [];
-        D.settings = Object.assign({ hideXfer: false, tint: 16, instMode: "monthly", hideBal: false, catIncFuture: false, catYear: false }, D.settings || {});
+        D.settings = Object.assign({ tint: 16, instMode: "monthly", hideBal: false, catIncFuture: false, catYear: false, xferExcl: true }, D.settings || {});
+        delete D.settings.hideXfer;
+        migrateBanks();
         persist(); close(); go("home");
         toast("불러왔습니다 (내역 " + D.txns.length + "건)");
       };
@@ -3391,10 +3578,31 @@ function parseWon(seg) {
   return any ? total + cur : 0;
 }
 
+/* 말한 이름으로 계좌 찾기: "우리" → "우리은행 생활비" */
+function findAccByWord(w) {
+  const k = String(w || "").replace(/(은행|통장|계좌|뱅크|카드|페이)$/g, "").trim();
+  if (!k) return null;
+  const acc = D.accounts.filter(a => a.kind !== "card");
+  return acc.find(a => a.name === w) ||
+         acc.find(a => a.name.replace(/\s/g, "").indexOf(k) === 0) ||
+         acc.find(a => a.name.indexOf(k) >= 0) ||
+         acc.find(a => k.indexOf(a.name.replace(/(은행|통장|계좌)/g, "")) >= 0 && a.name.length >= 2) || null;
+}
 function parseSpeech(text) {
   let t = String(text || "").trim();
   const out = { date: todayISO(), desc: "", amt: 0, flow: "out", hadDate: false };
   if (!t) return out;
+
+  /* 계좌간 이동: "우리에서 토스로 계좌이체 30만원" */
+  const xm = t.match(/([가-힣A-Za-z0-9]+?)\s*(?:에서|에서부터)\s*([가-힣A-Za-z0-9]+?)\s*(?:으로|로|에)\s/);
+  if (xm && /(이체|송금|옮|보냈|이동|넣었|충전)/.test(t)) {
+    const fa = findAccByWord(xm[1]), ta = findAccByWord(xm[2]);
+    if (fa && ta && fa.id !== ta.id) {
+      out.xfer = true; out.xboth = true; out.xfrom = fa.id; out.xto = ta.id;
+      out.acc = fa.id; out.flow = "out";
+      t = t.replace(xm[0], " ");
+    }
+  }
 
   /* 금액 */
   let amtStr = null;
@@ -3424,65 +3632,50 @@ function parseSpeech(text) {
   if (dateStr) t = t.replace(dateStr, " ");
 
   /* 수입 여부 */
-  if (/입금|들어왔|받았|수입|월급|급여|용돈|환불|취소|당첨|벌었/.test(t)) out.flow = "in";
+  if (!out.xfer && /입금|들어왔|받았|수입|월급|급여|용돈|환불|취소|당첨|벌었/.test(t)) out.flow = "in";
 
   /* 내용 */
   out.desc = t.replace(/[,·]/g, " ")
     .replace(/(사용했어요|사용했다|사용함|사용|결제했어요|결제함|결제|썼어요|썼어|썼다|지출|나갔어|냈어|샀어|삽니다|샀다|입금됐어요|입금|들어왔어요|들어왔어|받았어요|받았어|추가|기록|해줘|해주세요|넣어줘|으로|에서|한테|했어요|했어|이야|이다|임)/g, " ")
     .replace(/\s{2,}/g, " ").trim().slice(0, 40);
-  if (!out.desc) out.desc = out.flow === "in" ? "수입" : "지출";
+  if (out.xfer) out.desc = out.desc.replace(/(계좌\s*이체|계좌이동|이체|송금|옮겼어|옮김|보냈어|이동)/g, " ").replace(/\s{2,}/g, " ").trim();
+  if (!out.desc) out.desc = out.xfer ? "내 계좌간 이동" : out.flow === "in" ? "수입" : "지출";
   return out;
 }
 
 function voiceInput() {
   if (!D.accounts.length) { toast("먼저 은행이나 카드를 추가하세요"); return editAccount("card"); }
-  let rec = null, heard = "", parsed = null;
-
+  let rec = null, heard = "", sent = false;
   modal({
     title: "🎤 음성으로 입력하기",
     body:
       '<div class="card" style="margin:0 0 12px"><div class="bd">' +
         '<div class="b sm" style="margin-bottom:6px">이렇게 말하면 됩니다</div>' +
         '<div class="tiny muted" style="line-height:1.9">' +
-          '· <b>“커피값 3000원”</b> → 오늘 날짜로 지출 3,000원<br>' +
-          '· <b>“어제 점심 만이천원”</b> → 어제 날짜로 12,000원<br>' +
-          '· <b>“9월 15일 주유소 6만원”</b> → 그 날짜로 60,000원<br>' +
-          '· <b>“월급 300만원 입금”</b> → 수입으로 기록<br>' +
-          '<span style="color:var(--tx3)">날짜를 빼고 말하면 오늘 날짜로 들어갑니다.</span>' +
+          '· <b>“커피값 3000원”</b> → 오늘, 지출 3,000원<br>' +
+          '· <b>“어제 점심 만이천원”</b> → 어제 날짜로<br>' +
+          '· <b>“9월 15일 주유소 6만원”</b> → 그 날짜로<br>' +
+          '· <b>“월급 300만원 입금”</b> → 수입으로<br>' +
+          '· <b>“우리에서 토스로 계좌이체 30만원”</b> → 내 계좌간 이동, 양쪽 반영<br>' +
+          '<span style="color:var(--tx3)">말이 끝나면 바로 입력 화면이 열립니다. 거기서 확인하고 저장하세요.</span>' +
         '</div></div></div>' +
       '<button class="btn pri wide" id="vBtn" style="padding:18px;font-size:17px">🎤 눌러서 말하기</button>' +
-      '<div id="vStat" class="sm muted" style="text-align:center;margin-top:10px;min-height:20px"></div>' +
-      '<div id="vOut"></div>',
-    foot: '<button class="btn" id="vAgain">다시 말하기</button><button class="btn pri" id="vOk" disabled>확인</button>',
+      '<div id="vStat" class="sm muted" style="text-align:center;margin-top:10px;min-height:20px"></div>',
     onOpen(el, close) {
-      const btn = $("#vBtn", el), stat = $("#vStat", el), out = $("#vOut", el), ok = $("#vOk", el);
-
-      const draw = () => {
-        if (!parsed) { out.innerHTML = ""; ok.disabled = true; return; }
-        out.innerHTML =
-          '<div class="card" style="margin:12px 0 0"><div class="bd">' +
-            '<div class="tiny muted" style="margin-bottom:8px">들은 말: “' + esc(heard) + '”</div>' +
-            '<div class="two"><div class="field" style="margin-bottom:8px"><label>날짜</label>' +
-              '<input id="vD" class="inp" type="date" value="' + esc(parsed.date) + '"></div>' +
-            '<div class="field" style="margin-bottom:8px"><label>구분</label>' +
-              '<select id="vF" class="inp"><option value="out"' + (parsed.flow !== "in" ? " selected" : "") + '>지출</option>' +
-              '<option value="in"' + (parsed.flow === "in" ? " selected" : "") + '>수입</option></select></div></div>' +
-            '<div class="field" style="margin-bottom:8px"><label>내용</label>' +
-              '<input id="vT" class="inp" value="' + esc(parsed.desc) + '"></div>' +
-            '<div class="field" style="margin-bottom:0"><label>금액</label>' +
-              '<input id="vA" class="inp" inputmode="numeric" value="' + parsed.amt + '"></div>' +
-            (parsed.hadDate ? '' : '<p class="tiny muted" style="margin:8px 0 0">날짜를 말하지 않아 오늘로 넣었습니다.</p>') +
-          '</div></div>';
-        commaOn($("#vA", el));
-        ok.disabled = false;
-      };
-
+      const btn = $("#vBtn", el), stat = $("#vStat", el);
       const stop = () => { try { rec && rec.stop(); } catch (e) {} rec = null; btn.textContent = "🎤 눌러서 말하기"; btn.classList.remove("dan"); };
-
+      const finish = () => {
+        if (sent || !heard) return;
+        sent = true; stop();
+        const p = parseSpeech(heard);
+        p.desc = p.desc || "";
+        close();
+        editTxn(null, p.acc || accOne(), false, Object.assign({ memo: "", heard }, p));
+      };
       const start = () => {
         if (!SR) { stat.innerHTML = '<span class="c-bad b">이 브라우저에서는 음성 입력을 쓸 수 없습니다.</span>'; return; }
         if (rec) { stop(); return; }
-        parsed = null; draw();
+        heard = ""; sent = false;
         rec = new SR();
         rec.lang = "ko-KR"; rec.interimResults = true; rec.maxAlternatives = 1; rec.continuous = false;
         btn.textContent = "■ 듣는 중… (누르면 멈춤)"; btn.classList.add("dan");
@@ -3492,11 +3685,7 @@ function voiceInput() {
           for (let i = 0; i < e.results.length; i++) s += e.results[i][0].transcript;
           heard = s.trim();
           stat.textContent = "“" + heard + "”";
-          if (e.results[e.results.length - 1].isFinal) {
-            parsed = parseSpeech(heard);
-            if (!parsed.amt) stat.innerHTML = '<span class="c-bad b">금액을 알아듣지 못했습니다. 아래에서 고쳐주세요.</span>';
-            draw();
-          }
+          if (e.results[e.results.length - 1].isFinal) setTimeout(finish, 250);
         };
         rec.onerror = ev => {
           stop();
@@ -3507,23 +3696,11 @@ function voiceInput() {
               : c === "no-speech" ? "소리가 들리지 않았습니다. 다시 눌러 말씀해 주세요."
               : "음성 인식에 실패했습니다. 다시 시도해 주세요.") + '</span>';
         };
-        rec.onend = () => { stop(); if (!parsed && heard) { parsed = parseSpeech(heard); draw(); } };
+        rec.onend = () => { if (heard) finish(); else stop(); };
         try { rec.start(); } catch (e) { stop(); stat.innerHTML = '<span class="c-bad b">마이크를 시작하지 못했습니다.</span>'; }
       };
-
       btn.onclick = start;
-      $("#vAgain", el).onclick = () => { heard = ""; parsed = null; draw(); stat.textContent = ""; start(); };
-      ok.onclick = () => {
-        if (!parsed) return;
-        const p = {
-          date: $("#vD", el).value || todayISO(),
-          desc: $("#vT", el).value.trim(),
-          amt: +String($("#vA", el).value).replace(/[^\d]/g, "") || 0,
-          flow: $("#vF", el).value
-        };
-        stop(); close();
-        editTxn(null, accOne(), false, p);
-      };
+      setTimeout(start, 150);          /* 창이 열리면 바로 듣기 시작 */
     }
   });
 }
@@ -3602,7 +3779,7 @@ function buildSheets(from, to, label) {
     s4.push([
       isStock ? "주식·투자" : a.kind === "bank" ? "은행" : a.kind === "debit" ? "생활비·지역화폐" : "카드",
       a.name,
-      a.kind === "card" ? "" : (a.kind === "debit" ? debitBal(a) : (+a.bal || 0)),
+      a.kind === "card" ? "" : (a.kind === "debit" ? debitBal(a) : bankBal(a)),
       isStock ? stockSeed(a) : "", isStock ? stockPL(a) : "",
       a.kind === "debit" && a.budget ? a.budget : "",
       a.kind === "card" && a.goal ? a.goal : "",
@@ -3806,6 +3983,13 @@ function tourArt(k) {
     '<path d="M94 66 a16 16 0 0 0 32 0" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>' +
     '<path d="M110 82 v8" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>' +
     '<text x="110" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="var(--tx2)">“커피값 3000원”</text></svg>';
+  if (k === "xfer") return '<svg ' + W + '>' +
+    box(14, 34, 78, 58, "#7fa9e8", 12) + box(24, 48, 40, 7, "#fff", 3.5) + box(24, 64, 26, 6, "rgba(255,255,255,.6)", 3) +
+    '<text x="53" y="112" text-anchor="middle" font-size="12" font-weight="800" fill="#e23b3b">−300,000</text>' +
+    box(128, 34, 78, 58, "#8fcf9a", 12) + box(138, 48, 40, 7, "#fff", 3.5) + box(138, 64, 26, 6, "rgba(255,255,255,.6)", 3) +
+    '<text x="167" y="112" text-anchor="middle" font-size="12" font-weight="800" fill="#1a6fd4">+300,000</text>' +
+    '<path d="M96 63 H122" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>' +
+    '<path d="M114 55 L124 63 L114 71" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   if (k === "cat") return '<svg ' + W + '>' +
     box(20, 26, 180, 20, "#f0a68f", 6) + box(20, 54, 132, 20, "#7fa9e8", 6) +
     box(20, 82, 96, 20, "#8fcf9a", 6) + box(20, 110, 58, 20, "#b7a3e6", 6) +
@@ -3829,9 +4013,10 @@ function tourArt(k) {
 
 const TOUR = [
   { art: "hi", t: "우리집 가계부에 오신 걸 환영합니다", d: "기록은 <b>이 폰 안에만</b> 저장됩니다. 서버로 올라가지 않아서 다른 사람이 볼 수 없습니다. 대신 폰을 바꾸면 안 따라오니 가끔 백업을 받아두세요." },
-  { art: "acc", t: "먼저 은행과 카드를 등록하세요", d: "요약 화면의 <b>+ 버튼</b>으로 추가합니다. 이름은 직접 정하면 됩니다. 카드는 정산 기간과 실적 목표를, 지역화폐는 생활비 예산을 같이 넣을 수 있습니다." },
-  { art: "paste", t: "카드 내역은 복사해서 붙여넣으면 끝", d: "카드사·은행 앱에서 이용내역을 복사한 뒤, 내역 화면의 <b>📋 붙여넣기</b>에 그대로 넣으세요. 날짜·가맹점·금액을 알아서 나눠 담습니다. 엑셀 파일도 됩니다." },
-  { art: "voice", t: "음성으로도 넣을 수 있습니다", d: "<b>🎤 음성</b>을 누르고 “커피값 3000원”처럼 말하면 됩니다. “어제 점심 만이천원”처럼 날짜를 붙여도 되고, 빼면 오늘로 들어갑니다. 확인을 거쳐 저장합니다." },
+  { art: "acc", t: "먼저 은행과 카드를 등록하세요", d: "요약 화면의 <b>+ 버튼</b>으로 추가합니다. 은행은 지금 잔고를 한 번만 적어두면, 그 뒤로 입력한 입금·출금·이체가 <b>잔고에 알아서 반영</b>됩니다. 카드는 정산 기간과 실적 목표를, 지역화폐는 생활비 예산을 같이 넣을 수 있습니다." },
+  { art: "paste", t: "카드 내역은 복사해서 붙여넣으면 끝", d: "카드사·은행 앱에서 이용내역을 복사한 뒤, 내역 화면의 <b>📋 붙여넣기</b>에 그대로 넣으세요. 날짜·가맹점·금액을 알아서 나눠 담고, 잘못 읽힌 곳은 눌러서 바로 고칩니다. 설정에 <b>내 이름</b>을 적어두면 내 계좌로 보낸 이체도 알아봅니다." },
+  { art: "voice", t: "음성으로도 넣을 수 있습니다", d: "<b>🎤 음성</b>을 누르고 “커피값 3000원”처럼 말하면 입력 화면이 바로 채워져 열립니다. “어제 점심 만이천원”처럼 날짜를 붙여도 되고, 빼면 오늘로 들어갑니다. “우리에서 토스로 계좌이체 30만원”도 알아듣습니다." },
+  { art: "xfer", t: "내 통장끼리 옮긴 돈은 ‘내 계좌간 이동’", d: "입력할 때 <b>↔ 내 계좌간 이동</b>을 체크하고 보낸 곳과 받은 곳을 고르세요. <b>양쪽 모두 반영</b>을 켜두면 한 번에 두 통장에 기록되고 잔고도 둘 다 바뀝니다. 내역 화면의 체크박스로 수입·지출 합계에서 뺄지 넣을지 정할 수 있습니다." },
   { art: "cat", t: "색으로 분류하면 한눈에 보입니다", d: "내역을 눌러 분류를 지정하면 그 색이 줄에 깔립니다. <b>분류 탭</b>에서 어디에 얼마를 썼는지, 지난달보다 늘었는지 줄었는지 바로 보입니다." },
   { art: "goal", t: "카드 실적은 신호등으로", d: "카드마다 실적 목표를 넣어두면 초록·노랑·빨강으로 표시됩니다. 눌러보면 얼마가 남았는지 알려줍니다. 할부는 월 납입액으로 나눠서 잡힙니다." },
   { art: "backup", t: "한 달에 한 번, 백업만 챙기세요", d: "<b>설정 → 백업 내보내기</b>로 파일을 받아 메일이나 클라우드에 보관하세요. 폰을 바꾸거나 기록이 지워져도 그대로 되살릴 수 있습니다. 연말정산용 엑셀도 여기서 받습니다." }
