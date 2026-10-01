@@ -395,7 +395,7 @@ textarea.inp{min-height:150px;resize:vertical;font-size:13px;line-height:1.6}
    저장: localStorage (기기 안)
    ============================================================ */
 "use strict";
-const APP_VERSION = "2026.10.02.0440";
+const APP_VERSION = "2026.10.02.0505";
 const KEY = "insure.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -1465,6 +1465,14 @@ function covText(it) {
 }
 /* 여러 담보를 한 줄에 모았을 때 보여줄 글자 (서로 다르면 숫자 합계로) */
 /* "400/800만" 같은 글자를 숫자 여러 개로 쪼갠다 */
+/* 표기에 단위가 없을 때 — 보장금액이 1만원 미만일 수는 없으므로 만원으로 읽는다 */
+function covMul(cp) {
+  if (!cp) return 1;
+  if (cp.unit === "억") return 100000000;
+  if (cp.unit === "만") return 10000;
+  const hi = cp.nums.reduce((m, x) => Math.max(m, x), 0);
+  return hi > 0 && hi < 10000 ? 10000 : 1;
+}
 function covParts(txt) {
   const t = String(txt == null ? "" : txt).trim();
   if (!t) return null;
@@ -2414,7 +2422,7 @@ function tierRange(rows, fin) {
       const cp = covParts(fin && isCut(it) ? scaleCov(it.cov, cutRatio(it)) : it.cov);
       let vals;
       if (cp && cp.nums.length) {
-        const mul = cp.unit === "억" ? 100000000 : cp.unit === "만" ? 10000 : 1;
+        const mul = covMul(cp);
         vals = cp.nums.map(x => x * mul);
       } else {
         const a = fin ? effAmt(it) : baseAmt(it);
