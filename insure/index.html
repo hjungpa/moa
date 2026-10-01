@@ -196,6 +196,72 @@ textarea.inp{min-height:150px;resize:vertical;font-size:13px;line-height:1.6}
 @media (max-width:420px){ .pielg{min-width:0;width:100%} .lgv{width:70px} }
 .tag.memo{background:var(--panel2);color:var(--tx2);border:1px solid var(--line)}
 .cmp td.inp-cell{padding:3px 4px}
+.kindhd{display:flex;align-items:baseline;gap:8px;padding:9px 14px 5px;font-size:12.5px;font-weight:900;color:var(--tx2);
+  background:var(--panel2);border-top:1px solid var(--line)}
+.kindhd.sumline{border-top:2px solid var(--line);font-size:13.5px;color:var(--tx);padding:10px 14px}
+.kindlist{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+.kindrow{display:flex;align-items:center;gap:7px;font-size:12.5px}
+.kindrow .knm{flex:none;min-width:74px;font-weight:800}
+.kindrow .kbar{flex:1;height:7px;border-radius:4px;background:var(--line);overflow:hidden}
+.kindrow .kbar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.kindrow .kamt{flex:none;min-width:62px;text-align:right}
+.kindrow .kpct{flex:none;min-width:30px;text-align:right}
+.prod .hand{flex:none;cursor:grab;color:var(--tx3);font-size:15px;padding:0 1px;touch-action:none;user-select:none}
+.prod.drag{opacity:.4}
+.prod.pover{outline:2px dashed var(--accent);outline-offset:-2px}
+.pname{cursor:pointer}
+.pname .pen2{font-size:10px;opacity:.5}
+.unitnote{margin-left:9px;color:var(--tx3);font-weight:600;font-size:10.5px;white-space:nowrap}
+.payn{display:block;font-size:10px;color:var(--tx3);font-weight:700;line-height:1.3}
+.bars{display:flex;flex-direction:column;gap:11px;margin-top:4px}
+.cfrow.drag{opacity:.4}
+.cfrow .hand{flex:none;cursor:grab;color:var(--tx3);font-size:15px;touch-action:none;user-select:none}
+.cname{cursor:pointer}
+.cname.off{text-decoration:line-through;color:var(--tx3)}
+.crow{padding:10px 14px;border-bottom:1px solid var(--line)}
+.crow.on{background:var(--accent-soft)}
+.tcolbar{display:flex;gap:4px;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;padding-left:6px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tcolbar::-webkit-scrollbar{display:none}
+.tcolbar .lg{flex:none;font-size:10.5px;padding:2px 7px;border:1px solid var(--line);border-radius:999px;
+  background:var(--panel2);color:var(--tx2);cursor:pointer;white-space:nowrap}
+.cmini{flex:none;padding:4px 9px;font-size:11.5px;min-width:0}
+.chit{cursor:pointer;width:11px;height:11px;border-radius:4px;margin:0}
+.crow .lnk{flex:none;font-size:12.5px;padding:2px 3px;line-height:1}
+.bgrp{cursor:pointer}
+.bhd .goal{font-size:10.5px;color:var(--tx3);font-weight:700;margin-left:5px}
+.fullmk{color:var(--ok);font-weight:900}
+.bhd .goal.own{color:var(--warn)}
+.bgrp:active{opacity:.75}
+.brkrow{display:flex;align-items:baseline;gap:6px;padding:4px 0;border-top:1px solid var(--line);font-size:12px}
+.brkrow.off{opacity:.55}
+.brkrow.off .bk1{text-decoration:line-through}
+.brkrow .bk1{flex:1;min-width:0}
+.brkrow .bk1 .sub2{display:block;font-size:11px;color:var(--tx2);font-weight:600;margin-top:1px}
+.brkrow .bk2{flex:none;min-width:66px;text-align:right;color:var(--tx3);font-size:11.5px}
+.brkrow .bk3{flex:none;min-width:70px;text-align:right}
+.rngline{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--tx2);margin:2px 0 1px}
+.rngline b{font-weight:800}
+.plusa{color:var(--warn);font-weight:900}
+.miniseg button{white-space:nowrap}
+.bgrp.sub{margin-left:14px;padding-left:9px;border-left:2px solid var(--line)}
+.bhd{display:flex;align-items:baseline;gap:5px;margin-bottom:4px}
+.bhd .bnm{flex:1;font-size:12.5px;font-weight:800;letter-spacing:-.2px}
+.bhd .bch{flex:none;font-size:11px;font-weight:800}
+.brow{display:flex;align-items:center;gap:6px;margin-top:3px}
+.brow .blab{flex:none;width:26px;font-size:10px;color:var(--tx3);font-weight:700}
+.brow .btrk{flex:1;min-width:0;height:13px;background:var(--panel2);border-radius:3px;overflow:hidden}
+.brow .btrk i{display:block;height:100%;border-radius:3px;transition:width .2s}
+.brow .bval{flex:none;min-width:70px;text-align:right;font-size:11.5px}
+.feeline{font-size:17px;line-height:1.4;text-align:left}
+.cmp thead th .subfold{cursor:pointer;margin-right:2px}
+.cmp thead th .foldtx{cursor:pointer;user-select:none}
+.fnote{margin-top:9px}
+.fnbtn{background:none;border:0;padding:2px 0;font:inherit;font-size:11.5px;font-weight:800;
+  color:var(--tx3);cursor:pointer;letter-spacing:-.2px}
+.fnote.warn .fnbtn{color:var(--warn)}
+.fnbody{font-size:11.5px;line-height:1.65;color:var(--tx2);margin-top:5px}
+.fnote.warn .fnbody{color:var(--warn)}
 .cmp th.ck,.cmp td.ck{width:22px;min-width:22px;padding:4px 0 4px 2px;text-align:center}
 .cmp td.ck input{width:17px;height:17px;margin:0;vertical-align:middle}
 .cmp td.inp-cell input{width:96px;padding:5px 7px;font-size:12px;text-align:right;
@@ -223,6 +289,9 @@ textarea.inp{min-height:150px;resize:vertical;font-size:13px;line-height:1.6}
   user-select:none;-webkit-user-select:none;text-align:center}
 .cmp tr.cat td{cursor:pointer}
 .cmp tr.cat .fold{display:inline-block;width:16px;font-size:13px;opacity:.9;font-weight:900}
+.cmp thead th.foldcell{cursor:pointer;user-select:none;text-align:center;padding:8px 0}
+.cmp thead th[data-foldall]{cursor:pointer;user-select:none}
+.cmp thead th[data-foldall] .fold{display:inline-block;width:13px;font-size:12px;opacity:.85;font-weight:900}
 .hd h2 .fold{display:inline-block;width:15px;font-size:11px;opacity:.7}
 .colbox{display:flex;flex-wrap:wrap;gap:6px}
 .colbox label{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;
@@ -237,6 +306,9 @@ textarea.inp{min-height:150px;resize:vertical;font-size:13px;line-height:1.6}
   border-bottom:1px solid var(--line)}
 .catbar .n{margin-left:auto;font-weight:800;opacity:.7;font-size:10.5px}
 .legend{display:flex;flex-wrap:wrap;gap:5px}
+.legend span.lg{cursor:pointer;user-select:none;transition:opacity .12s}
+.legend span.lg.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent)}
+.legend span.lg:active{transform:scale(.96)}
 .legend span{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;
   padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
 .legend i{width:8px;height:8px;border-radius:3px;display:inline-block}
@@ -253,6 +325,12 @@ textarea.inp{min-height:150px;resize:vertical;font-size:13px;line-height:1.6}
 .stat>div{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:9px;text-align:center}
 .stat b{display:block;font-size:17px;font-weight:900}
 .stat span{font-size:10.5px;color:var(--tx3);font-weight:700}
+.stat.mini{gap:6px;margin-bottom:8px}
+.stat.mini>div{padding:5px 4px;border-radius:9px}
+.stat.mini b{font-size:13px}
+.stat.mini span{font-size:9.5px}
+.pbtn{border:0;cursor:pointer;font:inherit;font-size:11px;font-weight:800;line-height:1.5}
+.pill.dead{background:var(--tx3);color:#fff}
 .bar{height:7px;border-radius:99px;background:var(--line);overflow:hidden}
 .bar i{display:block;height:100%;border-radius:99px}
 .arrow{font-size:11px;font-weight:900;margin-right:2px}
@@ -313,11 +391,14 @@ textarea.inp{min-height:150px;resize:vertical;font-size:13px;line-height:1.6}
    저장: localStorage (기기 안)
    ============================================================ */
 "use strict";
-const APP_VERSION = "2026.09.30.0458";
+const APP_VERSION = "2026.10.02.0355";
 const KEY = "insure.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+/* 짧고 서로 겹치지 않는 꼬리표 — uid() 앞부분은 시각이라 늘 같아서 쓰면 안 된다 */
+let RIDN = 0;
+const rid = () => (++RIDN).toString(36) + Math.random().toString(36).slice(2, 6);
 
 function blank() {
   return {
@@ -327,7 +408,11 @@ function blank() {
     cats: {},           /* 담보 분류 직접 지정: 표준키 -> 분류키 */
     labels: {},         /* 비교표 줄 이름 직접 지정: 표준키 -> 이름 */
     ord: {},            /* 내가 끌어서 정한 순서: 표준키 -> 번호 */
-    settings: { theme: "auto", agent: "", office: "", tel: "", tint: 0.18, disc: "" }
+    savedAt: 0,         /* 이 기기에서 마지막으로 내용이 바뀐 시각 */
+    ordBak: {},         /* 순서를 지우기 직전 모습 — 한 번은 되살릴 수 있게 */
+    bars: {},           /* 막대에 넣을 담보 직접 고르기: 막대키 -> {줄키: true/false} */
+    barGoal: {},        /* 막대가 꽉 차는 기준 금액: 막대키 -> 원 */
+    settings: { theme: "auto", agent: "", office: "", tel: "", tint: 0.18, disc: "", dev: "" }
   };
 }
 let D = blank();
@@ -346,10 +431,18 @@ function load() {
   (D.custs || []).forEach(c => { if (!c.at) c.at = Date.now(); });
   migrate();
   seedStamps();          /* 새 항목을 채운 뒤에 기준을 잡아야 괜히 분석일이 바뀌지 않는다 */
+  loadCols();
 }
 /* 예전에 저장해 둔 내용을 하나도 잃지 않고 새 항목만 채운다 */
 function migrate() {
   let touched = false;
+  if (!D.bars) { D.bars = {}; touched = true; }
+  if (!D.barGoal) { D.barGoal = {}; touched = true; }
+  (D.custs || []).forEach(c => {              /* 예전 버전은 고객마다 따로 적어 두었다 */
+    if (c.bars) { Object.keys(c.bars).forEach(k => {
+      D.bars[k] = Object.assign({}, c.bars[k], D.bars[k] || {}); });
+      delete c.bars; touched = true; }
+  });
   (D.custs || []).forEach(c => (c.prods || []).forEach(p => {
     if (!p.id) { p.id = uid(); touched = true; }
     if (p.kind === undefined) { p.kind = "보장성"; touched = true; }
@@ -371,7 +464,9 @@ function migrate() {
 /* 고객 내용이 실제로 바뀐 날만 "마지막 분석일"로 남긴다 */
 let LASTC = {};
 function stamp(c) { return JSON.stringify([c.prods, D.cats, D.ord, D.labels, D.dict]); }
-function seedStamps() { LASTC = {}; (D.custs || []).forEach(c => { LASTC[c.id] = stamp(c); }); }
+function seedStamps() { LASTC = {}; (D.custs || []).forEach(c => { LASTC[c.id] = stamp(c); }); LASTJ = bodyOf(D); }
+let LASTJ = null;
+function bodyOf(o) { return JSON.stringify([o.custs, o.dict, o.cats, o.labels, o.ord, o.bars, o.barGoal, o.settings]); }
 function save() {
   try {
     const c = cust();
@@ -380,6 +475,10 @@ function save() {
       if (LASTC[c.id] !== j) { c.updated = Date.now(); LASTC[c.id] = j; }
       if (!c.updated) c.updated = c.at || Date.now();
     }
+    /* 내용이 실제로 바뀐 때만 "마지막 저장" 시각을 올린다 — 그냥 열어 본 것으로는 안 바뀐다 */
+    const b = bodyOf(D);
+    if (LASTJ !== null && b !== LASTJ) D.savedAt = Date.now();
+    LASTJ = b;
     localStorage.setItem(KEY, JSON.stringify(D)); snap();
   } catch (e) { toast("저장 공간이 부족합니다"); }
 }
@@ -394,6 +493,22 @@ function ago(ts) {
   if (d < 365) return Math.floor(d / 30) + "달 전";
   return Math.floor(d / 365) + "년 전";
 }
+/* 2026-10-01 20:51 — 어느 쪽이 최신인지 견주려고 */
+function timeStr(ts) {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  return dayStr(ts) + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+/* 몇 분/몇 시간 차이인지 */
+function gapStr(ms) {
+  const m = Math.round(Math.abs(ms) / 60000);
+  if (m < 1) return "거의 같은 때";
+  if (m < 60) return m + "분";
+  const h = Math.round(m / 60);
+  if (h < 48) return h + "시간";
+  return Math.round(h / 24) + "일";
+}
+function devName() { return (D.settings && D.settings.dev || "").trim(); }
 function dayStr(ts) {
   if (!ts) return "—";
   const d = new Date(ts);
@@ -448,6 +563,12 @@ const CATOLD = { vessel: "vesselD", organ: "specD", diag: "specD", car: "driver"
 function hexRgb(h) {
   const m = String(h).replace("#", "");
   return [parseInt(m.slice(0, 2), 16), parseInt(m.slice(2, 4), 16), parseInt(m.slice(4, 6), 16)];
+}
+/* 색 진하기를 따르는 배경 — 소계처럼 색을 직접 쥔 곳에서 쓴다 */
+function tintBg(hex, mul) {
+  const t = (D.settings && D.settings.tint != null ? +D.settings.tint : 0.18) * (mul == null ? 1 : mul);
+  if (!t) return "transparent";
+  return catBg2(hex, Math.min(0.9, t));
 }
 function catBg2(hex, a) {
   const c = hexRgb(hex || "#aab3bd");
@@ -579,6 +700,7 @@ function saveFinal(after) {
       return Object.assign({}, i, {
         id: uid(), keep: true, cut: 0,
         amount: cut ? effAmt(i) : (+i.amount || 0),
+        rowKey: i.rowKey || undefined,
         covAmt: cut ? effAmt(i) : (+i.covAmt || 0),
         cov: cut ? "" : (i.cov || ""),
         premium: itemFee(p, i)
@@ -631,7 +753,9 @@ const SYN = [
   [/(뇌심혈관질환|뇌심혈관|뇌·심혈관)/g, "뇌심"],
   [/(급성심근경색증|급성심근경색|허혈성심장질환|허혈성심질환|심혈관질환|심장질환|심혈관|심장)/g, "심장"],
   [/(뇌혈관질환|뇌혈관|뇌졸중|뇌출혈|뇌경색)/g, "뇌"],
-  [/(악성신생물|유사암)/g, "암"],
+  /* 유사암(제자리암·경계성종양·기타피부암)은 암과 전혀 다른 보장이다 — 소액암으로 묶는다 */
+  [/(유사암|제자리암|상피내암|경계성종양|경계성종양암|기타피부암|소액암)/g, "소액암"],
+  [/(악성신생물)/g, "암"],
   [/(실손의료비|실손)/g, "실손"],
   /* 일반어 */
   [/(진단금|진단급여금|진단보장|진단비)/g, "진단비"],
@@ -1117,17 +1241,20 @@ function dictKey(n) {                       /* 사전을 따라 끝까지 */
   return k;
 }
 function buildRows(list) {
-  const ps = list || prods().filter(pickOn);
+  const ps = list || (PAIR ? sideProds("old").concat(sideProds("neu")) : prods().filter(pickOn));
   const buckets = [];
   const byKey = {};
   ps.forEach(p => (p.items || []).forEach(it => {
     if (it.on === false) return;            /* 잘못 들어온 담보 — 어디에도 나오지 않는다 */
     const n = normName(it.name);
-    const k = dictKey(n);
+    /* 손으로 떼어 둔 담보는 제 열쇠를 그대로 쓴다 */
+    const k = it.rowKey || dictKey(n);
     let b = byKey[k];
-    if (!b) {
+    const pinned = k.indexOf("#") >= 0;
+    if (!b && !pinned) {
       let best = null, bs = 0;
-      buckets.forEach(x => { const s = simil(k, x.key); if (s > bs) { bs = s; best = x; } });
+      buckets.forEach(x => { if (x.key.indexOf("#") >= 0) return;
+        const s = simil(k, x.key); if (s > bs) { bs = s; best = x; } });
       if (best && bs >= SIM_TH) b = best;
     }
     if (!b) { b = { key: k, label: it.name, cells: {}, alias: {} }; buckets.push(b); }
@@ -1145,8 +1272,26 @@ function mergeRows(srcKey, dstKey) {
   Object.keys(D.dict).forEach(k => { if (D.dict[k] === srcKey) D.dict[k] = dstKey; });
   save();
 }
-function splitRow(b) {                      /* 자동으로 묶인 걸 다시 떼기 */
-  Object.keys(b.alias).forEach(n => { delete D.dict[n]; D.dict[n] = n + "#" + uid().slice(0, 4); });
+/* 이 줄에 들어 있는 담보를 상품별로 모두 모은다 */
+function rowItems(b) {
+  const out = [];
+  withPick(() => prods()).forEach(p => (b.cells[p.id] || []).filter(isOn).forEach(it => out.push({ p, it })));
+  return out;
+}
+/* 고른 담보만 따로 떼어 새 줄로 만든다 (나머지는 그대로 둔다) */
+function splitPicked(list, each) {
+  if (!list || !list.length) return 0;
+  const tag = "#" + rid();
+  list.forEach(({ it }) => {
+    it.rowKey = normName(it.name) + (each ? "#" + rid() : tag);
+  });
+  save();
+  return list.length;
+}
+/* 떼어 놓은 것을 도로 붙이기 */
+function unsplitRow(b) {
+  rowItems(b).forEach(({ it }) => { delete it.rowKey; });
+  Object.keys(b.alias).forEach(n => { if (D.dict[n] && /#/.test(D.dict[n])) delete D.dict[n]; });
   save();
 }
 
@@ -1157,12 +1302,20 @@ const SIDE = { old: "기존", neu: "신규" };
 /* 비교 화면에서 "이 보험만 보기"로 걸러 낼 때만 켠다 — 엑셀·PDF·정리에는 영향 없음 */
 let USEPICK = false;
 const pickOn = p => !USEPICK || !(VIEW.pick && VIEW.pick[p.id] === false);
-function sideProds(s) { return prods().filter(p => (p.side || "old") === s && pickOn(p)); }
-function pickedCount() { return prods().filter(p => !(VIEW.pick && VIEW.pick[p.id] === false)).length; }
+let PAIR = null;                 /* [왼쪽 상품 id, 오른쪽 상품 id] — 두 보험만 맞대어 볼 때 */
+function sideProds(s) {
+  if (PAIR) { const p = prod(s === "old" ? PAIR[0] : PAIR[1]); return p ? [p] : []; }
+  return prods().filter(p => (p.side || "old") === s && pickOn(p));
+}
+/* 체크가 켜진 보험만 — 전역 스위치와 상관없이 늘 같은 답 */
+function pickedProds() { return prods().filter(p => !(VIEW.pick && VIEW.pick[p.id] === false)); }
+function pickedCount() { return pickedProds().length; }
 /* 이 보험을 어떻게 하기로 했는지 한눈에 */
 /* 상품 성격 — 저축·연금은 보장금액으로 견주면 안 된다 */
 const KINDS = [
   ["보장성", "보장성", ""],
+  ["운전자", "운전자", "교통사고 벌금·변호사비·형사합의금"],
+  ["화재", "화재", "건물·가재도구 손해, 배상책임"],
   ["저축성", "저축", "만기·해약환급금 위주"],
   ["연금", "연금", "노후 연금 지급"],
   ["종신", "종신", "평생 사망보장"],
@@ -1235,6 +1388,23 @@ function termMonths(txt, age, fallbackMonths) {
   m = s.match(/^(\d{1,3})$/);
   if (m) return +m[1] * 12;
   return null;
+}
+/* 가입일을 사람이 치는 대로 받아 2020-03-15 꼴로 맞춘다 */
+function normDate(v) {
+  const t = String(v == null ? "" : v).trim();
+  if (!t) return "";
+  const n = t.replace(/[^\d]/g, "");
+  const parts = t.split(/[^\d]+/).filter(Boolean);
+  let y, m, d;
+  if (parts.length >= 3) {                      /* 2020-3-5 · 2020.3.15 · 20/12/31 */
+    y = +parts[0]; m = +parts[1]; d = +parts[2];
+    if (y < 100) y += 2000;
+  }
+  else if (n.length === 8) { y = +n.slice(0, 4); m = +n.slice(4, 6); d = +n.slice(6, 8); }
+  else if (n.length === 6) { y = 2000 + +n.slice(0, 2); m = +n.slice(2, 4); d = +n.slice(4, 6); }
+  else return t;
+  if (!(y >= 1900 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31)) return t;
+  return y + "-" + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0");
 }
 function monthsSince(iso) {
   if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
@@ -1500,24 +1670,53 @@ function feeCell(a, b) {
   return a === b ? won(a)
     : '<span class="was">' + won(a) + '</span><b class="c-down">' + won(b) + '</b>';
 }
+const TCOLS = [
+  ["term", "보장기간", 1], ["pay", "납입기간", 1], ["fee", "월보험료", 1], ["total", "총 납입", 0],
+  ["paid", "낸 돈", 0], ["refund", "예상 해약환급금", 0], ["left", "남은 돈", 0]
+];
+const TSHORT = { total: "총납입", paid: "낸돈", refund: "환급금", left: "남은돈" };
+function tcolDef(k) { const c = TCOLS.find(x => x[0] === k); return c ? !!c[2] : true; }
+function tcolOn(k) {
+  const v = VIEW.tcols ? VIEW.tcols[k] : null;
+  return v == null ? tcolDef(k) : v !== false;
+}
+function tcolCount() { return TCOLS.filter(c => tcolOn(c[0])).length; }
+function tcell(k, html) { return tcolOn(k) ? html : ''; }
+function hiddenTColBar() {
+  const off = TCOLS.filter(c => !tcolOn(c[0]));
+  if (!off.length) return '';
+  return '<span class="tcolbar">' +
+    off.map(c => '<button class="lg" data-tshow="' + c[0] + '" title="' + esc(c[1]) + ' 다시 보이기">+ ' +
+      esc(TSHORT[c[0]] || c[1]) + '</button>').join("") +
+  '</span>';
+}
 function termFoot(TO, TN) {
   const rf = s2 => noPick(() => sideProds(s2).reduce((a, p) => a + (+p.refund || 0), 0));
   const line = (nm, T, sd) =>
-    '<tr class="tsum"><td class="ck"></td><td class="nm b">' + nm + '</td><td></td><td></td>' +
-    '<td class="n num b">' + feeCell(T.fee, T.kfee) + '</td>' +
-    '<td class="n num b">' + (T.some ? won(T.total) : "—") + '</td>' +
-    '<td class="n num">' + (T.some ? won(T.paidFee) : "—") + '</td>' +
-    '<td class="n num">' + (rf(sd) ? won(rf(sd)) : "—") + '</td>' +
-    '<td class="n num b">' + (T.some ? won(T.leftFee) : "—") + '</td></tr>';
+    '<tr class="tsum"><td class="ck"></td><td class="nm b">' + nm + '</td>' +
+    tcell("term", '<td></td>') + tcell("pay", '<td></td>') +
+    tcell("fee", '<td class="n num b">' + feeCell(T.fee, T.kfee) + '</td>') +
+    tcell("total", '<td class="n num b">' + (T.some ? won(T.total) : "—") + '</td>') +
+    tcell("paid", '<td class="n num">' + (T.some ? won(T.paidFee) : "—") + '</td>') +
+    tcell("refund", '<td class="n num">' + (rf(sd) ? won(rf(sd)) : "—") + '</td>') +
+    tcell("left", '<td class="n num b">' + (T.some ? won(T.leftFee) : "—") + '</td>') + '</tr>';
   const finF = TO.kfee + TN.kfee, some = TO.some || TN.some;
+  void line;                                        /* 합계는 이제 한 줄로만 */
+  const one = (nm, T) => nm + ' <span class="num">' +
+    (T.fee === T.kfee ? won(T.kfee) : won(T.fee) + '→' + won(T.kfee)) + '</span>';
+  const side = [];
+  if (TO.fee || TO.kfee) side.push(one("기존", TO));
+  if (TN.fee || TN.kfee) side.push(one("신규", TN));
   return '<tfoot>' +
-    ((TO.fee || TO.kfee) ? line("기존 보험 합계", TO, "old") : '') +
-    ((TN.fee || TN.kfee) ? line("신규 보험 합계", TN, "neu") : '') +
-    '<tr class="grand"><td class="ck"></td><td class="nm b">최종 월 보험료</td><td></td><td></td>' +
-      '<td class="n num b">' + won(finF) + '</td>' +
-      '<td class="n num b">' + (some ? won(TO.total + TN.total) : "—") + '</td>' +
-      '<td></td><td></td>' +
-      '<td class="n num b">' + (some ? won(TO.leftFee + TN.leftFee) : "—") + '</td></tr>' +
+    '<tr class="grand"><td class="ck"></td><td class="nm b">최종 월 보험료' +
+      (side.length > 1 ? '<div class="tiny muted" style="font-weight:700;white-space:nowrap">' +
+        side.join(" · ") + '</div>' : '') + '</td>' +
+      tcell("term", '<td></td>') + tcell("pay", '<td></td>') +
+      tcell("fee", '<td class="n num b">' + won(finF) + '</td>') +
+      tcell("total", '<td class="n num b">' + (some ? won(TO.total + TN.total) : "—") + '</td>') +
+      tcell("paid", '<td class="n num">' + (some ? won(TO.paidFee + TN.paidFee) : "—") + '</td>') +
+      tcell("refund", '<td class="n num">' + (rf("old") + rf("neu") ? won(rf("old") + rf("neu")) : "—") + '</td>') +
+      tcell("left", '<td class="n num b">' + (some ? won(TO.leftFee + TN.leftFee) : "—") + '</td>') + '</tr>' +
   '</tfoot>';
 }
 /* 표 밑에 한 줄로 못박아 준다 — 기존이 얼마에서 얼마로 줄었고 신규가 얼마 붙었는지 */
@@ -1595,7 +1794,7 @@ function compareRows(rows) {
 
     const finTxt = txtOf((ok.parts || []).concat(wk.parts || []));
     return { b, o, w, ok, wk, dAmt, dFee, kind, finTxt,
-      cat: catOf(b), ord: (D.ord && D.ord[b.key] != null) ? D.ord[b.key] : 9999,
+      cat: catOf(b), ord: ordOf(b.key),
       ins: insBadges((o.parts || []).concat(w.parts || [])),
       nowAmt, nowFee, finAmt, finFee, fAmt, fFee, act,
       uo: unitFee(o.amt, o.fee), un: unitFee(w.amt, w.fee),
@@ -1630,6 +1829,14 @@ function setSumOver(key, o) {
   save();
 }
 /* 분류별로 묶기 (표에 큰 목록으로 보여주려고) */
+/* 끌어서 정해 둔 자리를 기억한다 — 떼어 낸 줄(#꼬리표)은 원래 자리를 물려받는다 */
+function ordOf(key) {
+  if (!D.ord) return 9999;
+  if (D.ord[key] != null) return D.ord[key];
+  const base = String(key).split("#")[0];
+  if (D.ord[base] != null) return D.ord[base] + 0.5;
+  return 9999;
+}
 function ordSort(a, b) { return (a.ord - b.ord) || 0; }
 function groupByCat(rs) {
   const g = {};
@@ -1650,9 +1857,9 @@ function sumRows(rs) {
    화면
    ============================================================ */
 let TAB = "prod";
-let VIEW = { sort: "order", only: "all", /* only: all | old | neu */ move: null, showFee: true, showUnit: true,
+let VIEW = { sort: "order", only: "all", pairA: null, pairB: null, /* only: all | old | neu */ move: null, showFee: true, showUnit: true,
              mode: "final", group: true, planSort: "cat",
-             cols: { unit: false }, fold: {}, pfold: {}, pick: {}, pieBy: "amt", cfold: {} };
+             cols: { unit: false }, tcols: {}, note: {}, sfold: {}, custQ: "", custHid: false, hideSum: false, fold: {}, pfold: {}, pick: {}, pieBy: "amt", cfold: {}, pcat: {} };
 
 function go(tab) {
   TAB = tab;
@@ -1679,37 +1886,93 @@ function viewProd() {
 
   let h = '<div class="card"><div class="bd">' +
     '<div class="two">' +
-      '<button class="btn pri grow" data-add="old">📋 기존 보험 붙여넣기</button>' +
-      '<button class="btn grow" data-add="neu">📋 신규 보험 붙여넣기</button>' +
+      '<button class="btn pri grow" data-add="old">기존 보험</button>' +
+      '<button class="btn grow" data-add="neu">가입예정 보험</button>' +
     '</div>' +
-    '<p class="tiny muted" style="margin:9px 0 0;line-height:1.6">설계서나 보장내역을 복사해서 붙여넣으면 담보명·가입금액·보험료를 알아서 나눕니다. 엑셀에서 복사한 표도 됩니다.</p>' +
+    foldNote("paste", "붙여넣기 요령",
+      '설계서나 보장내역을 복사해서 붙여넣으면 담보명·가입금액·보험료를 알아서 나눕니다. 엑셀에서 복사한 표도 됩니다.') +
   '</div></div>';
 
-  ["old", "neu"].forEach(s => {
-    const ps = sideProds(s);
-    h += '<div class="card"><div class="hd pb"><h2>' + (s === "old" ? "기존 보험" : "신규 제안") + ' · ' + ps.length + '건</h2>' +
-      '<button class="btn sm" data-add="' + s + '">+ 추가</button></div>';
-    if (!ps.length) h += '<div class="empty">' + (s === "old" ? "고객이 가지고 있는 보험을 넣으세요." : "새로 제안할 보험을 넣으세요.") + '</div>';
-    else ps.forEach(p => {
-      const on = (p.items || []).filter(i => i.on !== false);
-      const x = prodTerm(p);
-      h += '<div class="prod" data-prod="' + p.id + '">' +
-        '<div class="ic" style="background:' + esc(p.color) + '">' + (s === "old" ? "기존" : "신규") + '</div>' +
-        '<div class="grow"><div class="b ell">' + esc(p.name || "(이름 없음)") + '</div>' +
-          '<div class="tiny muted ell">' + (p.insurer ? esc(p.insurer) + " · " : "") + '담보 ' + on.length + '/' + (p.items || []).length + '개' +
-          (p.feeMode === "total" ? ' · <b class="c-warn">총보험료만</b>' : '') +
-          (kindOf(p) !== "보장성" ? ' · <b style="color:var(--ok)">' + esc(kindOf(p)) + '</b>' : '') + '</div>' +
-          (p.note ? '<div class="tiny muted ell" style="opacity:.85">📝 ' + esc(String(p.note).split("\n")[0]) + '</div>' : '') +
-          '<div class="tiny muted ell num">' + (p.term ? '보험 ' + esc(p.term) : '보험기간 ?') + ' · ' +
-            (p.payTerm ? '납입 ' + esc(p.payTerm) : '납입기간 ?') +
-            (x.leftFee != null ? ' · 남은 ' + monY(x.leftM) + ' ' + won(x.leftFee) + '원' : '') + '</div></div>' +
-        '<div style="text-align:right"><div class="b num">' + wonS(x.fee) + '</div>' +
-          '<div class="tiny muted">월 보험료</div></div>' +
-      '</div>';
-    });
+  h += kindSummary();
+
+  ["old", "neu"].forEach(s2 => {
+    const ps = sideProds(s2);
+    const tot = ps.reduce((a, p) => a + prodFeeRaw(p), 0);
+    h += '<div class="card"><div class="hd pb"><h2>' + (s2 === "old" ? "기존 보험" : "가입예정 보험") + ' · ' + ps.length + '건</h2>' +
+      (tot ? '<span class="num b" style="font-size:15px">' + won(tot) + '원</span>' : '') +
+      '<button class="btn sm" data-add="' + s2 + '">+ 추가</button></div>';
+    if (!ps.length) h += '<div class="empty">' + (s2 === "old" ? "고객이 가지고 있는 보험을 넣으세요." : "새로 제안할 보험을 넣으세요.") + '</div>';
+    else {
+      const gs = groupByKind(ps);
+      gs.forEach(g => {
+        if (gs.length > 1) {
+          const k = KINDS.find(x => x[0] === g.key) || ["", g.key, ""];
+          h += '<div class="kindhd"><span class="grow">' + esc(g.key) + ' <span class="muted">' + g.list.length + '건</span>' +
+            (k[2] ? '<span class="tiny muted" style="display:block;font-weight:600">' + esc(k[2]) + '</span>' : '') + '</span>' +
+            '<span class="num b">' + won(g.fee) + '원</span></div>';
+        }
+        h += '<div class="pgroup">' + g.list.map(p => prodRow(p, s2)).join("") + '</div>';
+      });
+      if (gs.length > 1)
+        h += '<div class="kindhd sumline"><span class="grow">' + (s2 === "old" ? "기존" : "신규") + ' 합계</span>' +
+          '<span class="num b">' + won(tot) + '원</span></div>';
+    }
     h += '</div>';
   });
   return h;
+}
+/* 성격(보장성·운전자·화재·저축 …)별로 묶기 */
+function groupByKind(ps) {
+  const g = {};
+  ps.forEach(p => (g[kindOf(p)] = g[kindOf(p)] || []).push(p));
+  return KINDS.filter(k => g[k[0]] && g[k[0]].length).map(k => ({
+    key: k[0], list: g[k[0]], fee: g[k[0]].reduce((a, p) => a + prodFeeRaw(p), 0)
+  }));
+}
+/* 맨 위 — 전체 합계와 종류별 합계 */
+function kindSummary() {
+  const ps = prods();
+  if (!ps.length) return '';
+  const tot = ps.reduce((a, p) => a + prodFeeRaw(p), 0);
+  const gs = groupByKind(ps);
+  const oldF = sideProds("old").reduce((a, p) => a + prodFeeRaw(p), 0);
+  const newF = sideProds("neu").reduce((a, p) => a + prodFeeRaw(p), 0);
+  return '<div class="card"><div class="bd">' +
+    '<div class="row" style="align-items:baseline">' +
+      '<div class="grow"><div class="tiny muted b">전체 월 보험료</div>' +
+        '<div class="num b" style="font-size:22px">' + won(tot) + '원</div></div>' +
+      '<div style="text-align:right" class="tiny muted">' +
+        '기존 <b class="num">' + won(oldF) + '</b>원<br>신규 <b class="num">' + won(newF) + '</b>원</div>' +
+    '</div>' +
+    '<div class="kindlist">' + gs.map(g => {
+      const pct = tot ? Math.round(g.fee / tot * 100) : 0;
+      return '<div class="kindrow">' +
+        '<span class="knm">' + esc(g.key) + ' <span class="muted">' + g.list.length + '건</span></span>' +
+        '<span class="kbar"><i style="width:' + pct + '%"></i></span>' +
+        '<span class="num b kamt">' + won(g.fee) + '원</span>' +
+        '<span class="tiny muted kpct">' + pct + '%</span>' +
+      '</div>';
+    }).join("") + '</div>' +
+  '</div></div>';
+}
+function prodRow(p, s2) {
+  const on = (p.items || []).filter(i => i.on !== false);
+  const x = prodTerm(p);
+  return '<div class="prod" data-prod="' + p.id + '">' +
+    '<div class="hand" data-pdrag="' + p.id + '" title="끌어서 순서 바꾸기">⣿</div>' +
+    '<div class="ic" style="background:' + esc(p.color) + '">' + (s2 === "old" ? "기존" : "신규") + '</div>' +
+    '<div class="grow" style="min-width:0">' +
+      '<div class="b ell">' + esc(p.name || "(이름 없음)") + '</div>' +
+      '<div class="tiny muted ell">' + (p.insurer ? esc(p.insurer) + " · " : "") + '담보 ' + on.length + '/' + (p.items || []).length + '개' +
+      (p.feeMode === "total" ? ' · <b class="c-warn">총보험료만</b>' : '') +
+      (kindOf(p) !== "보장성" ? ' · <b style="color:var(--ok)">' + esc(kindOf(p)) + '</b>' : '') + '</div>' +
+      (p.note ? '<div class="tiny muted ell" style="opacity:.85">📝 ' + esc(String(p.note).split("\n")[0]) + '</div>' : '') +
+      '<div class="tiny muted ell num">' + (p.term ? '보험 ' + esc(p.term) : '보험기간 ?') + ' · ' +
+        (p.payTerm ? '납입 ' + esc(p.payTerm) : '납입기간 ?') +
+        (x.leftFee != null ? ' · 남은 ' + monY(x.leftM) + ' ' + won(x.leftFee) + '원' : '') + '</div></div>' +
+    '<div style="text-align:right;flex:none"><div class="b num">' + wonS(x.fee) + '</div>' +
+      '<div class="tiny muted">월 보험료</div></div>' +
+  '</div>';
 }
 
 /* ---------------- 정리 (유지 · 해지 · 감액) ---------------- */
@@ -1719,22 +1982,12 @@ function planHead() {
   const fin = keepOld + addNew, d = fin - nowFee;
   return '<div class="card"><div class="bd">' +
     '<div class="stat">' +
-      '<div><b class="num">' + won(nowFee) + '</b><span>현재 내는 돈</span></div>' +
-      '<div><b class="num">' + won(keepOld) + '</b><span>유지할 기존</span></div>' +
-      '<div><b class="num c-up">' + won(addNew) + '</b><span>새로 넣을 것</span></div>' +
+      '<div><b class="num">' + won(nowFee) + '</b><span>현재보험료</span></div>' +
+      '<div><b class="num">' + won(keepOld) + '</b><span>유지보험료</span></div>' +
+      '<div><b class="num c-up">' + won(addNew) + '</b><span>신규</span></div>' +
       '<div><b class="num b">' + won(fin) + '</b><span>최종</span></div>' +
     '</div>' +
-    '<div class="row" style="margin-top:6px">' +
-      '<div class="grow"><div class="tiny muted b">월 보험료</div>' +
-        '<div class="num b" style="font-size:20px">' + won(nowFee) + ' → ' + won(fin) + '원</div></div>' +
-      '<div style="text-align:right"><div class="num b ' + (d > 0 ? "c-down" : "c-up") + '" style="font-size:19px">' +
-        (d > 0 ? "+" : "") + won(d) + '원</div>' +
-        '<div class="tiny muted">' + (d > 0 ? "더 냅니다" : d < 0 ? "덜 냅니다" : "같습니다") + '</div></div>' +
-    '</div>' +
-    '<p class="tiny muted" style="margin:10px 0 0;line-height:1.6">' +
-      '<b>체크 = 가져간다</b>는 뜻입니다. 기존 보험은 처음부터 모두 체크(유지)되어 있으니, ' +
-      '<b>뺄 특약만 체크를 끄세요.</b> 금액만 줄일 때는 <b>감액</b> 칸에 줄인 보장금액을 적으면 ' +
-      '보험료가 그만큼 줄어든 것으로 계산됩니다.</p>' +
+    feeLine("월 보험료", nowFee, fin, true) +
   '</div></div>';
 }
 function planItem(p, it, i) {
@@ -1753,6 +2006,10 @@ function planItem(p, it, i) {
         (raw ? ' <span class="muted">·</span> ' + (cut ? '<s class="muted">' + won(raw) + '</s> <b class="c-down">' + won(now) + '원</b>'
           : '<span class="feex">' + won(now) + '원</span>') + (isEst(p) ? ' <span class="muted">(추정)</span>' : '')
           : ' <span class="muted">· 보험료 없음</span>') +
+        (() => {                                 /* 1,000만원당 얼마인지 — 비싼 담보를 바로 알아보게 */
+          const u = unitFee(effAmt(it), now);
+          return u ? '<span class="unitnote">(1,000만원당 ' + won(Math.round(u)) + '원)</span>' : '';
+        })() +
       '</div>' +
       '<div class="cutbox">' +
         '<span class="tiny muted b">감액 →</span>' +
@@ -1767,14 +2024,19 @@ function planItem(p, it, i) {
 }
 function planProd(p) {
   const side = (p.side || "old") === "old";
-  let items = (p.items || []).filter(isOn);
+  const all = (p.items || []).filter(isOn);
+  let items = all.filter(it => pcatOn(itemCat(it)));
+  if (!items.length && all.length) return '';      /* 고른 분류에 이 보험 담보가 없으면 통째로 숨긴다 */
   const shut = !!(VIEW.pfold && VIEW.pfold[p.id]);
   const raw = prodFeeRaw(p), nowF = prodFee(p), kept = prodFeeKept(p);
   const nKeep = items.filter(isKept).length;
   const save2 = nowF - kept, cutAmt = raw - nowF;
   const head = '<div class="hd pb" data-pfold="' + p.id + '" style="cursor:pointer">' +
       '<h2><span class="fold" style="display:inline-block;width:14px;opacity:.75">' + (shut ? "▸" : "▾") + '</span>' +
-        '<span class="pill ' + (side ? "old" : "new") + '">' + (side ? "기존" : "신규") + '</span> ' +
+        '<button class="pill pbtn ' + (nKeep ? (side ? "old" : "new") : "dead") + '" ' +
+          'data-allkeep="' + p.id + '|' + (nKeep ? "0" : "1") + '" ' +
+          'title="눌러서 ' + (nKeep ? (side ? "전부 해지" : "전부 제외") : (side ? "전부 유지" : "전부 가입")) + '">' +
+          (nKeep ? (side ? "유지" : "신규") : (side ? "해지" : "제외")) + '</button> ' +
         (insTag(p) ? '<span class="ins" style="background:' + esc(p.color || "#7fa9e8") + '">' + esc(insTag(p)) + '</span>' : '') +
         esc(p.name) + '</h2>' +
       '<div class="row" style="gap:6px;align-items:center">' +
@@ -1783,11 +2045,7 @@ function planProd(p) {
   if (shut) return '<div class="card">' + head + '</div>';
   return '<div class="card">' + head +
     '<div class="bd" style="padding:0 14px 10px">' +
-      '<div class="row" style="gap:6px;margin-bottom:8px">' +
-        '<button class="btn sm gho grow" data-allkeep="' + p.id + '|1">전부 ' + (side ? "유지" : "가입") + '</button>' +
-        '<button class="btn sm gho grow" data-allkeep="' + p.id + '|0">전부 ' + (side ? "해지" : "제외") + '</button>' +
-      '</div>' +
-      '<div class="stat" style="margin-top:0">' +
+      '<div class="stat mini" style="margin-top:0">' +
         '<div><b class="num">' + nKeep + '/' + items.length + '</b><span>' + (side ? "유지" : "가입") + '</span></div>' +
         '<div><b class="num">' + won(raw) + '</b><span>설계서 보험료</span></div>' +
         '<div><b class="num ' + (save2 + cutAmt ? "c-down" : "") + '">' + won(kept) + '</b><span>' + (side ? "유지 후" : "가입 시") + '</span></div>' +
@@ -1800,11 +2058,34 @@ function planProd(p) {
     '</div>' +
     '<div>' + planBody(p, items) + '</div>' +
     (items.length ? '' : '<div class="empty">담보가 없습니다.</div>') +
+    (items.length < all.length ? '<div class="bd" style="padding:0 14px 10px"><p class="tiny c-warn b" style="margin:0">' +
+      '분류를 걸러 ' + items.length + '/' + all.length + '개만 보는 중입니다 — 위 숫자는 이 보험 전체 기준입니다.</p></div>' : '') +
   '</div>';
+}
+/* 이 고객이 실제로 가진 분류만, 누를 수 있는 칩으로 */
+function planCats() {
+  const n = {};
+  prods().forEach(p => (p.items || []).filter(isOn).forEach(it => {
+    const k = itemCat(it); n[k] = (n[k] || 0) + 1;
+  }));
+  return CATS.filter(c => n[c[0]]).map(c => ({ key: c[0], name: c[1], color: c[2], n: n[c[0]] }));
+}
+const pcatOn = k => { const v = VIEW.pcat || {}; return !Object.keys(v).some(x => v[x]) || !!v[k]; };
+function planCatChips() {
+  const gs = planCats();
+  if (!gs.length) return '';
+  const any = Object.keys(VIEW.pcat || {}).some(k => VIEW.pcat[k]);
+  return '<div class="tiny muted b" style="margin:2px 0 5px">분류를 눌러 그 분류만 볼 수 있습니다' +
+      (any ? ' — 지금 <b class="c-warn">' + gs.filter(g => pcatOn(g.key)).length + '개 분류만</b> 보는 중' : '') + '</div>' +
+    '<div class="legend">' +
+      '<span class="lg' + (any ? '' : ' on') + '" data-pcat="*">전체 ' + gs.reduce((a, g) => a + g.n, 0) + '</span>' +
+      gs.map(g => '<span class="lg' + (any && VIEW.pcat[g.key] ? ' on' : '') + '" data-pcat="' + esc(g.key) + '"' +
+        ' style="background:' + catBg(g.key, 1.4) + (any && !VIEW.pcat[g.key] ? ';opacity:.42' : '') + '">' +
+        '<i style="background:' + g.color + '"></i>' + esc(g.name) + ' ' + g.n + '</span>').join("") +
+    '</div>';
 }
 /* 담보를 분류 순서대로 묶어 색과 함께 보여준다 */
 function planBody(p, items) {
-  if (VIEW.planSort === "doc") return items.map((it, i) => planItem(p, it, i)).join("");
   const g = {};
   items.forEach(it => { const k = itemCat(it); (g[k] = g[k] || []).push(it); });
   return CATS.filter(c => g[c[0]] && g[c[0]].length).map(c =>
@@ -1820,28 +2101,17 @@ function viewPlan() {
     '상품 화면에서 기존·신규 보험을 먼저 넣어 주세요.</div></div>';
   let h = planHead();
   h += '<div class="card"><div class="bd">' +
-    '<div class="two" style="margin-bottom:10px">' +
-      '<button class="btn sm gho grow" data-pfoldall="1">▸ 보험 모두 접기</button>' +
-      '<button class="btn sm gho grow" data-pfoldall="0">▾ 모두 펴기</button>' +
-    '</div>' +
-    '<div class="miniseg" style="margin-bottom:10px">' +
-      '<button data-psort="cat" class="' + (VIEW.planSort !== "doc" ? "on" : "") + '">분류 순서로</button>' +
-      '<button data-psort="doc" class="' + (VIEW.planSort === "doc" ? "on" : "") + '">설계서 순서로</button>' +
-    '</div>' +
-    '<div class="legend">' + CATS.map(c =>
-      '<span style="background:' + catBg(c[0], 1.4) + '"><i style="background:' + c[2] + '"></i>' + esc(c[1]) + '</span>').join("") +
-    '</div>' +
-    '<div class="row" style="margin-top:10px;gap:8px">' +
-      '<span class="tiny muted b" style="flex:none">색 진하기</span>' +
-      '<input type="range" id="plTint" min="0" max="60" value="' + Math.round((D.settings.tint || 0) * 100) + '" style="flex:1;accent-color:var(--accent)">' +
-      '<span class="tiny muted b num" id="plTintV" style="flex:none;width:36px;text-align:right">' + Math.round((D.settings.tint || 0) * 100) + '%</span>' +
-    '</div>' +
+    planCatChips() +
   '</div></div>';
   ["old", "neu"].forEach(sd => {
     const ps = sideProds(sd);
     if (!ps.length) return;
-    h += '<div class="card" style="margin-bottom:6px"><div class="bd" style="padding:8px 14px">' +
-      '<b class="sm">' + (sd === "old" ? "기존 보험 — 뺄 것만 체크를 끄세요" : "신규 제안 — 넣을 것만 체크") + '</b></div></div>';
+    const allShut = ps.every(p => VIEW.pfold && VIEW.pfold[p.id]);
+    h += '<div class="card" style="margin-bottom:6px"><div class="bd" style="padding:8px 14px;cursor:pointer" data-sidefold="' + sd + '">' +
+      '<b class="sm"><span class="fold" style="display:inline-block;width:15px;opacity:.75">' + (allShut ? "▸" : "▾") + '</span>' +
+      (sd === "old" ? "유지보험" : "가입예정 보험") + '</b>' +
+      '<span class="tiny muted" style="display:block;margin:3px 0 0 15px;font-weight:600">' +
+        (sd === "old" ? "특약 삭제 = 체크박스 해제" : "가입할 특약만 체크") + '</span></div></div>';
     ps.forEach(p => { h += planProd(p); });
   });
   h += '<div class="card"><div class="bd">' +
@@ -1854,22 +2124,26 @@ function viewCmp() {
   const c = cust();
   if (!c || !prods().length) return '<div class="card"><div class="empty"><b>비교할 상품이 없습니다</b>상품 화면에서 기존·신규 보험을 붙여넣어 주세요.</div></div>';
   USEPICK = true;
+  const fin = VIEW.mode !== "side";
+  /* 설계서 그대로 모드에서 두 보험만 골랐으면 그 둘로만 표를 만든다 */
+  PAIR = (!fin && VIEW.pairA && VIEW.pairB && VIEW.pairA !== VIEW.pairB) ? [VIEW.pairA, VIEW.pairB] : null;
+  PAIRNM = PAIR ? [shortNm(prod(PAIR[0])), shortNm(prod(PAIR[1]))] : null;
   const rows = buildRows();
   const all = compareRows(rows);
   /* 위의 합계는 "볼 보험 고르기"와 상관없이 늘 전체로 낸다 — 거르는 건 보기 편하라고 있는 것뿐 */
   const full = noPick(() => compareRows(buildRows()));
   let rs = all.slice();
-  const fin = VIEW.mode !== "side";
   if (VIEW.only === "old") rs = rs.filter(r => r.o.has);
   else if (VIEW.only === "neu") rs = rs.filter(r => r.w.has);
-  const t = totals(full);
+  const t = fin ? totals(full) : totals(all);   /* 설계서 모드는 지금 보고 있는 두 쪽 기준 */
 
   const dFee = t.finFee - t.nowFee;
   let h = '<div class="card"><div class="bd">' +
     '<div class="miniseg" style="margin-bottom:12px">' +
       '<button data-mode="final" class="' + (fin ? "on" : "") + '">최종안 (지금 → 바꾼 뒤)</button>' +
-      '<button data-mode="side" class="' + (fin ? "" : "on") + '">설계서 그대로 (기존 vs 신규)</button>' +
-    '</div>';
+      '<button data-mode="side" class="' + (fin ? "" : "on") + '">설계서 그대로 (두 보험 맞대보기)</button>' +
+    '</div>' +
+    (fin ? '' : pairPicker());
 
   if (fin) {
     h += '<div class="stat">' +
@@ -1878,19 +2152,7 @@ function viewCmp() {
         '<div><b class="num c-down">' + (t.act.drop + t.act.cut) + '</b><span>해지·감액</span></div>' +
         '<div><b class="num">' + t.act.swap + '</b><span>교체</span></div>' +
       '</div>' +
-      '<div class="row" style="margin-top:4px">' +
-        '<div class="grow"><div class="tiny muted b">월 보험료 (현재 → 최종)</div>' +
-          '<div class="num b" style="font-size:20px">' + won(t.nowFee) + ' → ' + won(t.finFee) + '원</div></div>' +
-        '<div style="text-align:right"><div class="num b ' + (dFee > 0 ? "c-down" : "c-up") + '" style="font-size:19px">' +
-          (dFee > 0 ? "+" : "") + won(dFee) + '원</div>' +
-          '<div class="tiny muted">' + (dFee > 0 ? "더 냅니다" : dFee < 0 ? "덜 냅니다" : "같습니다") + '</div></div>' +
-      '</div>' +
-      '<p class="tiny muted" style="margin:10px 0 0;line-height:1.6">' +
-        '<b>기존 보험은 모두 유지하는 것이 기본</b>입니다. 빼고 싶은 특약만 <b>정리</b> 화면에서 체크를 끄세요. ' +
-        '끈 담보는 <span class="tag drop">해지</span>, <b>새로 넣는 담보는 연한 파란 줄</b>로 <span class="tag add">추가</span>, ' +
-        '금액을 줄이면 <span class="tag cutx">감액</span>으로 표시됩니다.<br>' +
-        '왼쪽 <b>⣿</b> 를 잡고 끌면 담보 순서를 원하는 자리로 옮길 수 있습니다 — 다른 분류 칸에 놓으면 분류도 같이 바뀝니다. ' +
-        '담보를 누르면 이름·분류·보장금액을 고칠 수 있고, 표가 길면 <b>👁 열 고르기</b>와 분류 머리줄로 접어 두세요.</p>';
+      feeLine("월 보험료", t.nowFee, t.finFee, true);
   } else {
     h += '<div class="stat">' +
         '<div><b class="num c-up">' + t.up + '</b><span>보장 커짐</span></div>' +
@@ -1898,31 +2160,25 @@ function viewCmp() {
         '<div><b class="num">' + t.onlyOld + '</b><span>신규에 없음</span></div>' +
         '<div><b class="num">' + t.onlyNew + '</b><span>새로 생김</span></div>' +
       '</div>' +
-      '<div class="row" style="margin-top:4px">' +
-        '<div class="grow"><div class="tiny muted b">월 보험료</div>' +
-          '<div class="num b" style="font-size:20px">' + won(t.oFee) + ' → ' + won(t.nFee) + '원</div></div>' +
-        '<div style="text-align:right"><div class="num b ' + (t.nFee > t.oFee ? "c-down" : "c-up") + '" style="font-size:19px">' +
-          (t.nFee - t.oFee > 0 ? "+" : "") + won(t.nFee - t.oFee) + '원</div>' +
-          '<div class="tiny muted">' + (t.nFee > t.oFee ? "더 냅니다" : t.nFee < t.oFee ? "덜 냅니다" : "같습니다") + '</div></div>' +
-      '</div>' +
-      '<p class="tiny muted" style="margin:10px 0 0;line-height:1.6">설계서에 적힌 그대로 기존과 신규를 맞대어 본 것입니다. ' +
-      '보장금액이 <b class="c-up">늘면 파랑</b>, <b class="c-down">줄면 빨강</b>.</p>';
+      feeLine("월 보험료" + (PAIRNM ? " (" + esc(PAIRNM[0]) + " → " + esc(PAIRNM[1]) + ")" : ""), t.oFee, t.nFee, true) +
+      '';
   }
   h += '</div></div>';
 
-  const TO = noPick(() => sideTerm("old")), TN = noPick(() => sideTerm("neu"));
+  PAIR = null;                                        /* 아래 기간 표부터는 늘 전체 기준 */
+  const TO = sideTerm("old"), TN = sideTerm("neu");   /* 체크한 보험만 — 이 표의 체크박스다 */
   if (true) {
     const tshut = !!(VIEW.cfold && VIEW.cfold.term);
     h += '<div class="card"><div class="hd pb">' +
-      '<h2 data-cfold="term" style="cursor:pointer;flex:1"><span class="fold">' + (tshut ? "▸" : "▾") + '</span>기간과 총 보험료</h2>' +
-      (tshut ? '<span class="tiny muted b">보험 ' + prods().length + '건 · ' + pickedCount() + '건 보는 중</span>' : '') + '</div>' +
+      '<h2 data-cfold="term" style="cursor:pointer;flex:none"><span class="fold">' + (tshut ? "▸" : "▾") + '</span>보장 변경</h2>' +
+      (tshut ? '<span class="tiny muted b grow" style="text-align:right">보험 ' + prods().length + '건 · ' + pickedCount() + '건 보는 중</span>'
+             : '<span class="grow" style="min-width:0;overflow:hidden">' + hiddenTColBar() + '</span>') + '</div>' +
       (tshut ? '' :
       '<div class="bd" style="padding-top:4px">' +
-      '<p class="tiny muted b" style="margin:0 0 5px">체크를 끄면 <b>아래 비교표에서만 잠깐 감춰 둡니다</b> — 위의 합계·엑셀·PDF에는 그대로 들어갑니다</p>' +
       '<div class="sc"><table class="cmp"><thead><tr>' +
-        '<th class="ck"></th><th style="min-width:112px">상품</th><th>보험기간</th><th>납입기간</th>' +
-        '<th class="n">월</th><th class="n">총 납입</th><th class="n">낸 돈</th>' +
-        '<th class="n">예상 해약환급금</th><th class="n">남은 돈</th>' +
+        '<th class="ck"></th><th style="min-width:112px">상품명</th>' +
+        TCOLS.map(c => tcolOn(c[0])
+          ? '<th class="n hid" data-thide="' + c[0] + '" title="눌러서 숨기기">' + esc(c[1]) + '</th>' : '').join("") +
       '</tr></thead><tbody>' +
       prods().map(pp => { const x = prodTerm(pp); const st = prodState(pp);
         const on = !(VIEW.pick && VIEW.pick[pp.id] === false);
@@ -1934,14 +2190,17 @@ function viewCmp() {
             '<span' + (st.dead ? ' style="text-decoration:line-through;color:var(--tx3)"' : '') + '>' + esc(pp.name) + '</span> ' +
             (on ? '' : '<span class="tag" style="background:var(--tx3);color:#fff">숨김</span>') + ' ' +
             prodBadges(pp) + '</td>' +
-          '<td class="n">' + (pp.term ? esc(pp.term) : "—") + '</td><td class="n">' + (pp.payTerm ? esc(pp.payTerm) : "—") + '</td>' +
-          '<td class="n num">' + feeCell(x.fee, x.kfee) + '</td>' +
-          '<td class="n num">' + (x.total != null ? won(x.total) : "—") + '</td>' +
-          '<td class="n num">' + (x.paidFee != null ? won(x.paidFee) : "—") + '</td>' +
-          '<td class="inp-cell"><input data-refund="' + pp.id + '" inputmode="numeric" placeholder="직접 입력" value="' +
-            comma(pp.refund || "") + '"></td>' +
-          '<td class="n num b">' + (x.leftFee != null ? won(x.leftFee) : "—") + '</td></tr>' +
-          ((pp.note || pp.refund) ? '<tr class="pnote-row"><td class="ck"></td><td colspan="8">' +
+          tcell("term", '<td class="n">' + (pp.term ? esc(pp.term) : "—") + '</td>') +
+          tcell("pay", '<td class="n">' + (pp.payTerm ? esc(pp.payTerm) : "—") +
+            ((x.paidM != null && x.payM != null) ?
+              '<span class="payn">(' + x.paidM + '/' + x.payM + ')</span>' : '') + '</td>') +
+          tcell("fee", '<td class="n num">' + feeCell(x.fee, x.kfee) + '</td>') +
+          tcell("total", '<td class="n num">' + (x.total != null ? won(x.total) : "—") + '</td>') +
+          tcell("paid", '<td class="n num">' + (x.paidFee != null ? won(x.paidFee) : "—") + '</td>') +
+          tcell("refund", '<td class="inp-cell"><input data-refund="' + pp.id + '" inputmode="numeric" placeholder="직접 입력" value="' +
+            comma(pp.refund || "") + '"></td>') +
+          tcell("left", '<td class="n num b">' + (x.leftFee != null ? won(x.leftFee) : "—") + '</td>') + '</tr>' +
+          ((pp.note || pp.refund) ? '<tr class="pnote-row"><td class="ck"></td><td colspan="' + (1 + tcolCount()) + '">' +
             (pp.refund && x.paidFee ? '<b>환급률 ' + Math.round(pp.refund / x.paidFee * 100) + '%</b> (낸 돈 ' + won(x.paidFee) + '원 대비)' +
               (pp.note ? ' · ' : '') : '') +
             (pp.note ? esc(pp.note) : '') + '</td></tr>' : '');
@@ -1952,18 +2211,22 @@ function viewCmp() {
         '<button class="btn sm gho grow" data-pickside="old">기존만</button>' +
         '<button class="btn sm gho grow" data-pickside="neu">신규만</button>' +
       '</div>' +
-      (pickedCount() < prods().length ? '<p class="tiny c-warn b" style="margin:8px 0 0;line-height:1.6">' +
-        '지금 <b>' + pickedCount() + '개 보험만</b> 보고 있습니다 — ' +
-        esc(prods().filter(p => !(VIEW.pick && VIEW.pick[p.id] === false)).map(p => p.name).join(", ")) +
-        '<br>감춰 둔 보험도 <b>위·아래의 합계에는 그대로 들어가 있습니다.</b></p>' : '') +
-      ((TO.miss + TN.miss) ? '<p class="tiny c-warn b" style="margin:8px 0 0">' + (TO.miss + TN.miss) + '개 상품은 보험기간·납입기간이 없어 총액을 못 냅니다. 상품을 눌러 넣어주세요.</p>' : '') +
-      (noPick(() => renewCount("old") + renewCount("neu")) ? (() => {
-        const ro = noPick(() => renewFee("old")), rn = noPick(() => renewFee("neu"));
-        return '<p class="tiny c-warn b" style="margin:8px 0 0;line-height:1.7">' +
-          '⚠ <b>갱신형 특약 ' + noPick(() => renewCount("old") + renewCount("neu")) + '개</b>가 들어 있습니다 (기존 ' + won(ro) + '원 · 신규 ' + won(rn) + '원). ' +
-          '위의 <b>총 납입보험료 · 앞으로 낼 돈</b>은 지금 보험료가 그대로 간다고 보고 계산한 값이라 ' +
-          '<b>갱신 때 오르는 몫은 들어 있지 않습니다.</b> 실제로는 이보다 더 나옵니다.</p>';
-      })() : '') +
+      (() => {
+        const ws = [];
+        if (pickedCount() < prods().length)
+          ws.push('지금 <b>' + pickedCount() + '개 보험만</b> 보고 있습니다 — ' +
+            esc(prods().filter(p => !(VIEW.pick && VIEW.pick[p.id] === false)).map(p => p.name).join(", ")) +
+            '<br>위 <b>합계와 엑셀·PDF는 체크한 ' + pickedCount() + '건만</b> 들어갑니다. 맨 위 요약은 전체 기준입니다.');
+        if (TO.miss + TN.miss)
+          ws.push((TO.miss + TN.miss) + '개 상품은 보험기간·납입기간이 없어 총액을 못 냅니다. 상품을 눌러 넣어주세요.');
+        const rc = renewCount("old") + renewCount("neu");
+        if (rc)
+          ws.push('<b>갱신형 특약 ' + rc + '개</b>가 들어 있습니다 (기존 ' + won(renewFee("old")) + '원 · 신규 ' + won(renewFee("neu")) + '원). ' +
+            '위의 <b>총 납입보험료 · 앞으로 낼 돈</b>은 지금 보험료가 그대로 간다고 보고 계산한 값이라 ' +
+            '<b>갱신 때 오르는 몫은 들어 있지 않습니다.</b> 실제로는 이보다 더 나옵니다.');
+        return ws.length ? foldNote("warn", "⚠ 알아둘 것 " + ws.length + "가지",
+          ws.map(x => '· ' + x).join("<br>"), true) : '';
+      })() +
     '</div>') + '</div>';
   }
 
@@ -1973,10 +2236,8 @@ function viewCmp() {
     '<span style="width:8px"></span>' +
     '<button class="chip ' + (VIEW.group !== false ? "on" : "") + '" data-group>📂 분류별로 묶기</button>' +
 
-    '<button class="chip' + (COLS.some(c => !colOn(c[0])) ? " on" : "") + '" data-cols>👁 열 고르기' +
+    '<button class="chip' + (COLS.some(c => !colOn(c[0])) ? " on" : "") + '" data-cols>열 고르기' +
       (COLS.filter(c => !colOn(c[0])).length ? ' (' + COLS.filter(c => !colOn(c[0])).length + '개 숨김)' : '') + '</button>' +
-    '<button class="chip" data-catfix>✏️ 분류 옮기기</button>' +
-    (Object.keys(D.ord || {}).length ? '<button class="chip" data-ordreset>↩ 순서 되돌리기</button>' : '') +
   '</div>';
 
   if (VIEW.move) {
@@ -1990,25 +2251,7 @@ function viewCmp() {
 
   h += viewPie(full);
 
-  h += '<div class="card"><div class="bd two">' +
-    '<button class="btn grow" data-excel>📊 스프레드시트</button>' +
-    '<button class="btn pri grow" data-pdf>📄 고객용 PDF</button>' +
-  '</div></div>' +
-  '<div class="card" style="margin-top:-8px"><div class="bd" style="padding-top:0">' +
-    '<p class="tiny muted" style="margin:0;line-height:1.7">' +
-      '<b>스프레드시트</b> — 색과 분류까지 그대로 들어간 파일이 만들어집니다. ' +
-      '저장한 뒤 <b>구글 드라이브</b>에 올리고 파일을 눌러 <b>Google 스프레드시트로 열기</b>를 고르면 됩니다.<br>' +
-      '<b>고객용 PDF</b> — 인쇄 화면이 안 열리면 <b>파일로 저장</b>을 쓰세요. 그 파일을 열고 공유 → 프린트로 PDF가 됩니다.</p>' +
-  '</div></div>';
-
-  h += '<div class="card"><div class="bd">' +
-    '<button class="btn wide" data-savefinal>✅ 이 최종안대로 가입 기록 만들기</button>' +
-    '<p class="tiny muted" style="margin:9px 0 0;line-height:1.7">실제로 이대로 정리하셨다면 누르세요. ' +
-      '<b>유지한 기존 담보 + 새로 넣은 담보</b>만 모아 <b>' + esc(c.name) + ' (보장분석대로 가입)</b> 기록을 새로 만듭니다. ' +
-      '감액한 담보는 줄인 금액으로 들어가고, 해지한 담보는 빠집니다. ' +
-      '지금 기록은 그대로 남아서 <b>설정</b>에서 같은 고객으로 묶여 나중에 견주어 볼 수 있습니다.</p>' +
-  '</div></div>';
-  USEPICK = false;
+  USEPICK = false; PAIR = null; PAIRNM = null;
   return h;
 }
 
@@ -2023,83 +2266,357 @@ function rowTags(r) {
   if (r.act !== "cut" && (r.ok.cut || r.wk.cut)) h += '<span class="tag cutx">감액</span>';
   return h;
 }
+/* 설계서 그대로 모드 — 어느 두 보험을 맞댈지 고른다 */
+function pairPicker() {
+  const ps = prods();
+  if (ps.length < 2) return '';
+  const opt = (sel, none) => '<option value="">' + none + '</option>' +
+    ps.map(p => '<option value="' + esc(p.id) + '"' + (sel === p.id ? " selected" : "") + '>' +
+      ((p.side || "old") === "old" ? "[기존] " : "[신규] ") + esc(p.name) + '</option>').join("");
+  const on = !!(VIEW.pairA && VIEW.pairB && VIEW.pairA !== VIEW.pairB);
+  return '<div class="row" style="gap:6px;margin-bottom:10px;align-items:center">' +
+      '<select class="inp" data-pair="a" style="flex:1;min-width:0;font-size:12.5px;padding:7px 8px">' +
+        opt(VIEW.pairA, "기존 보험 전체") + '</select>' +
+      '<span class="tiny muted b" style="flex:none">vs</span>' +
+      '<select class="inp" data-pair="b" style="flex:1;min-width:0;font-size:12.5px;padding:7px 8px">' +
+        opt(VIEW.pairB, "신규 보험 전체") + '</select>' +
+    '</div>' +
+    '<p class="tiny muted" style="margin:-4px 0 10px;line-height:1.6">' +
+      (on ? '<b class="c-warn">두 보험만</b> 맞대어 보는 중입니다. 비우면 기존 전체 ↔ 신규 전체로 돌아갑니다.'
+          : '위에서 보험을 하나씩 고르면 <b>그 둘만</b> 나란히 견줍니다 — 기존끼리도, 신규끼리도 됩니다.') +
+    (on ? ' <a href="#" data-pairclear>↩ 전체로</a>' : '') + '</p>';
+}
+/* 숨긴 열을 도로 켜는 줄 */
+/* 설명·알림은 기본으로 접어 둔다 — 눌러야 펴진다 */
+function foldNote(key, label, html, warn) {
+  if (!html) return '';
+  const open = !!(VIEW.note && VIEW.note[key]);
+  return '<div class="fnote' + (warn ? ' warn' : '') + '">' +
+    '<button class="fnbtn" data-note="' + esc(key) + '">' + (open ? "▾" : "▸") + ' ' + esc(label) + '</button>' +
+    (open ? '<div class="fnbody">' + html + '</div>' : '') + '</div>';
+}
+/* 현재 → 최종 한 줄 — 차액은 괄호 안에 작게 */
+function feeLine(label, a, b2, fee) {
+  const d = b2 - a;
+  const cls = fee ? (d > 0 ? "c-down" : "c-up") : (d >= 0 ? "c-up" : "c-down");
+  const unit = fee ? "원" : "원";
+  const f = v => fee ? won(v) : manwon(v);
+  return '<div class="row" style="margin-top:4px;align-items:baseline;gap:7px">' +
+      '<div class="tiny muted b" style="flex:none">' + label + '</div>' +
+      '<div class="grow num b feeline">' + f(a) + ' → ' + f(b2) + unit + '</div>' +
+      '<div class="num b" style="flex:none;font-size:13px">' +
+        (d ? '<span class="' + cls + '">(' + (d > 0 ? "+" : "−") + f(Math.abs(d)) + unit + ')</span>'
+           : '<span class="muted">(같음)</span>') + '</div>' +
+    '</div>';
+}
+function hiddenColBar() {
+  const off = COLS.filter(c => c[0] !== "unit" && !colOn(c[0]));
+  if (!off.length) return '';
+  return '<div class="bd" style="padding:8px 12px 10px"><div class="legend">' +
+    '<span class="tiny muted b" style="border:0;padding:3px 2px">숨긴 열</span>' +
+    off.map(c => '<span class="lg" data-show="' + c[0] + '">' + esc(colName(c)) + ' ↩</span>').join("") +
+  '</div></div>';
+}
 /* ------------------------------------------------------------
    원형 분류표 — 보장이 어느 쪽에 치우쳐 있는지 한눈에
    안쪽 고리는 지금, 바깥 고리는 최종
    ------------------------------------------------------------ */
-function ringSegs(cx, cy, r, wdt, segs, dim) {
-  const C = 2 * Math.PI * r;
-  let off = 0, out = "";
-  const tot = segs.reduce((a, x) => a + x.v, 0);
-  if (!tot) return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="var(--line)" stroke-width="' + wdt + '"/>';
-  segs.forEach(x => {
-    const len = C * x.v / tot;
-    if (len <= 0) return;
-    out += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + x.c + '"' +
-      (dim ? ' opacity=".55"' : '') +
-      ' stroke-width="' + wdt + '" stroke-dasharray="' + (len - 0.8).toFixed(2) + ' ' + (C - len + 0.8).toFixed(2) + '"' +
-      ' stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 ' + cx + ' ' + cy + ')"/>';
-    off += len;
-  });
-  return out;
+/* 소액암·유사암 — 암 진단비와 따로 센다 */
+const SMALLC = /소액암|유사암|제자리암|상피내|경계성|기타피부암|갑상선|대장점막/;
+const CHEMO  = /방사선|약물|항암|표적|카티|CART|중입자|양성자|호르몬|면역|암주치/;
+/* 이 줄에 붙은 모든 이름을 한 덩어리 글자로 — 무엇에 대한 담보인지 가려내려고 */
+function rowText(r) {
+  return String(r.b.label || "") + " " + Object.values(r.b.alias || {}).join(" ");
 }
+function isSmallCancer(r) { return SMALLC.test(rowText(r)); }
+/* 막대가 꽉 차는 기준 금액 — 고객마다가 아니라 한 번 정해 두고 계속 쓴다 */
+const BARGOAL = { life: 200000000, canD: 100000000, canS: 50000000, canT: 100000000,
+                  brain: 50000000, heart: 50000000, surgery: 20000000, care: 50000000 };
+/* 기본값 → 고객별로 고친 값이 있으면 그것 */
+function barGoalBase(k) {
+  const g = D.barGoal && D.barGoal[k];
+  return g > 0 ? g : (BARGOAL[k] || 50000000);
+}
+function barGoal(k) {
+  const c = cust();
+  const v = c && c.barGoal && c.barGoal[k];
+  return v > 0 ? v : barGoalBase(k);
+}
+function barGoalOwn(k) {                     /* 이 고객만 따로 정해 둔 값인가 */
+  const c = cust();
+  return !!(c && c.barGoal && c.barGoal[k] > 0);
+}
+function setBarGoal(k, v) {
+  const c = cust(); if (!c) return;
+  if (!c.barGoal) c.barGoal = {};
+  if (v > 0 && v !== barGoalBase(k)) c.barGoal[k] = v;
+  else delete c.barGoal[k];
+  save();
+}
+function clearBarGoal(k) {
+  const c = cust();
+  if (c && c.barGoal) { delete c.barGoal[k]; save(); }
+}
+/* 막대에 넣을 담보를 직접 고쳐 둔 것 — 없으면 자동 규칙을 쓴다 */
+function barHas(d, r) {
+  const o = D.bars && D.bars[d.k];
+  if (o && o[r.b.key] != null) return !!o[r.b.key];
+  return !!d.f(r);
+}
+function setBarPick(bk, rowKey, on) {
+  if (!D.bars) D.bars = {};
+  if (!D.bars[bk]) D.bars[bk] = {};
+  D.bars[bk][rowKey] = !!on;
+  save();
+}
+function resetBarPick(bk) {
+  if (D.bars) delete D.bars[bk];
+  clearBarGoal(bk);
+  save();
+}
+function barEdited(bk) {
+  return !!((D.bars && D.bars[bk] && Object.keys(D.bars[bk]).length) || barGoalOwn(bk));
+}
+/* 비교표와 같은 차례로 — 분류 순서 다음에 내가 끌어서 정한 자리 */
+function barSort(a, b) { return (catRank(a.cat) - catRank(b.cat)) || (a.ord - b.ord) || 0; }
+/* 막대로 보여 줄 묶음 — 고객이 제일 먼저 보는 것들만 */
+function barDefs() {
+  return [
+    { k: "life",   n: "주계약 사망보장",   c: CATC.life,    f: r => r.cat === "life" },
+    { k: "canD",   n: "암 진단비",         c: CATC.cancerD, f: r => r.cat === "cancerD" && !isSmallCancer(r) },
+    { k: "canS",   n: "소액암 진단비",     c: CATC.cancerT, f: r => r.cat === "cancerD" && isSmallCancer(r), sub: true },
+    { k: "canT",   n: "항암 방사선·약물치료", c: CATC.cancerT,
+      f: r => r.cat === "cancerT" && CHEMO.test(rowText(r)), sub: true },
+    { k: "brain",  n: "뇌혈관 진단비",     c: CATC.vesselD, f: r => r.cat === "vesselD" && /뇌/.test(rowText(r)) },
+    { k: "heart",  n: "심혈관 진단비",     c: CATC.vesselD,
+      f: r => r.cat === "vesselD" && !/뇌/.test(rowText(r)) && /심|허혈|관상동맥/.test(rowText(r)) },
+    { k: "surgery", n: "수술비",           c: CATC.surgery, f: r => r.cat === "surgery", range: true },
+    { k: "care",   n: "치매·간병",         c: CATC.care,    f: r => r.cat === "care" }
+  ];
+}
+/* 수술비처럼 1종~5종으로 갈리는 담보 — 제일 적게 주는 값과 제일 많이 주는 값 */
+function tierRange(rows, fin) {
+  let lo = 0, hi = 0, n = 0;
+  rows.forEach(r => {
+    const parts = (fin ? (r.ok.parts || []).concat(r.wk.parts || []) : (r.o.parts || []));
+    parts.forEach(({ it }) => {
+      n++;
+      const cp = covParts(fin && isCut(it) ? scaleCov(it.cov, cutRatio(it)) : it.cov);
+      let vals;
+      if (cp && cp.nums.length) {
+        const mul = cp.unit === "억" ? 100000000 : cp.unit === "만" ? 10000 : 1;
+        vals = cp.nums.map(x => x * mul);
+      } else {
+        const a = fin ? effAmt(it) : baseAmt(it);
+        vals = a ? [a] : [];
+      }
+      vals.forEach(v => { if (!lo || v < lo) lo = v; if (v > hi) hi = v; });
+    });
+  });
+  return { lo, hi, n };
+}
+/* 보장 구성 비교 — 가로 막대, 묶음마다 현재와 최종을 같은 자로 잰다 */
 function viewPie(rs) {
   const basis = VIEW.pieBy === "fee" ? "fee" : "amt";
-  const gs = groupByCat(rs);
-  if (!gs.length) return "";
-  const pick = (g, fin) => g.rows.reduce((a, r) =>
-    a + (basis === "fee" ? (fin ? r.finFee : r.nowFee) : (fin ? r.finAmt : r.nowAmt)), 0);
-  const now = gs.map(g => ({ k: g.key, n: g.name, c: g.color, v: pick(g, false) })).filter(x => x.v > 0);
-  const fin = gs.map(g => ({ k: g.key, n: g.name, c: g.color, v: pick(g, true) })).filter(x => x.v > 0);
-  const tn = now.reduce((a, x) => a + x.v, 0), tf = fin.reduce((a, x) => a + x.v, 0);
-  if (!tn && !tf) return "";
+  const val = (r, fin) => basis === "fee" ? (fin ? r.finFee : r.nowFee) : (fin ? r.finAmt : r.nowAmt);
   const f = v => basis === "fee" ? won(v) + "원" : manwon(v) + "원";
-  const all = {};
-  now.forEach(x => { all[x.k] = all[x.k] || { n: x.n, c: x.c, a: 0, b: 0 }; all[x.k].a = x.v; });
-  fin.forEach(x => { all[x.k] = all[x.k] || { n: x.n, c: x.c, a: 0, b: 0 }; all[x.k].b = x.v; });
-  const keys = CATS.map(c => c[0]).filter(k => all[k]);
-
+  const defs = barDefs().map(d => {
+    const list = rs.filter(r => barHas(d, r));
+    const o = Object.assign({}, d, {
+      a: list.reduce((x, r) => x + val(r, false), 0),
+      b: list.reduce((x, r) => x + val(r, true), 0),
+      rows: list
+    });
+    if (d.range && basis === "amt" && list.length) {
+      const A = tierRange(list, false), B = tierRange(list, true);
+      o.rngA = A; o.rngB = B;
+      o.a = A.hi; o.b = B.hi;                 /* 막대는 제일 많이 주는 값으로 */
+    }
+    return o;
+  }).filter(d => d.a > 0 || d.b > 0);
+  if (!defs.length) return "";
+  /* 보장금액은 정해 둔 기준 금액이 꽉 찬 것, 보험료는 가장 큰 것을 기준으로 */
+  const max = defs.reduce((m, d) => Math.max(m, d.a, d.b), 0) || 1;
+  const pct = (v, d) => {
+    const base = basis === "amt" ? barGoal(d.k) : max;
+    return Math.max(v > 0 ? 1.5 : 0, Math.min(100, v / (base || 1) * 100));
+  };
+  const full = (v, d) => basis === "amt" && v >= barGoal(d.k);
   const shut = !!(VIEW.cfold && VIEW.cfold.pie);
+  const rngTxt = (R, nRows) => {
+    if (!R || !R.hi) return "—";
+    const t = (R.lo && R.lo !== R.hi) ? manwon(R.lo) + " ~ " + manwon(R.hi) + "원" : manwon(R.hi) + "원";
+    return t + (nRows > 1 ? ' <span class="plusa" title="수술비 담보가 여러 가지라 한 번에 다 받는 금액이 아닙니다">+α</span>' : '');
+  };
+
   return '<div class="card"><div class="hd pb">' +
-      '<h2 data-cfold="pie" style="cursor:pointer;flex:1"><span class="fold">' + (shut ? "▸" : "▾") + '</span>보장 구성 한눈에</h2>' +
-      (shut ? '<span class="tiny muted b">' + gs.length + '개 분류</span>' :
+      '<h2 data-cfold="pie" style="cursor:pointer;flex:1"><span class="fold">' + (shut ? "▸" : "▾") + '</span>막대그래프</h2>' +
+      (shut ? '<span class="tiny muted b">' + defs.length + '개 묶음</span>' :
       '<div class="miniseg" style="width:auto;flex:none">' +
         '<button data-pieby="amt" class="' + (basis === "amt" ? "on" : "") + '" style="padding:5px 10px">보장금액</button>' +
         '<button data-pieby="fee" class="' + (basis === "fee" ? "on" : "") + '" style="padding:5px 10px">보험료</button>' +
       '</div>') + '</div>' +
     (shut ? '' :
-    '<div class="bd" style="padding-top:2px">' +
-      '<div class="pie">' +
-        '<svg viewBox="0 0 200 200" class="piesvg">' +
-          ringSegs(100, 100, 78, 21, fin, false) +
-          ringSegs(100, 100, 50, 19, now, true) +
-          '<text x="100" y="94" text-anchor="middle" class="pt1">' + (basis === "fee" ? "월 보험료" : "보장 합계") + '</text>' +
-          '<text x="100" y="112" text-anchor="middle" class="pt2">' + f(tf) + '</text>' +
-        '</svg>' +
-        '<div class="pielg">' + keys.map(k => {
-          const x = all[k];
-          const pf = tf ? Math.round(x.b / tf * 100) : 0;
-          const pn = tn ? Math.round(x.a / tn * 100) : 0;
-          const d = x.b - x.a;
-          return '<div class="lgrow">' +
-            '<i style="background:' + x.c + '"></i>' +
-            '<span class="lgn">' + esc(x.n) + '</span>' +
-            '<span class="lgp num">' + pf + '%</span>' +
-            '<span class="lgv num">' + f(x.b) + '</span>' +
-            '<span class="lgd num ' + (d > 0 ? "c-up" : d < 0 ? "c-down" : "muted") + '">' +
-              (d ? (d > 0 ? "▲" : "▼") + (pf - pn ? Math.abs(pf - pn) + "%p" : f(Math.abs(d))) : "—") + '</span>' +
-          '</div>';
-        }).join("") + '</div>' +
-      '</div>' +
-      '<p class="tiny muted" style="margin:10px 0 0;line-height:1.7">' +
-        '<b>바깥 고리</b>가 정리한 뒤, <b>안쪽 흐린 고리</b>가 지금입니다. ' +
-        (basis === "amt"
-          ? '보장금액을 다 더한 값이 아니라 <b>어느 쪽에 치우쳐 있는지</b> 보는 그림입니다 — 한 사람이 모든 보장을 동시에 받지는 않습니다.'
-          : '<b>내 보험료가 어디로 가고 있는지</b> 보여 줍니다. 비중이 큰 곳부터 손보면 보험료가 크게 줄어듭니다.') +
-      '</p>' +
+    '<div class="bd" style="padding-top:4px">' +
+      '<div class="bars">' + defs.map(d => {
+        const dd = d.b - d.a;
+        const rng = d.rngA || d.rngB;
+        return '<div class="bgrp' + (d.sub ? ' sub' : '') + '" data-bar="' + esc(d.k) + '" title="눌러서 무엇이 들어갔는지 보기">' +
+          '<div class="bhd">' +
+            '<span class="cdot" style="background:' + d.c + '"></span>' +
+            '<span class="bnm">' + esc(d.n) +
+              (basis === "amt" ? '<span class="goal' + (barGoalOwn(d.k) ? ' own' : '') + '">/ ' +
+                manwon(barGoal(d.k)) + '원' + (barGoalOwn(d.k) ? ' ✎' : '') + '</span>' : '') + '</span>' +
+            '<span class="bch num ' + (dd > 0 ? "c-up" : dd < 0 ? "c-down" : "muted") + '">' +
+              (dd ? (dd > 0 ? "▲" : "▼") + f(Math.abs(dd)) : "그대로") + '</span>' +
+          '</div>' +
+          (rng ? '<div class="rngline">' +
+              '<span>현재 <b>' + rngTxt(d.rngA, d.rows.length) + '</b></span>' +
+              '<span>최종 <b>' + rngTxt(d.rngB, d.rows.length) + '</b></span>' +
+            '</div>' : '') +
+          '<div class="brow"><span class="blab">현재</span>' +
+            '<span class="btrk"><i style="width:' + pct(d.a, d).toFixed(1) + '%;background:' + catBg2(d.c, .45) + '"></i></span>' +
+            '<span class="bval num">' + (d.a ? f(d.a) : "—") + (full(d.a, d) ? ' <span class="fullmk">✓</span>' : '') + '</span></div>' +
+          '<div class="brow"><span class="blab b">최종</span>' +
+            '<span class="btrk"><i style="width:' + pct(d.b, d).toFixed(1) + '%;background:' + d.c + '"></i></span>' +
+            '<span class="bval num b">' + (d.b ? f(d.b) : "—") + (full(d.b, d) ? ' <span class="fullmk">✓</span>' : '') + '</span></div>' +
+        '</div>';
+      }).join("") + '</div>' +
     '</div>') + '</div>';
 }
 
+/* 막대 하나에 무엇이 들어갔는지 보여 주고, 그 자리에서 고치게 한다 */
+function barMenu(k) {
+  const d = barDefs().find(x => x.k === k); if (!d) return;
+  const basis = VIEW.pieBy === "fee" ? "fee" : "amt";
+  const f = v => basis === "fee" ? won(v) + "원" : manwon(v) + "원";
+  const vOf = (it, p, fin) => basis === "fee"
+    ? (fin ? itemFee(p, it) : itemFeeRaw(p, it))
+    : (fin ? effAmt(it) : baseAmt(it));
+
+  const build = () => {
+    const rs = withPick(() => compareRows(buildRows()));
+    const inn = rs.filter(r => barHas(d, r)).sort(barSort);
+    const out = rs.filter(r => !barHas(d, r)).sort(barSort);
+    let A = 0, B = 0, body = '';
+
+    const itemLines = r => {
+      let lines = '', rowA = 0, rowB = 0;
+      withPick(() => prods()).forEach(p => (r.b.cells[p.id] || []).filter(isOn).forEach(it => {
+        const old = (p.side || "old") === "old", kept = isKept(it);
+        const a = old ? vOf(it, p, false) : 0, b2 = kept ? vOf(it, p, true) : 0;
+        rowA += a; rowB += b2;
+        lines += '<div class="brkrow' + (kept ? '' : ' off') + '">' +
+          '<span class="bk1">' +
+            (insTag(p) ? '<span class="ins" style="background:' + esc(p.color || "#7fa9e8") + '">' + esc(insTag(p)) + '</span>' : '') +
+            '<span style="color:' + esc(p.color || "#7fa9e8") + ';font-weight:800">' + esc(p.name) + '</span>' +
+            '<span class="sub2">' + esc(bareName(it.name)) + (it.cov ? ' · ' + esc(String(it.cov)) : '') + '</span>' +
+          '</span>' +
+          '<span class="bk2 num">' + (old ? f(a) : '<span class="muted">신규</span>') + '</span>' +
+          '<span class="bk3 num b">' + (kept ? f(b2) : '<span class="c-down">빠짐</span>') + '</span>' +
+        '</div>';
+      }));
+      return { lines, rowA, rowB };
+    };
+
+    if (basis === "amt")
+      body += '<div class="card" style="margin:0 0 10px;border-color:var(--accent)"><div class="bd" style="padding:9px 11px">' +
+        '<div class="row" style="gap:8px;align-items:center">' +
+          '<span class="sm b" style="flex:none">막대가 꽉 차는 기준</span>' +
+          '<input class="inp num" id="bkGoal" inputmode="numeric" style="flex:1;min-width:0;text-align:right" value="' +
+            comma(Math.round(barGoal(d.k) / 10000)) + '">' +
+          '<span class="sm b" style="flex:none">만원</span>' +
+        '</div>' +
+        '<p class="tiny muted" style="margin:6px 0 0;line-height:1.6">이 금액에 닿으면 막대가 가득 찹니다. ' +
+          (barGoalOwn(d.k)
+            ? '지금은 <b class="c-warn">' + esc(cust() ? cust().name : "") + ' 고객님만</b> 따로 정해 둔 값입니다 ' +
+              '(기본 ' + manwon(barGoalBase(d.k)) + '원). <a href="#" id="bkGoalReset">기본으로</a>'
+            : '고치면 <b>이 고객에게만</b> 적용되고, 다른 고객은 기본값을 그대로 씁니다.') + '</p>' +
+      '</div></div>';
+    body += '<div class="hd pb" style="padding:0 0 6px"><h2>이 막대에 든 담보 ' + inn.length + '개</h2>' +
+      (barEdited(d.k) ? '<button class="btn sm gho" id="bkAuto">자동으로 되돌리기</button>' : '') + '</div>';
+    if (!inn.length) body += '<div class="empty">아무것도 안 들어 있습니다. 아래에서 골라 넣으세요.</div>';
+    inn.forEach(r => {
+      const x = itemLines(r);
+      A += x.rowA; B += x.rowB;
+      body += '<div class="card" style="margin:0 0 8px"><div class="bd" style="padding:9px 11px">' +
+        '<div class="row" style="gap:7px;align-items:baseline;margin-bottom:4px">' +
+          '<input type="checkbox" data-bpick="' + esc(r.b.key) + '" checked' +
+            ' style="width:19px;height:19px;accent-color:var(--accent);flex:none">' +
+          '<span class="cdot" style="background:' + (CATC[r.cat] || "#96a1ac") + '"></span>' +
+          '<span class="sm b grow">' + esc(bareName(r.b.label)) + '</span>' +
+          '<span class="tiny muted num">' + f(x.rowA) + ' → </span><span class="sm b num">' + f(x.rowB) + '</span>' +
+        '</div>' + x.lines + '</div></div>';
+    });
+
+    if (d.range && basis === "amt" && inn.length) {
+      const RA = tierRange(inn, false), RB = tierRange(inn, true);
+      body += '<div class="card" style="margin:0 0 8px;border-color:var(--accent)"><div class="bd" style="padding:9px 11px">' +
+        '<div class="tiny muted b" style="margin-bottom:3px">막대에 쓴 값 — 종별로 갈려서 더하지 않습니다</div>' +
+        '<div class="sm">현재 <b>' + (RA.lo && RA.lo !== RA.hi ? manwon(RA.lo) + " ~ " : "") + manwon(RA.hi) + '원</b>' +
+        ' · 최종 <b>' + (RB.lo && RB.lo !== RB.hi ? manwon(RB.lo) + " ~ " : "") + manwon(RB.hi) + '원</b></div>' +
+      '</div></div>';
+    }
+
+    body += '<div class="hd pb" style="padding:8px 0 6px"><h2>더 넣을 담보</h2>' +
+      '<span class="tiny muted">체크하면 이 막대에 더해집니다</span></div>' +
+      '<div class="card" style="margin:0">' +
+      (out.length ? out.map(r => {
+        const x = itemLines(r);
+        return '<div class="prod plan" style="padding:8px 11px;gap:8px">' +
+          '<input type="checkbox" data-bpick="' + esc(r.b.key) + '"' +
+            ' style="width:19px;height:19px;accent-color:var(--accent);flex:none">' +
+          '<span class="cdot" style="background:' + (CATC[r.cat] || "#96a1ac") + '"></span>' +
+          '<span class="grow sm b" style="min-width:0">' + esc(bareName(r.b.label)) +
+            '<span class="sub2 tiny muted" style="display:block;font-weight:600">' + esc(CATN[r.cat] || "") + '</span></span>' +
+          '<span class="tiny muted num" style="flex:none">' + f(x.rowA) + ' → </span>' +
+          '<span class="sm b num" style="flex:none">' + f(x.rowB) + '</span>' +
+        '</div>';
+      }).join("") : '<div class="empty">더 넣을 담보가 없습니다.</div>') +
+      '</div>';
+
+    const hi = (fin) => (d.range && basis === "amt" && inn.length) ? manwon(tierRange(inn, fin).hi) : f(fin ? B : A);
+    return '<div class="stat" style="margin-bottom:10px">' +
+        '<div><b class="num">' + hi(false) + '</b><span>현재</span></div>' +
+        '<div><b class="num b">' + hi(true) + '</b><span>최종</span></div>' +
+        '<div><b class="num">' + inn.length + '</b><span>담보 줄</span></div>' +
+      '</div>' + body +
+      '<p class="tiny muted" style="margin:9px 0 0;line-height:1.7">' +
+        '<b>현재</b>는 지금 가지고 계신 <b>기존 보험</b>만, <b>최종</b>은 유지·가입하기로 <b>체크한 것</b>만 더한 값입니다. ' +
+        '여기서 고친 구성은 <b>이 고객에게만</b> 적용되고 그대로 기억합니다.</p>';
+  };
+
+  modal({
+    title: d.n, wide: true,
+    body: '<div id="bkBody"></div>',
+    foot: '<button class="btn pri wide" id="bkOk">닫기</button>',
+    onClose() { render(); },
+    onOpen(el, close) {
+      const draw = () => {
+        $("#bkBody", el).innerHTML = build();
+        $$("[data-bpick]", el).forEach(x => x.onchange = () => {
+          setBarPick(d.k, x.dataset.bpick, x.checked);
+          render(); draw();
+        });
+        const g = $("#bkGoal", el);
+        if (g) {
+          liveComma(g);
+          g.onchange = () => {
+            const man = +String(g.value).replace(/[^\d]/g, "") || 0;
+            setBarGoal(d.k, man * 10000); render(); draw();
+          };
+          g.onkeydown = e => { if (e.key === "Enter") g.blur(); };
+          const gr = $("#bkGoalReset", el);
+          if (gr) gr.onclick = e2 => { e2.preventDefault(); clearBarGoal(d.k); render(); draw(); toast("기본값으로 돌렸습니다"); };
+        }
+        const au = $("#bkAuto", el);
+        if (au) au.onclick = () => { resetBarPick(d.k); render(); draw(); toast("자동으로 되돌렸습니다"); };
+      };
+      draw();
+      $("#bkOk", el).onclick = close;
+    }
+  });
+}
 function arrow(k) {
   return k === "up" ? '<span class="arrow c-up">▲</span>' : k === "down" ? '<span class="arrow c-down">▼</span>' : "";
 }
@@ -2113,6 +2630,37 @@ const COLS = [
   ["unit",   "1,000만원당", "1,000만원당"]
 ];
 const PICKCOLS = COLS;
+let PAIRNM = null;                 /* 두 보험을 맞대 볼 때 [왼쪽이름, 오른쪽이름] */
+function shortNm(p) {
+  if (!p) return "";
+  const t = insTag(p);
+  let n = String(p.name || "").trim();
+  const ins = String(p.insurer || "").trim();
+  const first = n.split(/\s+/)[0] || "";
+  /* "교보 마이플랜건강보험" + 보험사 "교보생명" → 앞의 "교보"는 떼고 교 뱃지로 */
+  if (first && ins && (ins.indexOf(first) === 0 || first.indexOf(ins.slice(0, 2)) === 0))
+    n = n.slice(first.length).trim() || n;
+  if (n.length > 6) n = n.slice(0, 6) + "…";
+  return (t ? t + " " : "") + (n || p.name || "보험");
+}
+function colName(c) {
+  const fin = VIEW.mode !== "side";
+  if (fin || !PAIRNM) return fin ? c[1] : c[2];
+  const A = PAIRNM[0], B = PAIRNM[1];
+  return c[0] === "nowAmt" ? A + " 보장" : c[0] === "finAmt" ? B + " 보장"
+    : c[0] === "nowFee" ? A + " 보험료" : c[0] === "finFee" ? B + " 보험료"
+    : c[0] === "diff" ? "보장 차이" : c[2];
+}
+/* 어느 열을 숨겼는지 그대로 기억한다 */
+function saveCols() {
+  D.settings.cols = Object.assign({}, VIEW.cols);
+  D.settings.tcols = Object.assign({}, VIEW.tcols);
+  save();
+}
+function loadCols() {
+  if (D.settings && D.settings.cols) VIEW.cols = Object.assign({}, D.settings.cols);
+  if (D.settings && D.settings.tcols) VIEW.tcols = Object.assign({}, D.settings.tcols);
+}
 function colOn(k) {
   if (!VIEW.cols) VIEW.cols = {};
   if (k === "unit") return VIEW.cols.unit === true;   /* 1,000만원당은 기본으로 감춘다 */
@@ -2126,6 +2674,11 @@ function mark(a, b, fee, big) {
   const good = fee ? !up : up;
   return '<span class="mk ' + (good ? "c-up" : "c-down") + (big ? " big" : "") + '">' + (up ? "▲" : "▼") + '</span>';
 }
+/* 분류가 전부 접혀 있는가 */
+function allFolded(rs) {
+  const gs = groupByCat(rs);
+  return gs.length > 0 && gs.every(g => VIEW.fold && VIEW.fold[g.key]);
+}
 function cmpTable(rs, forPrint) {
   const fin = VIEW.mode !== "side";
   const dash = '<span class="dash">—</span>';
@@ -2135,10 +2688,13 @@ function cmpTable(rs, forPrint) {
 
   let h = '<table class="cmp main"><thead><tr>' +
     (forPrint ? '' : '<th style="width:26px"></th>') +
-    '<th style="min-width:150px">담보</th>' +
+    (forPrint ? '<th style="min-width:150px">담보</th>'
+      : '<th style="min-width:150px">' +
+        '<span class="fold subfold" data-subfold title="소계까지 통째로 숨기기">' + (VIEW.hideSum ? "▸" : "▾") + '</span>' +
+        '<span class="foldtx" data-foldall="' + (allFolded(rs) ? "0" : "1") + '" title="눌러서 담보 접기·펴기">담보</span></th>') +
     use.map(c => '<th class="n' + (forPrint ? '' : ' hid') + '"' +
       (forPrint ? '' : ' data-hide="' + c[0] + '" title="눌러서 숨기기"') + '>' +
-      (fin ? c[1] : c[2]) + (forPrint ? '' : '<span class="x">×</span>') + '</th>').join("") +
+      colName(c) + '</th>').join("") +
     '</tr></thead><tbody>';
 
   const cell = (r, k) => {
@@ -2207,7 +2763,7 @@ function cmpTable(rs, forPrint) {
     if (ov && ov.now != null) a1 = ov.now;
     if (ov && ov.fin != null) a2 = ov.fin;
     const f1 = fin ? x.nowFee : x.oFee, f2 = fin ? x.finFee : x.nFee;
-    const st = col ? 'background:' + catBg2(col, .2) + ';border-top:2.5px solid ' + col + ';color:' + col + ';' : '';
+    const st = col ? 'background:' + tintBg(col, 1.1) + ';border-top:2.5px solid ' + col + ';color:' + col + ';' : '';
     const td = (cls, inner) => '<td class="' + cls + '"' + (st ? ' style="' + st + '"' : '') + '>' + inner + '</td>';
     const dA = Math.round(a2 - a1), dF = Math.round(f2 - f1);
     const paren = t => ' <span class="paren">(' + t + ')</span>';
@@ -2234,7 +2790,7 @@ function cmpTable(rs, forPrint) {
         '<span class="cdot" style="background:' + g.color + '"></span>' + esc(g.name) +
         '<span class="cnt">' + g.rows.length + '개' + (shut ? " · 접힘" : "") + '</span></td></tr>';
       if (!shut) g.rows.forEach(r => { h += line(r); });
-      if (g.rows.length > 1 || sumOver(g.key))
+      if (!VIEW.hideSum && (g.rows.length > 1 || sumOver(g.key)))
         h += sumRow(g, sumRows(g.rows), "csum", g.color);
       h += '<tr class="gap"><td colspan="' + span + '"></td></tr>';
     });
@@ -2247,83 +2803,131 @@ function cmpTable(rs, forPrint) {
 }
 
 /* ---------------- 설정 ---------------- */
+/* 설정 화면의 접는 상자 */
+function setCard(key, title, right, inner, openByDefault) {
+  const shut = VIEW.sfold && VIEW.sfold[key] != null ? VIEW.sfold[key] : !openByDefault;
+  return '<div class="card"><div class="hd pb">' +
+      '<h2 data-sfold="' + key + '" style="cursor:pointer;flex:1"><span class="fold">' + (shut ? "▸" : "▾") + '</span>' + esc(title) + '</h2>' +
+      (right || '') + '</div>' +
+    (shut ? '' : inner) + '</div>';
+}
 function viewSet() {
   const c = cust();
   const row = (x, sub) => {
     const fee = (x.prods || []).reduce((a, p) => a + (p.items || []).filter(i => i.on !== false && i.keep !== false)
       .reduce((b, i) => b + (+i.premium || 0), 0), 0);
-    return '<div class="prod"' + (x.id === D.cur ? ' style="background:var(--accent-soft)"' : '') + '>' +
-      (sub ? '<div style="width:14px;flex:none;text-align:center;color:var(--tx3);font-weight:900">↳</div>' : '') +
-      '<div class="ic" style="background:' + (x.id === D.cur ? "var(--accent)" : x.tag ? "var(--ok)" : "var(--tx3)") + '">' +
-        esc((x.tag ? "가입" : x.name.slice(0, 2))) + '</div>' +
-      '<div class="grow" style="min-width:0">' +
-        '<div class="b ell">' + esc(x.name) + (x.tag ? ' <span class="tag add">' + esc(x.tag) + '</span>' : '') + '</div>' +
-        '<div class="tiny muted">상품 ' + (x.prods || []).length + '개 · 담보 ' +
-          (x.prods || []).reduce((a, p) => a + (p.items || []).filter(isOn).length, 0) + '개' +
-          (fee ? ' · 월 ' + won(fee) + '원' : '') + (x.memo ? ' · ' + esc(x.memo) : '') + '</div>' +
-        '<div class="tiny num" style="color:var(--accent);font-weight:800">' +
-          (x.tag ? '정리 ' : '마지막 분석 ') +
-          (x.updated ? dayStr(x.updated) + ' <span class="muted">(' + ago(x.updated) + ')</span>'
-                     : '<span class="muted">아직 분석 전</span>') + '</div></div>' +
-      '<button class="btn sm gho" data-editcust="' + x.id + '" style="flex:none">✏️</button>' +
-      '<button class="btn sm gho" data-usecust="' + x.id + '">' + (x.id === D.cur ? "사용 중" : "열기") + '</button>' +
-      '<button class="btn sm gho dan" data-delcust="' + x.id + '">삭제</button>' +
+    const here = x.id === D.cur;
+    /* 두 줄로 끝낸다 — 윗줄은 이름과 단추, 아랫줄은 숫자와 날짜 */
+    return '<div class="crow' + (here ? ' on' : '') + '">' +
+      '<div class="row" style="gap:6px;align-items:center">' +
+        (sub ? '<div style="width:11px;flex:none;text-align:center;color:var(--tx3);font-weight:900">↳</div>' : '') +
+        '<span class="cdot chit" data-hidecust="' + x.id + '" style="flex:none;background:' +
+          (x.hide ? "var(--tx3)" : here ? "var(--accent)" : x.tag ? "var(--ok)" : "var(--tx2)") +
+          '" title="눌러서 숨기기·다시 보이기"></span>' +
+        '<span class="b ell cname' + (x.hide ? ' off' : '') + '" data-editcust="' + x.id + '" ' +
+          'style="min-width:0;flex:1" title="눌러서 이름 고치기">' + esc(x.name) +
+          (x.tag ? ' <span class="tag add">' + esc(x.tag) + '</span>' : '') +
+          (here ? ' <span class="pill new">보는 중</span>' : '') + '</span>' +
+        '<button class="lnk" data-memocust="' + x.id + '" title="메모">✏️</button>' +
+        (here ? '' : '<button class="btn sm pri cmini" data-usecust="' + x.id + '">열기</button>') +
+        '<button class="btn sm gho dan cmini" data-delcust="' + x.id + '">삭제</button>' +
+      '</div>' +
+      '<div class="row tiny" style="gap:6px;margin-top:3px;align-items:baseline">' +
+        (sub ? '<div style="width:11px;flex:none"></div>' : '') +
+        '<span style="width:8px;flex:none"></span>' +
+        '<span class="muted ell grow" style="min-width:0">상품 ' + (x.prods || []).length + ' · 담보 ' +
+          (x.prods || []).reduce((a, p) => a + (p.items || []).filter(isOn).length, 0) +
+          (fee ? ' · 월 ' + won(fee) + '원' : '') + (x.memo ? ' · ' + esc(x.memo) : '') + '</span>' +
+        '<span class="num" style="flex:none;color:var(--accent);font-weight:800">' +
+          (x.updated ? (x.tag ? '정리 ' : '') + dayStr(x.updated) : '<span class="muted">분석 전</span>') + '</span>' +
+      '</div>' +
     '</div>';
   };
-  const G = custGroups();
-  let h = '<div class="card"><div class="hd pb"><h2>고객</h2><button class="btn sm" data-newcust>+ 고객 추가</button></div>' +
-    (D.custs.length ? G.map(g => {
-      const main = g.list.find(x => !x.tag) || g.list[0];
-      const subs = g.list.filter(x => x !== main);
+
+  /* ---- 고객 ---- */
+  const qq = String(VIEW.custQ || "").trim().toLowerCase();
+  const hitQ = x => !qq || (x.name + " " + (x.tag || "") + " " + (x.memo || "")).toLowerCase().indexOf(qq) >= 0;
+  const G = custGroups().map(g => ({ list: g.list }))
+    .filter(g => g.list.some(hitQ))
+    .filter(g => VIEW.custHid || g.list.some(x => !x.hide));
+  const nHid = D.custs.filter(x => x.hide).length;
+  let body =
+    '<div class="bd" style="padding:0 14px 8px">' +
+      '<input class="inp" data-custq value="' + esc(VIEW.custQ || "") + '" placeholder="🔍 고객 이름·메모로 찾기">' +
+      '<p class="tiny muted" style="margin:6px 0 0">앞의 <b>점</b>은 숨기기, <b>이름</b>은 이름 고치기, <b>✏️</b>는 메모입니다.</p>' +
+      (nHid ? '<label class="tog" style="border:0;padding:7px 0 0"><input type="checkbox" data-custhid' +
+        (VIEW.custHid ? " checked" : "") + '><span class="grow sm">숨긴 고객 ' + nHid + '명도 보기</span></label>' : '') +
+    '</div>' +
+    (G.length ? G.map(g => {
+      const list = g.list.filter(x => VIEW.custHid || !x.hide);
+      const main = list.find(x => !x.tag) || list[0];
+      if (!main) return '';
+      const subs = list.filter(x => x !== main);
       return row(main, false) + subs.map(x => row(x, true)).join("") +
         (subs.length ? '<div class="tiny muted" style="padding:2px 14px 9px 40px;line-height:1.6">' +
-          '같은 고객의 기록 ' + g.list.length + '개 — 위가 분석 당시, 아래가 정리한 뒤입니다.</div>' : '');
-    }).join('<div style="height:8px"></div>') : '<div class="empty">등록된 고객이 없습니다.</div>') +
-  '</div>';
+          '같은 고객의 기록 ' + list.length + '개 — 위가 분석 당시, 아래가 정리한 뒤입니다.</div>' : '');
+    }).join('<div style="height:8px"></div>')
+      : '<div class="empty">' + (qq ? '“' + esc(VIEW.custQ) + '” 에 맞는 고객이 없습니다.' : '등록된 고객이 없습니다.') + '</div>');
+  let h = setCard("cust", "고객 " + D.custs.length + "명",
+    '<button class="btn sm" data-newcust>+ 고객 추가</button>', body, true);
 
-  h += '<div class="card"><div class="hd"><h2>고객용 PDF에 넣을 정보</h2></div><div class="bd">' +
-    '<div class="field"><label>설계사 이름</label><input id="sAgent" class="inp" value="' + esc(D.settings.agent || "") + '" placeholder="예: 홍길동 설계사"></div>' +
-    '<div class="field"><label>소속</label><input id="sOffice" class="inp" value="' + esc(D.settings.office || "") + '" placeholder="예: ○○보험대리점"></div>' +
-    '<div class="field" style="margin:0"><label>연락처</label><input id="sTel" class="inp" value="' + esc(D.settings.tel || "") + '" placeholder="010-0000-0000"></div>' +
-  '</div></div>';
+  /* ---- 내보내기 · 기록 ---- */
+  h += setCard("out", "내보내기",
+    (c ? '<span class="tiny muted b">' + esc(c.name) + '</span>' : ''),
+    '<div class="bd">' +
+      (c ? '<div class="two">' +
+        '<button class="btn grow" data-excel>📊 스프레드시트</button>' +
+        '<button class="btn pri grow" data-pdf>📄 고객용 PDF</button>' +
+      '</div>' +
+      '<button class="btn wide" data-savefinal style="margin-top:10px">✅ 이 최종안대로 가입 기록 만들기</button>' +
+      '<p class="tiny muted" style="margin:9px 0 0;line-height:1.7">실제로 이대로 정리하셨다면 누르세요. ' +
+        '<b>유지한 기존 담보 + 새로 넣은 담보</b>만 모아 <b>' + esc(c.name) + ' (보장분석대로 가입)</b> 기록을 새로 만듭니다.</p>'
+       : '<div class="empty">고객을 먼저 고르세요.</div>') +
+    '</div>', false);
 
-  const dn = Object.keys(D.dict).length;
-  h += '<div class="card"><div class="hd"><h2>담보 짝 사전</h2></div><div class="bd">' +
-    '<p class="tiny muted" style="margin:0 0 10px;line-height:1.6">비교표에서 손으로 합친 담보 짝을 기억해 둡니다. 다음에 같은 상품을 넣으면 알아서 같은 줄에 놓습니다. 지금 <b>' + dn + '쌍</b>을 기억하고 있습니다.</p>' +
-    '<button class="btn wide dan gho" data-cleardict>사전 비우기</button>' +
-  '</div></div>';
+  /* ---- 담보 분류·순서 ---- */
+  h += setCard("cat", "보장 분류", '',
+    '<div class="bd">' +
+      '<button class="btn wide pri" data-catfix>✏️ 분류 옮기기 · 순서 바꾸기</button>' +
+      '<p class="tiny muted" style="margin:7px 0 0;line-height:1.6">담보를 끌어서 차례를 바꾸고, 분류도 함께 고칩니다. ' +
+        '정해 둔 차례는 <b>다음에도 그대로</b> 나옵니다.</p>' +
+      '<div class="row" style="gap:8px;margin:12px 0">' +
+        '<span class="tiny muted b" style="flex:none">색 진하기</span>' +
+        '<input type="range" id="stTint" min="0" max="60" value="' + Math.round((D.settings.tint || 0) * 100) + '" style="flex:1;accent-color:var(--accent)">' +
+        '<span class="tiny muted b num" id="stTintV" style="flex:none;width:36px;text-align:right">' + Math.round((D.settings.tint || 0) * 100) + '%</span>' +
+      '</div>' +
+      '<div style="border:1px solid var(--line);border-radius:10px;overflow:hidden">' +
+        CATS.map(x => '<div class="row" style="padding:7px 11px;gap:7px;background:' + catBg(x[0]) + ';border-bottom:1px solid var(--line)">' +
+          '<span class="cdot" style="background:' + x[2] + '"></span>' +
+          '<span class="sm b grow">' + esc(x[1]) + '</span>' +
+          '<span class="tiny muted">' + (CATI[x[0]] + 1) + '번째</span></div>').join("") +
+      '</div>' +
+      '<p class="tiny muted" style="margin:9px 0 0;line-height:1.6">위에서 아래 차례로 표에 나옵니다. <b>0%</b>로 두면 색을 쓰지 않습니다.</p>' +
+    '</div>', false);
 
-  /* 보장 분류 색 */
-  h += '<div class="card"><div class="hd"><h2>보장 분류 색</h2></div><div class="bd">' +
-    '<p class="tiny muted" style="margin:0 0 10px;line-height:1.6">정리·비교 화면에서 담보를 분류별로 색을 입혀 보여줍니다. ' +
-      '색이 진해서 눈이 아프면 아래에서 옅게 줄이세요. <b>0%</b>로 두면 색을 쓰지 않습니다.</p>' +
-    '<div class="row" style="gap:8px;margin-bottom:12px">' +
-      '<span class="tiny muted b" style="flex:none">색 진하기</span>' +
-      '<input type="range" id="stTint" min="0" max="60" value="' + Math.round((D.settings.tint || 0) * 100) + '" style="flex:1;accent-color:var(--accent)">' +
-      '<span class="tiny muted b num" id="stTintV" style="flex:none;width:36px;text-align:right">' + Math.round((D.settings.tint || 0) * 100) + '%</span>' +
-    '</div>' +
-    '<div style="border:1px solid var(--line);border-radius:10px;overflow:hidden">' +
-      CATS.map(c => '<div class="row" style="padding:7px 11px;gap:7px;background:' + catBg(c[0]) + ';border-bottom:1px solid var(--line)">' +
-        '<span class="cdot" style="background:' + c[2] + '"></span>' +
-        '<span class="sm b grow">' + esc(c[1]) + '</span>' +
-        '<span class="tiny muted">' + (CATI[c[0]] + 1) + '번째</span></div>').join("") +
-    '</div>' +
-    '<p class="tiny muted" style="margin:9px 0 0;line-height:1.6">위에서 아래 순서대로 표에 나옵니다. 담보가 엉뚱한 분류에 들어갔으면 ' +
-      '비교 화면의 <b>✏️ 분류 옮기기</b>에서 바꾸세요.</p>' +
-  '</div></div>';
-
-  h += '<div class="card"><div class="bd">' +
-    '<div class="seg">' + [["auto", "자동"], ["light", "라이트"], ["dark", "다크"]].map(([k, n]) =>
-      '<button data-theme="' + k + '" class="' + ((D.settings.theme || "auto") === k ? "on" : "") + '">' + n + '</button>').join("") + '</div>' +
-    '<div class="two" style="margin-top:10px">' +
-      '<button class="btn grow" data-backup>⬇ 백업</button>' +
-      '<button class="btn grow" data-restore>⬆ 복원</button>' +
-    '</div>' +
-    '<button class="btn wide" data-snap style="margin-top:8px">↩ 이전 날짜로 되돌리기 (' + snaps().length + '개 보관)</button>' +
-    '<p class="tiny muted" style="margin:8px 0 0;line-height:1.6">입력한 내용은 이 기기에 저장되며, 하루에 한 번씩 최근 7일치를 따로 보관합니다. 잘못 지웠을 때 되돌릴 수 있습니다.</p>' +
-    '<button class="btn wide" data-upd style="margin-top:8px">🔄 업데이트 확인</button>' +
-    '<p class="tiny muted" style="margin:10px 0 0;text-align:center">버전 ' + APP_VERSION + '</p>' +
-  '</div></div>';
+  /* ---- 화면 · 저장 ---- */
+  h += setCard("app", "화면과 저장", '<span class="tiny muted b">' + esc(APP_VERSION) + '</span>',
+    '<div class="bd">' +
+      '<div class="seg">' + [["auto", "자동"], ["light", "라이트"], ["dark", "다크"]].map(([k, n]) =>
+        '<button data-theme="' + k + '" class="' + ((D.settings.theme || "auto") === k ? "on" : "") + '">' + n + '</button>').join("") + '</div>' +
+      '<div class="card" style="margin:10px 0 0;border-color:var(--accent)"><div class="bd" style="padding:10px 11px">' +
+        '<div class="row" style="gap:8px;align-items:baseline">' +
+          '<div class="tiny muted b" style="flex:none">이 기기의 마지막 저장</div>' +
+          '<div class="grow num b" style="font-size:15px;text-align:right">' + timeStr(D.savedAt) + '</div>' +
+        '</div>' +
+        '<div class="tiny muted" style="margin-top:3px;text-align:right">' +
+          (D.savedAt ? gapStr(Date.now() - D.savedAt) + " 전" : "아직 저장한 적 없음") + '</div>' +
+        '<div class="field" style="margin:9px 0 0"><label>이 기기 이름</label>' +
+          '<input class="inp" data-devname value="' + esc(devName()) + '" placeholder="예: 아이폰 · 태블릿 · 사무실 컴퓨터"></div>' +
+      '</div></div>' +
+      '<div class="two" style="margin-top:10px">' +
+        '<button class="btn grow" data-backup>⬇ 백업</button>' +
+        '<button class="btn grow" data-restore>⬆ 복원</button>' +
+      '</div>' +
+      '<button class="btn wide" data-snap style="margin-top:8px">↩ 이전 날짜로 되돌리기 (' + snaps().length + '개 보관)</button>' +
+      '<button class="btn wide" data-upd style="margin-top:8px">🔄 업데이트 확인</button>' +
+      '<p class="tiny muted" style="margin:9px 0 0;line-height:1.6">입력한 내용은 이 기기에 저장되며, 하루에 한 번씩 최근 7일치를 따로 보관합니다.</p>' +
+    '</div>', false);
   return h;
 }
 
@@ -2591,11 +3195,17 @@ function openProd(id) {
     $("#opBody", el).innerHTML =
       '<div class="card" style="margin:0 0 12px"><div class="bd">' +
         '<div class="two">' +
+          '<div class="field"><label>상품명 (보험명)</label><input id="tpName" class="inp" value="' + esc(p.name || "") + '" placeholder="예: 교보 마이플랜건강보험"></div>' +
+          '<div class="field"><label>보험사</label><input id="tpIns" class="inp" value="' + esc(p.insurer || "") + '" placeholder="예: 교보생명"></div>' +
+        '</div>' +
+        '<div class="two">' +
           '<div class="field"><label>보험기간</label><input id="tpTerm" class="inp" value="' + esc(p.term || "") + '" placeholder="예: 20년 · 100세"></div>' +
           '<div class="field"><label>납입기간</label><input id="tpPay" class="inp" value="' + esc(p.payTerm || "") + '" placeholder="예: 20년 · 전기납"></div>' +
         '</div>' +
         '<div class="two">' +
-          '<div class="field"><label>가입일(계약일)</label><input id="tpStart" class="inp" type="date" value="' + esc(p.start || "") + '"></div>' +
+          '<div class="field"><label>가입일(계약일)</label>' +
+            '<input id="tpStart" class="inp num" inputmode="numeric" value="' + esc(p.start || "") + '" placeholder="2020-03-15">' +
+            '<p class="tiny muted" style="margin:4px 0 0">숫자만 쳐도 됩니다 — <b>20200315</b> · <b>2020.3.15</b></p></div>' +
           '<div class="field"><label>가입 당시 나이 (세 만기일 때)</label><input id="tpAge" class="inp" inputmode="numeric" value="' + (p.age || "") + '" placeholder="예: 42"></div>' +
         '</div>' +
         '<div class="two">' +
@@ -2673,8 +3283,24 @@ function openProd(id) {
         save(); draw(el);
       };
     };
-    bindF("tpTerm", "term"); bindF("tpPay", "payTerm"); bindF("tpStart", "start");
+    bindF("tpTerm", "term"); bindF("tpPay", "payTerm");
+    const st = $("#tpStart", el);
+    if (st) st.onchange = () => {
+      const v = normDate(st.value);
+      if (st.value.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(v)) toast("날짜를 못 읽었습니다 — 2020-03-15 처럼 적어주세요");
+      p.start = /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "";
+      save(); draw(el);
+    };
     bindF("tpAge", "age", true); bindF("tpTotal", "totalFee", true);
+    bindF("tpIns", "insurer");
+    const nmf = $("#tpName", el);
+    if (nmf) nmf.onchange = () => {
+      const v = nmf.value.trim();
+      if (!v) { toast("상품명을 적어주세요"); nmf.value = p.name || ""; return; }
+      p.name = v; save();
+      const tl = el.querySelector(".mh h3"); if (tl) tl.textContent = v;
+      draw(el);
+    };
     bindF("tpNote", "note"); bindF("tpRefund", "refund", true);
     const ks = $("#tpKind", el);
     if (ks) ks.onchange = () => { p.kind = ks.value; save(); draw(el); };
@@ -2903,7 +3529,8 @@ function offerFile(filename, data, mime, note) {
 }
 
 const ACTN = { keep: "유지", add: "추가", drop: "해지", swap: "교체(기존 해지→신규)", cut: "감액", up: "증액", same: "그대로" };
-function sheetRows() {
+function sheetRows() { return withPick(() => sheetRows_()); }
+function sheetRows_() {
   const rs = compareRows(buildRows());
   const t = totals(rs);
   const head = ["분류", "담보", "보험사", "갱신형", "현재 보장금액(표기)", "최종 보장금액(표기)",
@@ -2949,7 +3576,7 @@ function catSheet(rs) {
 /* 유지 · 해지 · 감액 결정 시트 */
 function planSheet() {
   const out = [["구분", "상품명", "담보", "갱신형", "가입금액", "보장금액(표기)", "계산용 보장금액", "감액 후", "설계서 보험료", "조정 후 보험료", "결정"]];
-  prods().forEach(p => {
+  pickedProds().forEach(p => {
     const side = (p.side || "old") === "old";
     (p.items || []).filter(isOn).forEach(it => {
       out.push([side ? "기존" : "신규", p.name, bareName(it.name), isRenew(it) ? "갱신형" : "",
@@ -2957,17 +3584,20 @@ function planSheet() {
         it.keep === false ? (side ? "해지" : "가입 안 함") : (side ? "유지" : "가입")]);
     });
   });
-  const nowFee = sideProds("old").reduce((a, p) => a + prodFeeRaw(p), 0);
-  out.push([], ["현재 내는 월 보험료", nowFee], ["유지하는 기존", keptFee("old")],
-    ["새로 넣는 신규", keptFee("neu")], ["최종 월 보험료", keptFee("old") + keptFee("neu")],
-    ["차액", keptFee("old") + keptFee("neu") - nowFee]);
+  const nowFee = pickedProds().filter(p => (p.side || "old") === "old").reduce((a, p) => a + prodFeeRaw(p), 0);
+  const kO = withPick(() => keptFee("old")), kN = withPick(() => keptFee("neu"));
+  out.push([], ["현재 내는 월 보험료", nowFee], ["유지하는 기존", kO],
+    ["새로 넣는 신규", kN], ["최종 월 보험료", kO + kN],
+    ["차액", kO + kN - nowFee]);
   return out;
 }
 async function doExcel() {
   const c = cust(); if (!c) return;
   const base = c.name + "_보장정리_" + todayISO();
-  const rs = compareRows(buildRows());
-  const t = totals(rs);
+  /* 체크를 끈 보험은 파일에도 안 들어간다 — 기다리는 구간이 있으니 미리 다 모아 둔다 */
+  const rs = withPick(() => compareRows(buildRows()));
+  const t = withPick(() => totals(rs));
+  const keepO = withPick(() => keptFee("old")), keepN = withPick(() => keptFee("neu"));
   const fin = VIEW.mode !== "side";
 
   let X;
@@ -3102,7 +3732,7 @@ async function doExcel() {
   const s2 = [["구분", "상품명", "보험사", "성격", "담보 수", "가져갈 담보", "보장 합계",
     "설계서 월보험료", "조정 후 월보험료", "가져갈 때 월보험료",
     "보험기간", "납입기간", "가입일", "총 납입보험료", "지금까지 낸 돈", "예상 해약환급금", "환급률", "앞으로 낼 돈", "상품 특징 메모"]];
-  prods().forEach(p => {
+  pickedProds().forEach(p => {
     const on = (p.items || []).filter(isOn);
     const x = prodTerm(p);
     s2.push([p.side === "old" ? "기존" : "신규", p.name, p.insurer || "", kindOf(p), on.length, on.filter(isKept).length,
@@ -3114,7 +3744,7 @@ async function doExcel() {
   });
   s2.push([], ["마지막 분석일", c.updated ? dayStr(c.updated) : ""],
     ["현재 내는 월 보험료", t.nowFee], ["최종 월 보험료", t.finFee], ["최종 차액", t.finFee - t.nowFee],
-    ["유지하는 기존", keptFee("old")], ["새로 넣는 신규", keptFee("neu")],
+    ["유지하는 기존", keepO], ["새로 넣는 신규", keepN],
     ["유지", t.act.keep], ["추가", t.act.add], ["해지", t.act.drop], ["교체", t.act.swap], ["감액", t.act.cut], ["증액", t.act.up]);
   const w2 = X.utils.aoa_to_sheet(s2);
   w2["!cols"] = [{ wch: 7 }, { wch: 28 }, { wch: 12 }, { wch: 9 }, { wch: 8 }, { wch: 10 }, { wch: 14 },
@@ -3124,7 +3754,7 @@ async function doExcel() {
     styleRow(w2, 0, s2[0].length, { font: { name: XF, sz: 10, bold: true, color: { rgb: "FFFFFF" } },
       fill: { fgColor: { rgb: "1F3864" } }, border: BOX,
       alignment: { horizontal: "center", vertical: "center", wrapText: true } }, X);
-    for (let r = 1; r <= prods().length; r++) {
+    for (let r = 1; r <= pickedProds().length; r++) {
       const old = s2[r][0] === "기존";
       styleRow(w2, r, s2[0].length, { font: { name: XF, sz: 10 },
         fill: { fgColor: { rgb: old ? "F5F6F8" : "DCE9FF" } }, border: BOX,
@@ -3296,7 +3926,8 @@ function printHTML(title) {
     '컴퓨터 — <b>Ctrl/⌘ + P</b> → 대상에서 <b>PDF로 저장</b>.</div>' +
     '<div id="print">' + $("#print").innerHTML + '</div></body></html>';
 }
-function buildPrint(o) {
+function buildPrint(o) { return withPick(() => buildPrint_(o)); }
+function buildPrint_(o) {
   const c = cust();
   const rs = compareRows(buildRows());
   const t = totals(rs);
@@ -3393,7 +4024,7 @@ function buildPrint(o) {
     (o.unit ? '<td></td>' : '') + ((o.verdict || (fin && o.act)) ? '<td></td>' : '') + '</tr></tfoot>' : '') + '</table>';
 
   const dl = discLines();
-  const notes = prods().filter(p => p.note || kindOf(p) !== "보장성" || p.refund);
+  const notes = prods().filter(pickOn).filter(p => p.note || kindOf(p) !== "보장성" || p.refund);
   if (notes.length) h += '<div class="pmemo"><b class="pnt">상품별 참고 사항</b>' +
     notes.map(p => {
       const x = prodTerm(p);
@@ -3411,7 +4042,7 @@ function buildPrint(o) {
          : '· 설계서에 적힌 그대로 기존 보험과 새 제안을 맞대어 본 것입니다.<br>') +
     '· 보장금액이 늘어난 담보는 파랑, 줄어든 담보는 빨강으로 표시했습니다. “—”는 해당 담보가 없다는 뜻입니다.<br>' +
     (o.renew ? '· <b>(갱)</b> 은 갱신형 특약으로, 갱신할 때 보험료가 오를 수 있습니다.<br>' : '') +
-    (prods().some(isEst) ? '· 담보별 보험료를 알 수 없는 상품은 총보험료를 보장금액 비율로 나눈 <b>추정치</b>입니다.<br>' : '') +
+    (prods().filter(pickOn).some(isEst) ? '· 담보별 보험료를 알 수 없는 상품은 총보험료를 보장금액 비율로 나눈 <b>추정치</b>입니다.<br>' : '') +
     (rs.some(r => r.o.cut || r.w.cut) ? '· <b>감액</b>한 담보의 보험료는 보장금액에 비례해 어림한 값으로, 실제 보험사 산출과 다를 수 있습니다.<br>' : '') +
     '· 담보별 보험료는 설계서 기준이며, 특약을 빼거나 더하면 실제 보험료는 보험사 산출과 다를 수 있습니다.</div>';
   $("#print").innerHTML = h;
@@ -3427,17 +4058,15 @@ function bind() {
     pasteFlow(b.dataset.add);
   });
   $$("[data-prod]", v).forEach(b => b.onclick = () => openProd(b.dataset.prod));
+  $$("[data-pdrag]", v).forEach(h => {
+    h.addEventListener("pointerdown", e => pdragStart(e, h));
+    h.addEventListener("click", e => e.stopPropagation());
+  });
   $$("[data-newcust]", v).forEach(b => b.onclick = addCust);
   $$("[data-usecust]", v).forEach(b => b.onclick = () => { D.cur = b.dataset.usecust; save(); go("prod"); });
   $$("[data-editcust]", v).forEach(b => b.onclick = () => editCust(b.dataset.editcust));
-  $$("[data-delcust]", v).forEach(b => b.onclick = () => {
-    const x = D.custs.find(y => y.id === b.dataset.delcust); if (!x) return;
-    ask("<b>" + esc(x.name) + (x.tag ? " (" + esc(x.tag) + ")" : "") + "</b> 기록과 그 상품을 모두 삭제합니다.", () => {
-      D.custs = D.custs.filter(y => y.id !== x.id);
-      if (D.cur === x.id) D.cur = D.custs.length ? D.custs[0].id : null;
-      save(); go("set");
-    }, "삭제", true);
-  });
+  $$("[data-memocust]", v).forEach(b => b.onclick = () => memoCust(b.dataset.memocust));
+  $$("[data-delcust]", v).forEach(b => b.onclick = () => delCust(b.dataset.delcust));
   /* ---- 정리 화면 ---- */
   const pick = key => {
     const [pid, iid] = String(key).split("|");
@@ -3472,12 +4101,15 @@ function bind() {
     const i = (p.items || []).findIndex(y => y.id === iid); if (i < 0) return;
     editItem(p, i, render);
   });
-  $$("[data-allkeep]", v).forEach(x => x.onclick = () => {
+  $$("[data-allkeep]", v).forEach(x => x.onclick = e => {
+    e.stopPropagation();                               /* 접기 단추와 겹치지 않게 */
     const [pid, on] = x.dataset.allkeep.split("|");
     const p = prod(pid); if (!p) return;
+    const side = (p.side || "old") === "old";
     (p.items || []).filter(isOn).forEach(it => it.keep = on === "1");
     save(); render();
-    toast(on === "1" ? "전부 가져갑니다" : "전부 뺍니다");
+    toast(on === "1" ? (side ? "전부 유지합니다" : "전부 가입합니다")
+                     : (side ? "전부 해지합니다" : "전부 뺍니다"));
   });
   $$("[data-gocmp]", v).forEach(x => x.onclick = () => go("cmp"));
   $$("[data-psort]", v).forEach(b => b.onclick = () => { VIEW.planSort = b.dataset.psort; render(); });
@@ -3487,9 +4119,19 @@ function bind() {
     VIEW.pfold[k] = !VIEW.pfold[k];
     render();
   });
-  $$("[data-pfoldall]", v).forEach(b => b.onclick = () => {
-    VIEW.pfold = {};
-    if (b.dataset.pfoldall === "1") prods().forEach(p => VIEW.pfold[p.id] = true);
+  $$("[data-sidefold]", v).forEach(b => b.onclick = () => {
+    const ps = sideProds(b.dataset.sidefold);
+    if (!VIEW.pfold) VIEW.pfold = {};
+    const allShut = ps.every(p => VIEW.pfold[p.id]);
+    ps.forEach(p => { VIEW.pfold[p.id] = !allShut; });
+    render();
+  });
+  $$("[data-bar]", v).forEach(b => b.onclick = () => barMenu(b.dataset.bar));
+  $$("[data-pcat]", v).forEach(b => b.onclick = () => {
+    const k = b.dataset.pcat;
+    if (!VIEW.pcat) VIEW.pcat = {};
+    if (k === "*") VIEW.pcat = {};
+    else VIEW.pcat[k] = !VIEW.pcat[k];
     render();
   });
   ["tpTotal", "pTotal"].forEach(id => { const el = $("#" + id, v); if (el) liveComma(el); });
@@ -3549,24 +4191,77 @@ function bind() {
     VIEW.fold[k] = !VIEW.fold[k];
     render();
   });
+  $$("[data-pair]", v).forEach(sl => sl.onchange = () => {
+    if (sl.dataset.pair === "a") VIEW.pairA = sl.value || null; else VIEW.pairB = sl.value || null;
+    if (VIEW.pairA && VIEW.pairA === VIEW.pairB) { toast("서로 다른 보험을 고르세요"); return render(); }
+    render();
+  });
+  $$("[data-pairclear]", v).forEach(b => b.onclick = e => { e.preventDefault(); VIEW.pairA = null; VIEW.pairB = null; render(); });
+  $$("[data-note]", v).forEach(b => b.onclick = () => {
+    if (!VIEW.note) VIEW.note = {};
+    VIEW.note[b.dataset.note] = !VIEW.note[b.dataset.note];
+    render();
+  });
+  $$("[data-sfold]", v).forEach(b => b.onclick = () => {
+    if (!VIEW.sfold) VIEW.sfold = {};
+    const k = b.dataset.sfold;
+    const open = VIEW.sfold[k] != null ? !VIEW.sfold[k] : (k === "cust");
+    VIEW.sfold[k] = open;              /* true = 접힘 */
+    render();
+  });
+  $$("[data-custq]", v).forEach(x => {
+    x.oninput = () => { VIEW.custQ = x.value; };
+    x.onchange = () => { VIEW.custQ = x.value; render(); };
+    x.onkeydown = e => { if (e.key === "Enter") { VIEW.custQ = x.value; x.blur(); render(); } };
+  });
+  $$("[data-custhid]", v).forEach(x => x.onchange = () => { VIEW.custHid = x.checked; render(); });
+  $$("[data-hidecust]", v).forEach(b => b.onclick = () => {
+    const x = D.custs.find(y => y.id === b.dataset.hidecust); if (!x) return;
+    x.hide = !x.hide; save(); render();
+    toast(x.hide ? "목록에서 숨겼습니다" : "다시 보입니다");
+  });
   $$("[data-cols]", v).forEach(b => b.onclick = colPick);
+  $$("[data-show]", v).forEach(b => b.onclick = () => {
+    if (!VIEW.cols) VIEW.cols = {};
+    if (b.dataset.show === "unit") VIEW.cols.unit = true; else VIEW.cols[b.dataset.show] = true;
+    saveCols(); render();
+  });
+  $$("[data-thide]", v).forEach(th => th.onclick = () => {
+    const k = th.dataset.thide;
+    if (!VIEW.tcols) VIEW.tcols = {};
+    VIEW.tcols[k] = false;
+    if (!tcolCount()) { VIEW.tcols[k] = true; return toast("열을 모두 숨길 수는 없습니다"); }
+    saveCols(); render();
+    toast((TCOLS.find(c => c[0] === k) || [])[1] + " 숨김 — 표 밑에서 다시 켭니다");
+  });
+  $$("[data-tshow]", v).forEach(b => b.onclick = () => {
+    if (!VIEW.tcols) VIEW.tcols = {};
+    VIEW.tcols[b.dataset.tshow] = true;
+    saveCols(); render();
+  });
   $$("[data-hide]", v).forEach(th => th.onclick = () => {
     const k = th.dataset.hide;
     if (!VIEW.cols) VIEW.cols = {};
     VIEW.cols[k] = false;
     if (!COLS.some(c => colOn(c[0]))) { VIEW.cols[k] = true; return toast("열을 모두 숨길 수는 없습니다"); }
-    render();
+    saveCols(); render();
     const nm = (COLS.find(c => c[0] === k) || [])[VIEW.mode !== "side" ? 1 : 2] || "열";
     toast(nm + " 숨김 — 👁 열 고르기에서 다시 켭니다");
   });
-  $$("[data-foldall]", v).forEach(b => b.onclick = () => {
+  $$("[data-subfold]", v).forEach(b => b.onclick = () => {
+    const rs0 = withPick(() => compareRows(buildRows()));
+    const shut = allFolded(rs0) && VIEW.hideSum;
     VIEW.fold = {};
-    if (b.dataset.foldall === "1") groupByCat(compareRows(buildRows())).forEach(g => VIEW.fold[g.key] = true);
+    if (!shut) withPick(() => groupByCat(rs0)).forEach(g => VIEW.fold[g.key] = true);
+    VIEW.hideSum = !shut;
     render();
   });
-  $$("[data-ordreset]", v).forEach(b => b.onclick = () => ask("끌어서 바꾼 순서를 모두 지우고 원래대로 돌립니다.", () => {
-    D.ord = {}; save(); render(); toast("순서를 되돌렸습니다");
-  }, "되돌리기", true));
+  $$("[data-foldall]", v).forEach(b => b.onclick = () => {
+    VIEW.fold = {};
+    if (b.dataset.foldall === "1")
+      withPick(() => groupByCat(compareRows(buildRows()))).forEach(g => VIEW.fold[g.key] = true);
+    render();
+  });
   $$("[data-row]", v).forEach(tr => tr.onclick = () => {
     const k = tr.dataset.row;
     if (VIEW.move && VIEW.move !== k) { mergeRows(VIEW.move, k); VIEW.move = null; render(); toast("같은 담보로 합쳤습니다"); return; }
@@ -3576,8 +4271,18 @@ function bind() {
   $$("[data-pdf]", v).forEach(b => b.onclick = doPDF);
   $$("[data-cleardict]", v).forEach(b => b.onclick = () => ask("기억해 둔 담보 짝을 모두 지웁니다.", () => { D.dict = {}; save(); render(); }, "비우기", true));
   $$("[data-theme]", v).forEach(b => b.onclick = () => { D.settings.theme = b.dataset.theme; save(); applyTheme(); render(); });
-  $$("[data-backup]", v).forEach(b => b.onclick = () => offerFile("보장비교백업_" + todayISO() + ".json",
-    JSON.stringify(D, null, 1), "application/json", "고객 " + D.custs.length + "명"));
+  $$("[data-devname]", v).forEach(x => {
+    x.onchange = () => { D.settings.dev = x.value.trim(); save(); render(); };
+    x.onkeydown = e => { if (e.key === "Enter") x.blur(); };
+  });
+  $$("[data-backup]", v).forEach(b => b.onclick = () => {
+    const t = D.savedAt || Date.now();
+    const d = new Date(t);
+    const hm = String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0");
+    const nm = "보장비교백업_" + (devName() ? devName().replace(/[\\/:*?"<>|\s]+/g, "") + "_" : "") + dayStr(t) + "_" + hm + ".json";
+    offerFile(nm, JSON.stringify(D, null, 1), "application/json",
+      "고객 " + D.custs.length + "명 · " + timeStr(t));
+  });
   $$("[data-restore]", v).forEach(b => b.onclick = doRestore);
   $$("[data-upd]", v).forEach(b => b.onclick = () => checkUpdate(true));
   $$("[data-snap]", v).forEach(b => b.onclick = () => {
@@ -3612,6 +4317,34 @@ function bind() {
 }
 /* 잘못 들어간 분류를 한 화면에서 모두 옮긴다 */
 /* 표에서 보고 싶은 열만 고르기 — 계산에는 영향이 없다 */
+/* 예전 날짜의 스냅샷에서 "담보 순서"만 꺼내 온다 — 다른 자료는 손대지 않는다 */
+function ordFromSnap() {
+  const L = snaps().slice().reverse().map(x => {
+    let o = {}; try { o = JSON.parse(x.json); } catch (e) {}
+    return { day: x.day, ord: o.ord || {}, n: Object.keys(o.ord || {}).length };
+  }).filter(x => x.n);
+  if (!L.length) return toast("보관된 순서가 없습니다");
+  modal({
+    title: "예전 순서 가져오기",
+    body: '<p class="tiny muted" style="margin:0 0 10px;line-height:1.7">그날 저장해 둔 <b>담보 순서만</b> 가져옵니다. ' +
+        '고객·상품·체크 같은 <b>다른 자료는 전혀 건드리지 않습니다.</b></p>' +
+      '<div class="card" style="margin:0">' + L.map((x, i) =>
+        '<div class="prod" data-os="' + i + '"><div class="grow">' +
+          '<div class="b sm">' + esc(x.day) + '</div>' +
+          '<div class="tiny muted">담보 ' + x.n + '개 순서가 들어 있습니다</div></div>' +
+          '<button class="btn sm">가져오기</button></div>').join("") + '</div>',
+    foot: '<button class="btn pri wide" id="osOk">닫기</button>',
+    onOpen(el, close) {
+      $$("[data-os]", el).forEach(x => x.onclick = () => {
+        const o = L[+x.dataset.os];
+        D.ordBak = Object.assign({}, D.ord || {});
+        D.ord = Object.assign({}, o.ord);
+        save(); close(); render(); toast(o.day + " 의 순서를 가져왔습니다");
+      });
+      $("#osOk", el).onclick = close;
+    }
+  });
+}
 function colPick() {
   const draw = el => {
     $("#cpBody", el).innerHTML = '<div class="colbox">' + PICKCOLS.map(c =>
@@ -3620,7 +4353,7 @@ function colPick() {
     $$("[data-cp]", el).forEach(x => x.onchange = () => {
       VIEW.cols[x.dataset.cp] = x.checked;
       if (!PICKCOLS.some(c => colOn(c[0]))) { VIEW.cols[x.dataset.cp] = true; toast("열을 모두 끌 수는 없습니다"); }
-      draw(el); render();
+      saveCols(); draw(el); render();
     });
   };
   modal({
@@ -3629,56 +4362,121 @@ function colPick() {
       '<b>합계와 계산에는 영향이 없고</b>, 엑셀·PDF에도 그대로 다 들어갑니다.<br>' +
     '<b>1,000만원당</b> 단가는 담보를 눌렀을 때 자세히 나오니 평소에는 꺼 두셔도 됩니다.</p>' +
       '<div id="cpBody"></div>' +
-      '<p class="tiny muted" style="margin:12px 0 0;line-height:1.6">분류 머리줄(<b>암 진단</b> 같은 줄)을 누르면 그 묶음을 통째로 접었다 펼 수 있습니다.</p>',
+      '<p class="tiny muted" style="margin:12px 0 0;line-height:1.6">여기서 끄고 켠 것은 <b>그대로 기억</b>해서 다음에 열 때도 같은 모습으로 나옵니다.<br>' +
+      '분류 머리줄(<b>암 진단</b> 같은 줄)이나 <b>담보</b> 머리글을 누르면 묶음을 통째로 접었다 펼 수 있습니다.</p>',
     foot: '<button class="btn pri wide" id="cpOk">다 했습니다</button>',
     onOpen(el, close) { draw(el); $("#cpOk", el).onclick = close; }
   });
 }
 
 function catFix() {
-  const rows = buildRows();
-  if (!rows.length) return toast("담보가 없습니다");
-  const rs = compareRows(rows);
+  if (!buildRows().length) return toast("담보가 없습니다");
   const draw = el => {
-    const q = ($("#cfQ", el) ? $("#cfQ", el).value.trim() : "");
-    const list = q ? rs.filter(r => (r.b.label + " " + Object.values(r.b.alias).join(" ")).indexOf(q) >= 0) : rs;
+    const rs = compareRows(buildRows());          /* 끌어 옮긴 차례가 바로 보이게 매번 다시 센다 */
+    const qv = ($("#cfQ", el) ? $("#cfQ", el).value.trim() : "");
+    const list = qv ? rs.filter(r => (r.b.label + " " + Object.values(r.b.alias).join(" ")).indexOf(qv) >= 0) : rs;
     $("#cfBody", el).innerHTML = groupByCat(list).map(g =>
-      '<div class="card" style="margin:0 0 10px"><div class="bd" style="padding:7px 12px;background:var(--accent-soft)">' +
-        '<b class="sm" style="color:var(--accent)">' + esc(g.name) + ' · ' + g.rows.length + '개</b></div>' +
+      '<div class="card" style="margin:0 0 10px"><div class="bd" style="padding:7px 12px;background:' + catBg2(g.color, .16) + '">' +
+        '<b class="sm" style="color:' + g.color + '">' + esc(g.name) + ' · ' + g.rows.length + '개</b></div>' +
+      '<div class="cfgrp" data-cfcat="' + esc(g.key) + '">' +
       g.rows.map(r =>
-        '<div class="prod" style="padding:8px 11px;gap:8px;flex-wrap:wrap">' +
-          '<div class="grow" style="min-width:140px"><div class="sm b">' +
+        '<div class="prod cfrow" data-cfrow="' + esc(r.b.key) + '" style="padding:8px 11px;gap:8px;flex-wrap:wrap">' +
+          '<div class="hand" data-cfdrag="' + esc(r.b.key) + '" title="끌어서 차례 바꾸기">⣿</div>' +
+          '<div class="grow" style="min-width:130px"><div class="sm b">' +
             ((r.o.renew || r.w.renew) ? '<span class="tag ren">갱</span>' : '') + esc(bareName(r.b.label)) + '</div>' +
             '<div class="tiny muted num">' + (r.o.has ? (r.o.txt ? esc(r.o.txt) : manwon(r.nowAmt) + "원") : "기존 없음") +
             (r.w.has ? ' → ' + (r.w.txt ? esc(r.w.txt) : manwon(r.w.amt) + "원") : '') + '</div></div>' +
-          '<select class="inp" data-cf="' + esc(r.b.key) + '" style="width:150px;flex:none;padding:6px 8px;font-size:12.5px">' +
+          '<select class="inp" data-cf="' + esc(r.b.key) + '" style="width:140px;flex:none;padding:6px 8px;font-size:12.5px">' +
             CATS.map(c => '<option value="' + c[0] + '"' + (c[0] === r.cat ? " selected" : "") + '>' + c[1] + '</option>').join("") +
           '</select>' +
-        '</div>').join("") + '</div>').join("") || '<div class="empty">찾는 담보가 없습니다.</div>';
+        '</div>').join("") + '</div></div>').join("") || '<div class="empty">찾는 담보가 없습니다.</div>';
     $$("[data-cf]", el).forEach(x => x.onchange = () => {
       setCat(x.dataset.cf, x.value);
       toast(CATN[x.value] + " 로 옮겼습니다");
-      rs.forEach(r => { if (r.b.key === x.dataset.cf) r.cat = x.value; });
       draw(el);
     });
-  };
-  modal({
-    title: "분류 옮기기", wide: true, onClose() { render(); },
-    body: '<p class="tiny muted" style="margin:0 0 10px;line-height:1.6">담보 오른쪽 칸을 바꾸면 바로 옮겨지고 ' +
-      '<b>다음에도 그대로 기억</b>합니다. 잘못 묶인 분류를 여기서 한 번에 정리하세요.</p>' +
-      '<div class="field"><input id="cfQ" class="inp" placeholder="담보 이름으로 찾기"></div>' +
-      '<div id="cfBody"></div>',
-    foot: '<button class="btn" id="cfReset">자동 분류로 되돌리기</button><button class="btn pri" id="cfOk">다 했습니다</button>',
-    onOpen(el, close) {
-      draw(el);
-      $("#cfQ", el).oninput = () => draw(el);
-      $("#cfOk", el).onclick = () => { close(); render(); };
+    $$("[data-cfdrag]", el).forEach(hd => {
+      hd.addEventListener("pointerdown", e => cfDragStart(e, hd, el, draw));
+      hd.addEventListener("click", e => e.stopPropagation());
+    });
+    /* 가끔 쓰는 단추들 — 바닥이 좁아지지 않게 위쪽에 작게 */
+    const tb = $("#cfTools", el);
+    if (tb) {
+      tb.innerHTML =
+        '<button class="btn sm" id="cfOrd">차례 지우기</button>' +
+        (Object.keys(D.ordBak || {}).length ? '<button class="btn sm" id="cfUndo">순서 되살리기</button>' : '') +
+        '<button class="btn sm" id="cfSnap">예전 순서</button>' +
+        '<button class="btn sm" id="cfReset">자동 분류로</button>';
       $("#cfReset", el).onclick = () => ask("직접 지정한 분류를 모두 지우고 자동 분류로 되돌립니다.", () => {
         D.cats = {}; save(); draw(el); toast("되돌렸습니다");
       }, "되돌리기", true);
+      $("#cfOrd", el).onclick = () => ask(
+        "끌어서 정해 두신 <b>담보 차례를 전부 지웁니다.</b><br>분류는 그대로 둡니다.", () => {
+          D.ordBak = Object.assign({}, D.ord || {});
+          D.ord = {}; save(); draw(el); toast("차례를 지웠습니다 — 「순서 되살리기」로 되돌릴 수 있습니다");
+        }, "차례 지우기", true);
+      if ($("#cfUndo", el)) $("#cfUndo", el).onclick = () => {
+        D.ord = Object.assign({}, D.ordBak || {});
+        delete D.ordBak; save(); draw(el); toast("순서를 되살렸습니다");
+      };
+      $("#cfSnap", el).onclick = () => { close2(); render(); ordFromSnap(); };
+    }
+  };
+  let close2 = () => {};
+  modal({
+    title: "분류 옮기기 · 순서 바꾸기", wide: true, onClose() { render(); },
+    body: '<p class="tiny muted" style="margin:0 0 10px;line-height:1.7">' +
+      '왼쪽 <b>⣿</b> 를 잡고 끌면 <b>차례</b>가 바뀌고, 오른쪽 칸을 바꾸면 <b>분류</b>가 바뀝니다. ' +
+      '둘 다 <b>다음에도 그대로 기억</b>합니다.</p>' +
+      '<div class="field"><input id="cfQ" class="inp" placeholder="담보 이름으로 찾기"></div>' +
+      '<div id="cfTools" class="row" style="flex-wrap:wrap;gap:6px;margin:0 0 10px"></div>' +
+      '<div id="cfBody"></div>',
+    foot: '<button class="btn pri wide" id="cfOk">다 했습니다</button>',
+    onOpen(el, close) {
+      close2 = close;
+      draw(el);
+      $("#cfQ", el).oninput = () => draw(el);
+      $("#cfOk", el).onclick = () => { close(); render(); };
     }
   });
 }
+/* 분류 옮기기 창 안에서 끌어 옮기기 — 같은 분류 안에서만 */
+let CFD = null;
+function cfDragStart(e, hd, el, draw) {
+  const row = hd.closest(".cfrow"); if (!row) return;
+  CFD = { row, box: row.parentNode, moved: false, el, draw };
+  row.classList.add("drag");
+  try { hd.setPointerCapture(e.pointerId); } catch (x) {}
+  e.preventDefault();
+}
+function cfDragMove(e) {
+  if (!CFD) return;
+  e.preventDefault();
+  const pt = document.elementFromPoint(e.clientX, e.clientY);
+  if (!pt || !pt.closest) return;
+  const over = pt.closest(".cfrow");
+  if (!over || over === CFD.row || over.parentNode !== CFD.box) return;
+  const r = over.getBoundingClientRect();
+  CFD.box.insertBefore(CFD.row, e.clientY < r.top + r.height / 2 ? over : over.nextSibling);
+  CFD.moved = true;
+}
+function cfDragEnd() {
+  if (!CFD) return;
+  const d = CFD; CFD = null;
+  d.row.classList.remove("drag");
+  if (!d.moved) return;
+  /* 창에 보이는 차례 그대로 번호를 다시 매긴다 */
+  let n = 0;
+  Array.from(d.el.querySelectorAll(".cfrow")).forEach(x => {
+    const k = x.dataset.cfrow; if (k) D.ord[k] = n++;
+  });
+  save();
+  toast("차례를 바꿨습니다");
+  if (d.draw) d.draw(d.el);
+}
+document.addEventListener("pointermove", cfDragMove, { passive: false });
+document.addEventListener("pointerup", cfDragEnd);
+document.addEventListener("pointercancel", cfDragEnd);
 
 /* ---------- 끌어서 순서 바꾸기 ---------- */
 let DRAG = null;
@@ -3716,6 +4514,8 @@ function dragEnd() {
     if (tr.classList.contains("csum")) return;
     const k = tr.dataset.row; if (!k) return;
     D.ord[k] = n++;
+    const bk = String(k).split("#")[0];
+    if (bk !== k && D.ord[bk] == null) D.ord[bk] = D.ord[k];
     /* 다른 분류 칸으로 옮겼으면 분류도 따라 바뀐다 */
     if (cat && k === d.key && tr.dataset.cat !== cat) { D.cats[k] = cat; moved = true; }
   });
@@ -3723,10 +4523,64 @@ function dragEnd() {
   render();
   toast(moved ? CATN[D.cats[d.key]] + " 로 옮겼습니다" : "순서를 바꿨습니다");
 }
+/* ---- 상품 순서 끌어 옮기기 (상품 화면) ---- */
+let PDRAG = null;
+function pdragStart(e, h) {
+  const el = h.closest(".prod"); if (!el) return;
+  PDRAG = { el, box: el.parentNode, moved: false };
+  el.classList.add("drag");
+  try { h.setPointerCapture(e.pointerId); } catch (x) {}
+  e.preventDefault();
+}
+function pdragMove(e) {
+  if (!PDRAG) return;
+  e.preventDefault();
+  const pt = document.elementFromPoint(e.clientX, e.clientY);
+  if (!pt || !pt.closest) return;
+  const over = pt.closest(".prod[data-prod]");
+  if (!over || over === PDRAG.el || over.parentNode !== PDRAG.box) return;
+  const r = over.getBoundingClientRect();
+  PDRAG.box.insertBefore(PDRAG.el, e.clientY < r.top + r.height / 2 ? over : over.nextSibling);
+  PDRAG.moved = true;
+}
+function pdragEnd() {
+  if (!PDRAG) return;
+  const d = PDRAG; PDRAG = null;
+  d.el.classList.remove("drag");
+  if (!d.moved) return;
+  const c = cust(); if (!c) return;
+  const ids = Array.from(document.querySelectorAll("#view .prod[data-prod]")).map(x => x.dataset.prod);
+  const at = id => { const i = ids.indexOf(id); return i < 0 ? 9999 : i; };
+  c.prods.sort((a, b) => at(a.id) - at(b.id));
+  save(); render(); toast("상품 순서를 바꿨습니다");
+}
+document.addEventListener("pointermove", pdragMove, { passive: false });
+document.addEventListener("pointerup", pdragEnd);
+document.addEventListener("pointercancel", pdragEnd);
+
 document.addEventListener("pointermove", dragMove, { passive: false });
 document.addEventListener("pointerup", dragEnd);
 document.addEventListener("pointercancel", dragEnd);
 
+/* 메모만 간단히 — 이름 옆 연필 */
+function memoCust(id) {
+  const c = D.custs.find(x => x.id === id); if (!c) return;
+  modal({
+    title: "메모 — " + c.name,
+    body: '<div class="field" style="margin:0"><label>이 고객에 대해 적어 둘 것</label>' +
+      '<input id="mcIn" class="inp" value="' + esc(c.memo || "") + '" placeholder="예: 38세 여 · 남편분도 상담 예정"></div>' +
+      '<p class="tiny muted" style="margin:6px 0 0">비워 두면 메모가 지워집니다.</p>',
+    foot: '<button class="btn" id="mcNo">취소</button><button class="btn pri" id="mcOk">저장</button>',
+    onOpen(el, close) {
+      const i = $("#mcIn", el); i.focus(); i.select();
+      const ok = () => { c.memo = i.value.trim(); save(); close(); go("set");
+        toast(c.memo ? "메모를 적었습니다" : "메모를 비웠습니다"); };
+      $("#mcNo", el).onclick = close;
+      $("#mcOk", el).onclick = ok;
+      i.onkeydown = e => { if (e.key === "Enter") ok(); };
+    }
+  });
+}
 /* 고객 이름·메모·꼬리표 고치기 */
 function editCust(id) {
   const c = D.custs.find(x => x.id === id); if (!c) return;
@@ -3761,6 +4615,64 @@ function editCust(id) {
   });
 }
 
+/* 기록을 지운다 — 같은 고객의 기록이 여럿이면 어느 것을 지울지 고르게 한다 */
+function dropCusts(ids) {
+  if (!ids.length) return;
+  D.custs = D.custs.filter(y => ids.indexOf(y.id) < 0);
+  if (ids.indexOf(D.cur) >= 0) D.cur = D.custs.length ? D.custs[0].id : null;
+  save(); go("set");
+  toast("기록 " + ids.length + "개를 지웠습니다");
+}
+function delCust(id) {
+  const x = D.custs.find(y => y.id === id); if (!x) return;
+  const fam = D.custs.filter(y => gidOf(y) === gidOf(x))
+    .slice().sort((a, b) => (a.at || 0) - (b.at || 0));
+  if (fam.length < 2) {
+    return ask("<b>" + esc(x.name) + "</b> 기록과 그 상품을 모두 지웁니다.<br>되돌릴 수 없습니다.",
+      () => dropCusts([x.id]), "삭제", true);
+  }
+  const newest = fam[fam.length - 1];
+  modal({
+    title: esc(x.name) + " 기록 지우기",
+    body: '<p class="tiny muted" style="margin:0 0 10px;line-height:1.7">' +
+        '이 고객에게 기록이 <b>' + fam.length + '개</b> 있습니다. <b>지울 것만 체크</b>하세요.<br>' +
+        '가장 아래가 가장 <b>최근</b> 기록입니다.</p>' +
+      '<div class="card" style="margin:0">' +
+      fam.map((y, i) =>
+        '<div class="prod plan" style="padding:9px 11px;gap:9px">' +
+          '<input type="checkbox" data-dc="' + i + '"' + (y.id === x.id ? " checked" : "") +
+            ' style="width:21px;height:21px;accent-color:var(--accent);flex:none;margin-top:2px">' +
+          '<div class="grow" style="min-width:0">' +
+            '<div class="sm b">' + esc(y.name) +
+              (y.tag ? ' <span class="tag add">' + esc(y.tag) + '</span>' : '') +
+              (y === newest ? ' <span class="pill new">최근</span>' : '') +
+              (y.id === D.cur ? ' <span class="pill">보는 중</span>' : '') + '</div>' +
+            '<div class="tiny muted">상품 ' + (y.prods || []).length + '개 · 담보 ' +
+              (y.prods || []).reduce((a, p) => a + (p.items || []).filter(isOn).length, 0) + '개 · ' +
+              (y.updated ? dayStr(y.updated) : dayStr(y.at)) + '</div>' +
+          '</div></div>').join("") + '</div>' +
+      '<p class="tiny c-warn b" style="margin:10px 0 0;line-height:1.6">지운 기록은 되돌릴 수 없습니다. ' +
+        '설정 → 화면과 저장에서 <b>백업</b>을 먼저 받아 두셔도 좋습니다.</p>',
+    foot: '<button class="btn" id="dcKeepNew">최근 것만 남기기</button>' +
+          '<button class="btn dan" id="dcAll">전부 지우기</button>' +
+          '<button class="btn pri" id="dcOk">고른 것 지우기</button>',
+    onOpen(el, close) {
+      const picked = () => $$("[data-dc]", el).filter(z => z.checked).map(z => fam[+z.dataset.dc]);
+      $("#dcOk", el).onclick = () => {
+        const ns = picked();
+        if (!ns.length) return toast("지울 기록을 체크해 주세요");
+        ask("고른 <b>" + ns.length + "개</b> 기록을 지웁니다.", () => { close(); dropCusts(ns.map(y => y.id)); }, "삭제", true);
+      };
+      $("#dcKeepNew", el).onclick = () => ask(
+        "<b>" + esc(newest.name) + (newest.tag ? " (" + esc(newest.tag) + ")" : "") + "</b> 하나만 남기고 " +
+        "나머지 " + (fam.length - 1) + "개를 지웁니다.",
+        () => { close(); dropCusts(fam.filter(y => y !== newest).map(y => y.id)); }, "삭제", true);
+      $("#dcAll", el).onclick = () => ask(
+        "<b>" + esc(x.name) + "</b> 의 기록 <b>" + fam.length + "개를 전부</b> 지웁니다.",
+        () => { close(); dropCusts(fam.map(y => y.id)); }, "전부 삭제", true);
+    }
+  });
+}
 function addCust() { askText("고객 추가", "이름", "", n => { newCust(n); save(); go("prod"); }, "예: 김영희"); }
 
 /* 비교에서 보험을 걸러 놓은 채로도 같은 줄을 찾게 한다 */
@@ -3807,11 +4719,65 @@ function sumMenu(key) {
     }
   });
 }
+/* 이 담보 줄에서 1,000만원당 가장 싼 값 */
+function rowBestUnit(b) {
+  let best = 0;
+  ["old", "neu"].forEach(s2 => withPick(() => sideProds(s2)).forEach(p =>
+    (b.cells[p.id] || []).filter(isOn).forEach(it => {
+      const u = unitFee(effAmt(it), itemFee(p, it));
+      if (u && (!best || u < best)) best = u;
+    })));
+  return best;
+}
+/* 어느 담보를 뗄지 체크해서 고른다 */
+function splitMenu(b, after) {
+  const list = rowItems(b);
+  if (list.length < 2) return toast("이 줄은 담보가 하나뿐이라 뗄 것이 없습니다");
+  const anySplit = list.some(x => x.it.rowKey);
+  modal({
+    title: "묶은 것 떼기",
+    body: '<p class="tiny muted" style="margin:0 0 10px;line-height:1.7">' +
+        '지금 <b>담보 ' + list.length + '개</b>가 “' + esc(bareName(b.label)) + '” 한 줄로 묶여 있습니다.<br>' +
+        '<b>떼어 낼 것만 체크</b>하세요. 체크한 것끼리 새 줄이 되고, 나머지는 그대로 남습니다.</p>' +
+      '<div class="card" style="margin:0">' +
+      list.map((x, i) =>
+        '<div class="prod plan" style="padding:9px 11px;gap:9px">' +
+          '<input type="checkbox" data-sp="' + i + '"' +
+            ' style="width:21px;height:21px;accent-color:var(--accent);flex:none;margin-top:2px">' +
+          '<div class="grow" style="min-width:0">' +
+            '<div class="sm b">' + esc(bareName(x.it.name)) + '</div>' +
+            '<div class="tiny num" style="line-height:1.6">' +
+              (insTag(x.p) ? '<span class="ins" style="background:' + esc(x.p.color || "#7fa9e8") + '">' + esc(insTag(x.p)) + '</span>' : '') +
+              '<span style="color:' + esc(x.p.color || "#7fa9e8") + ';font-weight:800">' + esc(x.p.name) + '</span>' +
+              '<span class="muted"> · </span>' + manwon(baseAmt(x.it)) + '원' +
+              (x.it.rowKey ? ' <span class="tag cutx">떼어 둠</span>' : '') + '</div>' +
+          '</div></div>').join("") + '</div>',
+    foot: (anySplit ? '<button class="btn" id="spBack">도로 붙이기</button>' : '') +
+          '<button class="btn" id="spAll">하나씩 전부</button>' +
+          '<button class="btn pri" id="spOk">고른 것 떼기</button>',
+    onOpen(el, close) {
+      const picked = () => $$("[data-sp]", el).filter(x => x.checked).map(x => list[+x.dataset.sp]);
+      $("#spOk", el).onclick = () => {
+        const ns = picked();
+        if (!ns.length) return toast("뗄 담보를 체크해 주세요");
+        if (ns.length === list.length) return toast("전부 고르셨습니다 — 「하나씩 전부」를 쓰세요");
+        splitPicked(ns, false); close(); render(); if (after) after();
+        toast(ns.length + "개를 따로 떼었습니다");
+      };
+      $("#spAll", el).onclick = () => {
+        splitPicked(list, true); close(); render(); if (after) after();
+        toast("담보 " + list.length + "개를 하나씩 떼었습니다");
+      };
+      const bk = $("#spBack", el);
+      if (bk) bk.onclick = () => { unsplitRow(b); close(); render(); if (after) after(); toast("도로 붙였습니다"); };
+    }
+  });
+}
 function rowMenu(key) {
   const rows = withPick(buildRows);
   const b = rows.find(x => x.key === key); if (!b) return;
   const r = withPick(() => compareRows([b])[0]);
-  const many = Object.keys(b.alias).length > 1;
+  const many = rowItems(b).length > 1;
   let body = '<div class="stat">' +
     '<div><b class="num">' + (r.o.has ? (r.o.txt ? esc(r.o.txt) : manwon(r.nowAmt)) : "—") + '</b><span>현재 보장</span></div>' +
     '<div><b class="num b">' + ((r.ok.live || r.wk.live) ? (r.finTxt ? esc(r.finTxt) : manwon(r.finAmt)) : "—") + '</b><span>최종 보장</span></div>' +
@@ -3855,9 +4821,22 @@ function rowMenu(key) {
           '<div class="sm b" style="line-height:1.35;' + (it.keep === false ? "text-decoration:line-through;opacity:.5" : "") + '">' +
             '<span class="pill ' + (s === "old" ? "old" : "new") + '">' + (s === "old" ? "기존" : "신규") + '</span> ' +
             (isRenew(it) ? '<span class="tag ren">갱</span>' : '') + esc(bareName(it.name)) + '</div>' +
-          '<div class="tiny num" style="line-height:1.6"><span class="muted">' + esc(p.name) + ' · </span>' + amtLine(it) +
+          '<div class="tiny num" style="line-height:1.6">' +
+            (insTag(p) ? '<span class="ins" style="background:' + esc(p.color || "#7fa9e8") + '">' + esc(insTag(p)) + '</span>' : '') +
+            '<span style="color:' + esc(p.color || "#7fa9e8") + ';font-weight:800">' + esc(p.name) + '</span>' +
+            '<span class="muted"> · </span>' + amtLine(it) +
             (raw ? ' <span class="muted">·</span> ' + (cut ? '<s class="muted">' + won(raw) + '</s> <b class="c-down">' + won(now) + '원</b>'
               : '<span class="feex">' + won(now) + '원</span>') + (isEst(p) ? ' <span class="muted">(추정)</span>' : '') : '') + '</div>' +
+          (() => {                               /* 1,000만원당 — 어느 보험이 싼지 바로 보이게 */
+            const u = unitFee(effAmt(it), now);
+            const best = rowBestUnit(b);
+            return '<div class="tiny num" style="line-height:1.6;margin-top:1px">' +
+              '<span class="muted">1,000만원당</span> ' +
+              (u ? '<b style="color:' + esc(p.color || "#7fa9e8") + '">' + won(Math.round(u)) + '원</b>' +
+                   (best && Math.round(u) === Math.round(best) ? ' <span class="tag add">가장 쌈</span>'
+                    : best ? ' <span class="muted">(가장 싼 것보다 ' + Math.round((u / best - 1) * 100) + '% 비쌈)</span>' : '')
+                 : '<span class="muted">—</span>') + '</div>';
+          })() +
           '<div class="cutbox"><span class="tiny muted b">감액 →</span>' +
             '<input class="inp" data-rc="' + p.id + '|' + it.id + '" inputmode="numeric" placeholder="가입금액" value="' +
               (cut ? toMan(+it.cut) : "") + '"><span class="tiny muted b">만원</span></div>' +
@@ -3869,7 +4848,7 @@ function rowMenu(key) {
   modal({
     title: b.label, wide: true, body, onClose() { render(); },
     foot: '<button class="btn" id="rvMove">다른 담보와 합치기</button>' +
-      (many ? '<button class="btn dan" id="rvSplit">묶은 것 떼기</button>' : '') +
+      (many ? '<button class="btn dan" id="rvSplit">묶은 것 떼기 (' + rowItems(b).length + ')</button>' : '') +
       '<button class="btn pri" id="rvOk">닫기</button>',
     onOpen(el, close) {
       const grab = key => {
@@ -3909,7 +4888,7 @@ function rowMenu(key) {
       $("#rvOk", el).onclick = () => { close(); render(); };
       $("#rvMove", el).onclick = () => { close(); VIEW.move = key; render(); };
       const sp = $("#rvSplit", el);
-      if (sp) sp.onclick = () => { splitRow(b); close(); render(); toast("따로 떼었습니다"); };
+      if (sp) sp.onclick = () => { close(); splitMenu(b); };
     }
   });
 }
@@ -3924,8 +4903,8 @@ function doRestore() {
     foot: '<button class="btn" id="rCheck">내용 확인</button><button class="btn pri" id="rGo" disabled>덮어쓰기</button>',
     onOpen(el, close) {
       const ta = $("#rIn", el), msg = $("#rMsg", el), go2 = $("#rGo", el), fi = $("#rFile", el);
-      let parsed = null;
-      const bad = t => { parsed = null; go2.disabled = true; msg.innerHTML = '<p class="sm c-down b" style="margin:0">' + t + '</p>'; };
+      let parsed = null, risky = false;
+      const bad = t => { parsed = null; risky = false; go2.disabled = true; msg.innerHTML = '<p class="sm c-down b" style="margin:0">' + t + '</p>'; };
       const check = () => {
         let raw = String(ta.value || "").trim();
         if (!raw) return bad("내용이 비어 있습니다.");
@@ -3934,14 +4913,55 @@ function doRestore() {
         let o; try { o = JSON.parse(raw.slice(i, j + 1)); } catch (e) { return bad("내용이 중간에 끊긴 것 같습니다. 전체를 다시 복사해 주세요."); }
         if (!o || !Array.isArray(o.custs)) return bad("보장 비교 백업이 아닙니다.");
         parsed = o; go2.disabled = false;
-        msg.innerHTML = '<div class="card" style="margin:0"><div class="bd sm">고객 ' + o.custs.length + '명 · 담보 짝 ' +
-          Object.keys(o.dict || {}).length + '쌍<br><span class="muted">' + esc(o.custs.map(c => c.name).join(", ").slice(0, 80)) + '</span></div></div>';
+        const fAt = +o.savedAt || 0, mAt = +D.savedAt || 0;
+        const fDev = (o.settings && o.settings.dev || "").trim();
+        const older = fAt && mAt && fAt < mAt;          /* 파일이 더 옛날 */
+        const newer = fAt && (!mAt || fAt > mAt);
+        risky = !!older;
+        go2.textContent = older ? "그래도 덮어쓰기" : "덮어쓰기";
+        go2.className = "btn " + (older ? "dan" : "pri");
+        const when = t => t ? timeStr(t) : "시각 없음 (옛 백업)";
+        msg.innerHTML =
+          '<div class="card" style="margin:0"><div class="bd" style="padding:10px 11px">' +
+            '<table class="cmp" style="font-size:12.5px"><tbody>' +
+            '<tr><td class="nm" style="padding:5px 6px">가져올 파일' +
+              (fDev ? ' <span class="tag add">' + esc(fDev) + '</span>' : '') + '</td>' +
+              '<td class="n num b" style="padding:5px 6px">' + esc(when(fAt)) + '</td>' +
+              '<td class="n num" style="padding:5px 6px">고객 ' + o.custs.length + '명</td></tr>' +
+            '<tr><td class="nm" style="padding:5px 6px">지금 이 기기' +
+              (devName() ? ' <span class="tag keep">' + esc(devName()) + '</span>' : '') + '</td>' +
+              '<td class="n num b" style="padding:5px 6px">' + esc(when(mAt)) + '</td>' +
+              '<td class="n num" style="padding:5px 6px">고객 ' + D.custs.length + '명</td></tr>' +
+            '</tbody></table>' +
+            (older
+              ? '<p class="sm c-down b" style="margin:9px 0 0;line-height:1.65">⚠ <b>이 기기 자료가 ' +
+                  gapStr(mAt - fAt) + ' 더 최신입니다.</b><br>덮어쓰면 그 사이에 이 기기에서 하신 작업이 사라집니다. ' +
+                  '먼저 <b>백업</b>을 받아 두시거나, 이 기기 것을 다른 기기로 옮기세요.</p>'
+              : newer
+              ? '<p class="sm b" style="margin:9px 0 0;color:var(--ok);line-height:1.65">✓ 가져올 파일이 ' +
+                  (mAt ? gapStr(fAt - mAt) + " 더 최신입니다." : "최신입니다.") + '</p>'
+              : '<p class="tiny muted" style="margin:9px 0 0;line-height:1.6">시각을 알 수 없어 어느 쪽이 최신인지 가릴 수 없습니다. ' +
+                  '고객 수와 이름을 보고 판단하세요.</p>') +
+            '<p class="tiny muted" style="margin:7px 0 0">' + esc(o.custs.map(c => c.name).join(", ").slice(0, 90)) + '</p>' +
+          '</div></div>';
       };
       $("#rPick", el).onclick = () => fi.click();
       fi.onchange = async () => { const f = fi.files && fi.files[0]; if (f) { ta.value = await f.text(); check(); } };
-      ta.oninput = () => { if (parsed) { parsed = null; go2.disabled = true; msg.innerHTML = ""; } };
+      ta.oninput = () => { if (parsed) { parsed = null; risky = false; go2.disabled = true; go2.textContent = "덮어쓰기"; go2.className = "btn pri"; msg.innerHTML = ""; } };
       $("#rCheck", el).onclick = check;
-      go2.onclick = () => { if (!parsed) return check(); D = Object.assign(blank(), parsed); save(); close(); go("prod"); toast("불러왔습니다"); };
+      const put = () => {
+        D = Object.assign(blank(), parsed);
+        if (!D.savedAt) D.savedAt = Date.now();
+        /* 보고 있던 고객이 그 백업에 없으면 첫 고객으로 — 빈 화면이 되지 않게 */
+        if (!D.custs.some(x => x.id === D.cur)) D.cur = D.custs.length ? D.custs[0].id : null;
+        migrate(); seedStamps(); save(); close(); go("prod"); toast("불러왔습니다");
+      };
+      go2.onclick = () => {
+        if (!parsed) return check();
+        if (!risky) return put();
+        ask("이 기기 자료가 더 최신입니다. 덮어쓰면 그동안 하신 작업이 사라집니다. 그래도 하시겠습니까?",
+            put, "덮어쓰기", true);
+      };
     }
   });
 }
