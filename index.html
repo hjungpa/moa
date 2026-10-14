@@ -129,6 +129,10 @@ textarea.inp{min-height:64px;resize:vertical;font-size:15px}
 .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--tx3)}
 .light{width:13px;height:13px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(128,128,128,.22)}
 .c-ok{color:var(--ok)} .c-warn{color:var(--warn)} .c-bad{color:var(--bad)} .c-inc{color:var(--inc)}
+.c-dim{color:var(--tx2)}
+.todoband{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 11px}
+.todoband .tb{font-size:11.5px;font-weight:800;color:var(--warn)}
+.todoband .chip{font-size:11.5px;padding:4px 10px;border-color:var(--warn);color:var(--tx)}
 .bg-ok{background:var(--ok)} .bg-warn{background:var(--warn)} .bg-bad{background:var(--bad)} .bg-off{background:var(--tx3)}
 
 .bar{height:7px;border-radius:99px;background:var(--line);overflow:hidden}
@@ -139,17 +143,21 @@ textarea.inp{min-height:64px;resize:vertical;font-size:15px}
 
 /* ---------- account cards ---------- */
 .acc{display:flex;align-items:center;gap:11px;padding:12px 14px;border-top:1px solid var(--line)}
-.ahand{flex:none;width:26px;margin:-10px 0 -10px -8px;padding:10px 5px;color:var(--tx3);font-size:15px;
-  line-height:1;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
-  text-align:center;opacity:.5;-webkit-tap-highlight-color:transparent}
-.acc.adrag{background:var(--panel2);border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.18);
-  transition:none}
-.acc.adrag .ahand{cursor:grabbing;opacity:1;color:var(--accent)}
+.ic.adh{touch-action:none;cursor:grab;-webkit-tap-highlight-color:transparent}
+.bookbin{border:1.5px dashed var(--line);border-radius:14px;margin:0 12px 10px;overflow:hidden}
+.bookbin.over{border-color:var(--accent);background:var(--accent-soft)}
+.bookhd{display:flex;align-items:center;gap:7px;padding:8px 14px;font-weight:800;font-size:12.5px;
+  color:var(--tx2);background:var(--panel2)}
+.bookhd .lnk{margin-left:auto;font-size:11px}
+.bookbin .acc:first-of-type{border-top:0}
+.acc.adrag{background:var(--panel2);border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.18)}
+.acc.adrag .ic.adh{cursor:grabbing;transform:scale(1.07)}
 [data-accgrp] > .acc{transition:transform .14s ease}
 [data-accgrp] > .acc.adrag{transition:none}
 .acc:first-child{border-top:0}
 .acc .ic{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:14px;font-weight:800;color:#fff}
 .acc .nm{font-weight:700;font-size:14.5px}
+.acc .grow .tiny.num{word-break:keep-all;line-height:1.5}
 .acc .rt{text-align:right;flex:none}
 .acc .rt .v{font-weight:800;font-size:15px}
 
@@ -374,7 +382,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.10.14.2240";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.10.15.0120";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -408,6 +416,7 @@ function emptyData(homeName) {
     ],
     rules: [],
     groups: [],
+    books: [],
     shops: {},
     settings: { tint: 16, instMode: "monthly", hideBal: false, catIncFuture: false, catYear: false, xferExcl: true, undoMax: 10 },
     trash: [],
@@ -638,8 +647,14 @@ function txnsOf(accId, anchor) { return txnsIn(SP, accId, anchor); }
 const isFut = t => t.date > todayISO();            // 아직 오지 않은 예정 건
 const accExcl = id => { const a = D.accounts.find(x => x.id === id); return !!(a && a.excl); };
 const xferOut = () => D.settings.xferExcl !== false;           // 계좌간 이동을 합계에서 뺄까
-const counts = t => !t.adj && !t.cpay && !isFut(t) && !accExcl(t.acc) && !(t.xfer && xferOut()); // 합계에 들어가는 건
-const spendable = t => !t.xfer && !t.adj && !t.cpay && !isFut(t) && !accExcl(t.acc);          // 실적·카드값용
+/* 지출 합계에서 빼기로 해 둔 분류 */
+function catNoSum(catId) {
+  if (!catId) return false;
+  const c = D.cats.find(x => x.id === catId);
+  return !!(c && c.noSum);
+}
+const counts = t => !t.adj && !t.cpay && !catNoSum(t.cat) && !isFut(t) && !accExcl(t.acc) && bookOn(t.acc) && !(t.xfer && xferOut()); // 합계에 들어가는 건
+const spendable = t => !t.xfer && !t.adj && !t.cpay && !catNoSum(t.cat) && !isFut(t) && !accExcl(t.acc) && bookOn(t.acc);          // 실적·카드값용
 /* 실적: 승인 총액 기준, 승인한 달에만 잡힌다 (할부 잔여 회차는 실적에 안 들어감) */
 function usedOf(accId, anchor) {
   return txnsIn(AL, accId, anchor).filter(spendable)
@@ -731,11 +746,6 @@ function rateOf(c) {
   return r > 0 ? +r : (CURS[c] ? CURS[c].rate : 1);
 }
 function fx(v, c) { return Math.round((+v || 0) * rateOf(c)); }      /* 외화 → 원화 어림값 */
-function curWon(v, c) {                                              /* "$450 (≈ 621,000원)" */
-  const sym = CURS[c] ? CURS[c].sym : "";
-  return sym + Math.abs(Math.round(+v || 0)).toLocaleString("ko-KR") +
-    ' <span class="muted" style="font-weight:600">(≈ ' + won(fx(v, c)) + '원)</span>';
-}
 /* 주식: 원금 = seed + 원금 입출금, 손익 = 평가금액 − 원금 */
 function stockSeed(a) {
   return (+a.seed || 0) + AL.filter(t => t.acc === a.id && t.adj && t.princ)
@@ -844,6 +854,7 @@ function migrateData() {
   if (!D) return false;
   let ch = false;
   if (!D.groups) { D.groups = []; ch = true; }
+  if (!D.books) { D.books = []; ch = true; }
   if (!D.shops) { D.shops = {}; ch = true; }
   if (!D.trash) { D.trash = []; ch = true; }
   if (!D.settings) { D.settings = {}; ch = true; }
@@ -861,6 +872,19 @@ function migrateBanks() {
   return changed;
 }
 const KINDN = { bank: "은행", card: "카드", debit: "생활비" };
+/* ---------- 용도 묶음 (개인 / 사업 …) ---------- */
+function books() { D.books = D.books || []; return D.books; }
+function bookPick() { return (D.settings || {}).book || ""; }     /* "" = 전체 */
+function bookOn(accId) {
+  const k = bookPick(); if (!k) return true;
+  const a = D.accounts.find(x => x.id === accId); if (!a) return true;
+  return k === "_none" ? !a.book : a.book === k;
+}
+function bookName(id) {
+  if (id === "_none") return "묶음 없음";
+  const b = books().find(x => x.id === id);
+  return b ? b.name : "";
+}
 /* 이 달에 쓰고 있던 계정인가 — 만든 달 전, 해지한 달 다음은 안 보인다 */
 function accLive(a, ym) {
   const M = ym || D.anchor || thisMonth();
@@ -868,51 +892,62 @@ function accLive(a, ym) {
   if (a.to && M > a.to) return false;
   return true;
 }
-function accEnded(a, ym) { const M = ym || D.anchor || thisMonth(); return !!(a.to && M > a.to); }
 /* 요약에서 끌어 옮긴 차례 — 정해 둔 적 없으면 만든 순서 */
 function accOrd(a, i) { const v = +a.ord; return isFinite(v) && a.ord != null ? v : 1000 + i; }
 let ADG = null;
+const ADG_SLOP = 7;                 /* 이만큼 움직여야 '끄는 것'으로 본다 — 그냥 누르면 열린다 */
 function aDragStart(e, hd) {
   const row = hd.closest(".acc"); if (!row) return;
   const box = row.closest("[data-accgrp]"); if (!box) return;
-  ADG = { row, box, startY: e.clientY, moved: false };
-  row.classList.add("adrag");
-  row.style.position = "relative";
-  row.style.zIndex = "5";
-  row.style.transform = "translateY(0px)";
-  try { hd.setPointerCapture(e.pointerId); } catch (x) {}
-  e.preventDefault(); e.stopPropagation();
+  ADG = { row, box, hd, pid: e.pointerId, y0: e.clientY, startY: e.clientY, on: false, moved: false };
+}
+function aDragOn() {
+  if (!ADG || ADG.on) return;
+  ADG.on = true;
+  ADG.row.classList.add("adrag");
+  ADG.row.style.position = "relative";
+  ADG.row.style.zIndex = "5";
+  try { ADG.hd.setPointerCapture(ADG.pid); } catch (x) {}
 }
 function aDragMove(e) {
   if (!ADG) return;
+  if (!ADG.on) {
+    if (Math.abs(e.clientY - ADG.y0) < ADG_SLOP) return;   /* 아직 탭일 수 있다 */
+    aDragOn();
+    ADG.startY = ADG.y0;
+  }
   e.preventDefault();
   const { row, box } = ADG;
   row.style.transform = "translateY(" + (e.clientY - ADG.startY) + "px)";
   const rr = row.getBoundingClientRect();
   const mid = rr.top + rr.height / 2;
-  const sibs = Array.prototype.slice.call(box.children).filter(x => x !== row && x.classList.contains("acc"));
+  const sibs = Array.prototype.slice.call(box.children).filter(x => x !== row && x.classList && x.classList.contains("acc"));
   for (const s2 of sibs) {
     const b = s2.getBoundingClientRect();
     const sm = b.top + b.height / 2;
-    /* s2 가 아래쪽 줄인가 */
     const below = !!(row.compareDocumentPosition(s2) & Node.DOCUMENT_POSITION_FOLLOWING);
     if ((below && mid > sm) || (!below && mid < sm)) {
       const vBefore = row.getBoundingClientRect().top;
       if (below) box.insertBefore(s2, row); else box.insertBefore(row, s2);
       const vAfter = row.getBoundingClientRect().top;
-      ADG.startY += (vAfter - vBefore);          /* 손가락 밑에 그대로 있게 기준점을 옮긴다 */
+      ADG.startY += (vAfter - vBefore);        /* 손가락 밑에 그대로 있게 기준점을 옮긴다 */
       row.style.transform = "translateY(" + (e.clientY - ADG.startY) + "px)";
       ADG.moved = true;
-      return;                                     /* 한 번에 한 칸씩만 — 다음 move 가 이어서 한다 */
+      return;
     }
   }
 }
 function aDragEnd() {
   if (!ADG) return;
-  const { row, box, moved } = ADG;
+  const { row, on, moved } = ADG;
   ADG = null;
+  if (!on) return;                              /* 그냥 눌렀다 뗀 것 — 열기로 넘긴다 */
   row.classList.remove("adrag");
   row.style.transform = ""; row.style.position = ""; row.style.zIndex = "";
+  /* 끌었으면 뒤따라오는 클릭은 삼킨다 */
+  const eat = ev => { ev.stopPropagation(); ev.preventDefault(); };
+  row.addEventListener("click", eat, true);
+  setTimeout(() => row.removeEventListener("click", eat, true), 350);
   if (!moved) return;
   /* 화면에 보이는 차례 그대로 번호를 다시 매긴다 — 번호가 겹쳐 뒤죽박죽되는 일이 없게 */
   const seen = {};
@@ -927,7 +962,79 @@ function aDragEnd() {
   shown.concat(rest).forEach((a, i) => { a.ord = i; });
   persist(); render(); toast("차례를 바꿨습니다");
 }
-function ahand(a) { return '<div class="ahand" data-adrag="' + a.id + '" title="끌어서 차례 바꾸기">⣿</div>'; }
+function ahand(a) { void a; return ''; }      /* 이제는 아이콘 자체를 잡아 끈다 */
+/* 설정 화면 — 계정을 다른 묶음으로 끌어다 놓기 */
+let BDG = null;
+function bDragStart(e, hd) {
+  const row = hd.closest(".acc"); if (!row) return;
+  BDG = { row, hd, pid: e.pointerId, y0: e.clientY, x0: e.clientX, on: false, id: hd.dataset.bdrag };
+}
+function bDragMove(e) {
+  if (!BDG) return;
+  if (!BDG.on) {
+    if (Math.abs(e.clientY - BDG.y0) < 7 && Math.abs(e.clientX - BDG.x0) < 7) return;
+    BDG.on = true;
+    BDG.row.classList.add("adrag");
+    BDG.row.style.position = "relative"; BDG.row.style.zIndex = "5";
+    try { BDG.hd.setPointerCapture(BDG.pid); } catch (x) {}
+  }
+  e.preventDefault();
+  BDG.row.style.transform = "translateY(" + (e.clientY - BDG.y0) + "px)";
+  const bins = $$("[data-bookbin]");
+  let hit = null;
+  bins.forEach(b => {
+    const r = b.getBoundingClientRect();
+    b.classList.remove("over");
+    if (e.clientY >= r.top && e.clientY <= r.bottom) hit = b;
+  });
+  const curBin = BDG.row.closest("[data-bookbin]");
+  if (hit && (!curBin || hit !== curBin)) hit.classList.add("over");
+  BDG.hit = hit;
+}
+function bDragEnd() {
+  if (!BDG) return;
+  const { row, on, hit, id } = BDG;
+  BDG = null;
+  $$("[data-bookbin]").forEach(b => b.classList.remove("over"));
+  if (!on) return;
+  row.classList.remove("adrag");
+  row.style.transform = ""; row.style.position = ""; row.style.zIndex = "";
+  const eat = ev => { ev.stopPropagation(); ev.preventDefault(); };
+  row.addEventListener("click", eat, true);
+  setTimeout(() => row.removeEventListener("click", eat, true), 350);
+  if (!hit) return;
+  const a = D.accounts.find(x => x.id === id); if (!a) return;
+  const to = hit.dataset.bookbin || "";
+  if ((a.book || "") === to) return;
+  if (to) a.book = to; else delete a.book;
+  persist(); render();
+  toast(a.name + " → " + (to ? bookName(to) : "묶지 않음"));
+}
+function editBook(id) {
+  const b = books().find(x => x.id === id);
+  if (!b) return;
+  modal({
+    title: "묶음 이름",
+    body: '<div class="field" style="margin:0"><label>이름</label>' +
+      '<input id="bkNm" class="inp" value="' + esc(b.name) + '"></div>' +
+      '<p class="tiny muted" style="margin:8px 0 0;line-height:1.6">없애면 이 묶음에 있던 계정은 <b>묶지 않음</b>으로 돌아갑니다. 기록은 그대로입니다.</p>',
+    foot: '<button class="btn dan" id="bkDel">없애기</button><button class="btn pri" id="bkOk">저장</button>',
+    onOpen(el, close) {
+      $("#bkOk", el).onclick = () => {
+        const n = $("#bkNm", el).value.trim();
+        if (!n) return toast("이름을 넣어주세요");
+        b.name = n.slice(0, 14); persist(); close(); render();
+      };
+      $("#bkDel", el).onclick = () => ask("묶음 <b>" + esc(b.name) + "</b> 을(를) 없앱니다.<br>계정과 기록은 그대로 남습니다.", () => {
+        D.accounts.forEach(a => { if (a.book === b.id) delete a.book; });
+        D.books = books().filter(x => x.id !== b.id);
+        if ((D.settings || {}).book === b.id) D.settings.book = "";
+        persist(); close(); render(); toast("없앴습니다");
+      }, "없애기", true);
+    }
+  });
+}
+function icDrag(a) { return ' data-adrag="' + a.id + '" title="꾹 눌러 끌면 차례가 바뀝니다"'; }
 function endTag(a) {
   if (!a.to) return '';
   const M = D.anchor || thisMonth();
@@ -937,7 +1044,7 @@ function sortAccs(list) {
   return list.map((a, i) => ({ a, i })).sort((x, y) => accOrd(x.a, x.i) - accOrd(y.a, y.i) || x.i - y.i).map(x => x.a);
 }
 function liveAccs(kind, ym) {
-  return sortAccs(D.accounts.filter(a => accLive(a, ym) && (kind === "stock" ? (a.kind === "bank" && a.stock)
+  return sortAccs(D.accounts.filter(a => accLive(a, ym) && bookOn(a.id) && (kind === "stock" ? (a.kind === "bank" && a.stock)
     : kind === "bank" ? (a.kind === "bank" && !a.stock) : a.kind === kind)));
 }
 function signWon(n) { return (n > 0 ? "+" : n < 0 ? "-" : "") + won(Math.abs(n)) + "원"; }
@@ -1344,6 +1451,18 @@ function viewHome() {
 
   let h = "";
 
+  /* 오늘 챙길 것 — 맨 위 한 줄 */
+  {
+    const todo = [];
+    const bd = billsDue(D.anchor);
+    if (bd.length) todo.push(["bill", "확정 안 한 카드대금 " + bd.length + "건"]);
+    const noAcc = bd.filter(x => !x.card.payAcc).length;
+    if (noAcc) todo.push(["bill", "빠질 통장을 안 정한 카드 " + noAcc + "장"]);
+    if (askVary()) { const vd = varyDue(); if (vd.length) todo.push(["vary", "금액 확인할 고정비 " + vd.length + "건"]); }
+    if (todo.length) h += '<div class="todoband"><span class="tb">오늘 챙길 것</span>' +
+      todo.map(x => '<button class="chip" data-jump="' + x[0] + '">' + esc(x[1]) + '</button>').join("") + '</div>';
+  }
+
   /* 계정별 마지막 기록 날짜 */
   if (D.accounts.length) {
     const T0 = todayISO();
@@ -1416,6 +1535,19 @@ function viewHome() {
       '<span class="num b" style="font-size:17px">' + mb(stockSum) + '</span></div>' : '') +
     '</div>') + '</div>';
 
+  /* 용도 묶음 고르기 */
+  if (books().length) {
+    const hasNone = D.accounts.some(a => !a.book);
+    h += '<div class="chipscroll" data-sc="book">' +
+      [["", "전체"]].concat(books().map(b => [b.id, b.name]))
+        .concat(hasNone ? [["_none", "묶음 없음"]] : [])
+        .map(([k, n]) => '<button class="chip ' + (bookPick() === k ? "on" : "") + '" data-book="' + esc(k) + '">' +
+          esc(n) + '</button>').join("") +
+    '</div>';
+    if (bookPick()) h += '<p class="tiny muted" style="margin:-4px 0 10px;line-height:1.6">' +
+      '<b>' + esc(bookName(bookPick())) + '</b> 묶음만 보고 있습니다 — 잔액·지출·실적·분류가 모두 이 묶음 기준입니다.</p>';
+  }
+
   /* 은행 */
   h += '<div class="card">' + secHd("bank", "은행", mb(bankSum),
        '<button class="btn sm" data-add="bank">+ 은행 추가</button>');
@@ -1428,15 +1560,15 @@ function viewHome() {
       const F = bankFlow(a.id, D.anchor);
       tInc += F.inc; tOut += F.out; tNet += F.net; tCp += F.cp;
       h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
-        '<div class="ic" style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
+        '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
         '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) +
           (lastAdj(a.id) ? ' <span class="pill tiny muted" style="padding:1px 6px">' +
             esc(String(lastAdj(a.id).date).slice(5)) + ' 맞춤</span>' : '') + '</div>' +
           '<div class="tiny num"><span class="c-inc b">입금 ' + won(F.inc) + '</span>' +
-          '<span class="muted"> · 출금 ' + won(F.out) + '</span>' +
+          '<span class="c-bad b"> · 출금 ' + won(F.out) + '</span>' +
           (F.cp ? '<span class="muted"> · 카드대금 ' + won(F.cp) + '</span>' : '') +
           (F.xin || F.xout ? '<span class="muted"> · 이체 ' + won(F.xin - F.xout) + '</span>' : '') +
-          (F.adj ? '<span class="c-bad b"> · 수 ' + signWon(F.adj) + '</span>' : '') +
+          (F.adj ? '<span class="c-dim b"> · (수정 ' + signWon(F.adj) + ')</span>' : '') +
           (F.soon ? '<span class="muted"> · 예정 ' + F.soon + '건</span>' : '') + '</div></div>' +
         '<div class="rt"><div class="v num">' + mb(bankBal(a)) + '</div>' +
           '<div class="tiny num ' + (F.net >= 0 ? "c-inc" : "muted") + '">' + (F.net >= 0 ? "+" : "") + won(F.net) + '</div></div>' +
@@ -1484,6 +1616,34 @@ function viewHome() {
     }
   }
 
+  /* 외화 통장 */
+  if (fxBanks.length) {
+    const fxSumW = fxBanks.reduce((s2, a) => s2 + fx(bankBal(a), curOf(a)), 0);
+    h += '<div class="card">' + secHd("fx", "🌐 외화", mb(fxSumW),
+         '<button class="btn sm" data-add="bank">+ 추가</button>');
+    if (folded("fx")) h += '</div>';
+    else {
+      h += '<div style="margin-top:10px" data-accgrp="fx">';
+      fxBanks.forEach(a => {
+        const c = curOf(a), b2 = bankBal(a), F = bankFlow(a.id, D.anchor);
+        h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
+          '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc(CURS[c].sym) + '</div>' +
+          '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) +
+            ' <span class="pill tiny" style="padding:1px 7px">' + esc(c) + '</span></div>' +
+            '<div class="tiny num"><span class="c-inc b">받음 ' + CURS[c].sym + won(F.inc) + '</span>' +
+            '<span class="c-bad b"> · 나감 ' + CURS[c].sym + won(F.out) + '</span></div></div>' +
+          '<div class="rt"><div class="v num">' + (D.settings.hideBal ? "••••••" : CURS[c].sym + won(b2)) + '</div>' +
+            '<div class="tiny muted num">≈ ' + won(fx(b2, c)) + '원</div></div>' +
+        '</div>';
+      });
+      h += '<div class="sumrow"><div class="grow"><div class="b sm">외화 합계 (원화 어림값)</div>' +
+          '<div class="tiny muted">' + fxBanks.map(a => CURS[curOf(a)].sym + " " + won(rateOf(curOf(a))) + "원").join(" · ") +
+          ' 기준 · 설정에서 고칠 수 있습니다</div></div>' +
+          '<div class="v num">' + mb(fxSumW) + '</div></div>';
+      h += '</div></div>';
+    }
+  }
+
   /* 직불 · 충전카드 */
   h += '<div class="card">' + secHd("debit", "생활비 · 지역화폐", mb(debitSum),
        '<button class="btn sm" data-add="debit">+ 추가</button>');
@@ -1502,7 +1662,7 @@ function viewHome() {
       const pct = Math.max(0, Math.min(100, (bud ? left / bud : bal / cap) * 100));
       const k = bud ? (left < 0 ? "bad" : left / bud < 0.2 ? "warn" : "ok") : null;
       h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
-        '<div class="ic" style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
+        '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
         '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) +
           (bud ? ' <span class="pill tiny" style="padding:1px 7px">예산</span>' : '') +
           (a.excl ? ' <span class="pill tiny muted" style="padding:1px 7px">합계 제외</span>' : '') + '</div>' +
@@ -1543,7 +1703,7 @@ function viewHome() {
       const pay = payOf(a, D.anchor);
       if (pay != null) { paySum += pay; payAny = true; }
       h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
-        '<div class="ic" style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
+        '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
         '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) + '</div>' +
           '<div class="tiny num"><span class="muted">' + periodLabel(a, D.anchor) + ' · ' + cnt + '건</span>' +
           (pay != null ? '<span class="b"> · 결제 ' + won(pay) + '</span>' +
@@ -1568,51 +1728,26 @@ function viewHome() {
   }
   h += '</div>';
 
-  /* 외화 통장 */
-  if (fxBanks.length) {
-    const fxSumW = fxBanks.reduce((s2, a) => s2 + fx(bankBal(a), curOf(a)), 0);
-    h += '<div class="card">' + secHd("fx", "🌐 외화", mb(fxSumW),
-         '<button class="btn sm" data-add="bank">+ 추가</button>');
-    if (folded("fx")) h += '</div>';
-    else {
-      h += '<div style="margin-top:10px" data-accgrp="fx">';
-      fxBanks.forEach(a => {
-        const c = curOf(a), b2 = bankBal(a), F = bankFlow(a.id, D.anchor);
-        h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
-          '<div class="ic" style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc(CURS[c].sym) + '</div>' +
-          '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) +
-            ' <span class="pill tiny" style="padding:1px 7px">' + esc(c) + '</span></div>' +
-            '<div class="tiny num"><span class="c-inc b">받음 ' + CURS[c].sym + won(F.inc) + '</span>' +
-            '<span class="muted"> · 나감 ' + CURS[c].sym + won(F.out) + '</span></div></div>' +
-          '<div class="rt"><div class="v num">' + (D.settings.hideBal ? "••••••" : CURS[c].sym + won(b2)) + '</div>' +
-            '<div class="tiny muted num">≈ ' + won(fx(b2, c)) + '원</div></div>' +
-        '</div>';
-      });
-      h += '<div class="sumrow"><div class="grow"><div class="b sm">외화 합계 (원화 어림값)</div>' +
-          '<div class="tiny muted">' + fxBanks.map(a => CURS[curOf(a)].sym + " " + won(rateOf(curOf(a))) + "원").join(" · ") +
-          ' 기준 · 설정에서 고칠 수 있습니다</div></div>' +
-          '<div class="v num">' + mb(fxSumW) + '</div></div>';
-      h += '</div></div>';
-    }
-  }
-
   /* 확정이 필요한 고정비 */
   if (askVary()) {
     const VD = varyDue();
     if (VD.length) {
-      h += '<div class="card" style="border-color:var(--accent)"><div class="bd">' +
+      h += '<div class="card" id="jmp-vary" style="border-color:var(--accent)"><div class="bd">' +
         '<div class="row" style="margin-bottom:8px"><span class="b sm grow">🔔 금액을 확인해 주세요</span>' +
         '<span class="tiny muted b">' + VD.length + '건</span></div>' +
         '<p class="tiny muted" style="margin:0 0 10px;line-height:1.6">매달 금액이 달라지는 항목입니다. ' +
           '지금은 <b>어림값</b>으로 잡혀 있습니다.</p>' +
-        VD.map(t => '<div class="acc" style="padding:9px 0;border-top:1px solid var(--line)">' +
+        VD.map(t => {
+          const dup = varyDup(t).length;
+          return '<div class="acc" style="padding:9px 0;border-top:1px solid var(--line);flex-wrap:wrap">' +
           '<div class="grow" style="min-width:0"><div class="nm ell">' + esc(t.desc || "고정비") + '</div>' +
             '<div class="tiny muted ell">' + esc(t.date) + ' · ' +
-            esc((D.accounts.find(a => a.id === t.acc) || {}).name || "") + '</div></div>' +
+            esc((D.accounts.find(a => a.id === t.acc) || {}).name || "") + '</div>' + dupNote(t) + '</div>' +
           '<div class="rt"><div class="v num" style="color:var(--tx2)">' + wonS(t.amt) + '</div>' +
             '<div class="tiny muted">어림값</div></div>' +
+          (dup ? '<button class="btn sm" data-varyskip="' + esc(t.rid) + '|' + esc(t.occ) + '" style="flex:none">빼기</button>' : '') +
           '<button class="btn sm pri" data-vary="' + esc(t.rid) + '|' + esc(t.occ) + '" style="flex:none">확정</button>' +
-        '</div>').join("") +
+        '</div>'; }).join("") +
       '</div></div>';
     }
   }
@@ -1626,7 +1761,7 @@ function viewHome() {
       const dueSum = due.reduce((s2, x) => s2 + x.amt, 0);
       const fixSum = fixedL.reduce((s2, t) => s2 + t.amt, 0);
       const benefit = fixedL.reduce((s2, t) => s2 + ((+t.used || 0) - t.amt), 0);
-      h += '<div class="card">' + secHd("bill", "💳 카드대금", mb(dueSum + fixSum));
+      h += '<div class="card" id="jmp-bill">' + secHd("bill", "💳 카드대금", mb(dueSum + fixSum));
       if (folded("bill")) h += '</div>';
       else {
         h += '<div style="margin-top:10px">';
@@ -1909,7 +2044,7 @@ function viewList() {
 function viewCat() {
   const incF = !!D.settings.catIncFuture;
   const yearMode = !!D.settings.catYear;
-  const okT = t => incF ? (!t.xfer && !t.adj) : counts(t);
+  const okT = t => incF ? (!t.xfer && !t.adj && !t.cpay && !catNoSum(t.cat)) : counts(t);
   const Y = +D.anchor.slice(0, 4);
 
   function sumsFor(ym) {
@@ -2006,6 +2141,38 @@ function viewCat() {
           won(Math.round(cur.total / used)) + '원입니다.' : '아직 기록이 없습니다.') +
         (hasInc ? ' 수입이 가장 많았던 달은 ' + (im.indexOf(Math.max(...im)) + 1) + '월 ' + won(Math.max(...im)) + '원입니다.' : '') + '</div>' +
     '</div></div>';
+  }
+
+  /* ---------- 합계에서 뺀 분류 ---------- */
+  {
+    const ex = D.cats.filter(c => c.noSum);
+    if (ex.length) {
+      const rngF = yearMode ? Y + "-01-01" : null;
+      const by = {}; let sum = 0;
+      SP.forEach(t => {
+        if (t.flow === "in" || t.xfer || t.adj || !catNoSum(t.cat)) return;
+        const acc = D.accounts.find(a => a.id === t.acc);
+        const ok = yearMode ? (t.date || "").slice(0, 4) === String(Y)
+          : (acc ? inPeriod(t, acc, D.anchor) : (t.date || "").slice(0, 7) === D.anchor);
+        if (!ok || isFut(t)) return;
+        by[t.cat] = (by[t.cat] || 0) + t.amt; sum += t.amt;
+      });
+      void rngF;
+      if (sum) {
+        h += '<div class="card"><div class="bd">' +
+          '<div class="row" style="align-items:baseline">' +
+            '<span class="tiny muted b grow">위 합계에서 뺀 것</span>' +
+            '<span class="num b" style="color:var(--tx2)">' + wonS(sum) + '</span></div>' +
+          '<p class="tiny muted" style="margin:4px 0 8px;line-height:1.6">통장에서는 나갔지만 <b>이미 지출로 잡은 돈</b>이라 ' +
+            '위 합계에 또 더하지 않았습니다.</p>' +
+          Object.keys(by).map(k => { const c = D.cats.find(x => x.id === k) || {};
+            return '<div class="row tiny" style="padding:3px 0">' +
+              '<span class="dot" style="background:' + esc(c.color || "#9fb0c2") + ';width:9px;height:9px"></span>' +
+              '<span class="grow ell">' + esc(c.name || "분류") + '</span>' +
+              '<span class="num b" style="color:var(--tx2)">' + won(by[k]) + '원</span></div>'; }).join("") +
+        '</div></div>';
+      }
+    }
   }
 
   /* ---------- 카드로 아낀 돈 ---------- */
@@ -2150,6 +2317,7 @@ function viewCat() {
       '<div class="row" style="padding:7px 0;border-top:1px solid var(--line)">' +
         '<span class="dot" style="background:' + esc(c.color) + ';width:15px;height:15px"></span>' +
         '<span class="grow b sm">' + esc(c.name) +
+          (c.noSum ? ' <span class="pill tiny" style="padding:1px 7px">합계 제외</span>' : '') +
           (groupOf(c.id) ? ' <span class="tiny muted">· ' + esc(groupOf(c.id).name) + '</span>' : '') +
           (c.off ? ' <span class="pill tiny muted" style="padding:1px 7px">보관' +
             (c.offFrom ? " · " + esc(c.offFrom) + " 이후 안 씀" : "") + '</span>' : '') + '</span>' +
@@ -2169,21 +2337,42 @@ function viewSet() {
     '<button class="btn sm" data-rename>이름 변경</button></div></div></div>';
 
   h += '<div class="card"><div class="hd"><h2>은행 · 카드 관리</h2></div>' +
-    (D.accounts.length ? D.accounts.map(a =>
-      '<div class="acc">' +
-        '<div class="ic" style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
-        '<div class="grow"><div class="nm ell">' + esc(a.name) + '</div>' +
-          '<div class="tiny muted">' + (a.kind === "bank" ? (a.stock ? "주식·투자 · 평가 " + wonS(+a.bal || 0) + " · 손익 " + signWon(stockPL(a)) : "은행 · 잔고 " + wonS(bankBal(a)))
-            : a.kind === "debit" ? "생활비·지역화폐 · 잔액 " + wonS(debitBal(a)) + (a.budget ? " · 예산 " + wonS(a.budget) : "") + (a.excl ? " · 합계 제외" : "")
-            : "카드 · " + (a.ds || 1) + "일~" + (a.de ? a.de + "일" : "말일") +
-              (tiersOf(a).length ? " · 실적 " + (tiersOf(a).length > 1 ? tiersOf(a).length + "구간 " : "") + wonS(tiersOf(a)[tiersOf(a).length - 1].amt) : "")) + '</div></div>' +
-        '<button class="btn sm gho" data-edit="' + a.id + '">수정</button>' +
-      '</div>').join("") : '<div class="empty">등록된 계정이 없습니다.</div>') +
+    (D.accounts.length ? (() => {
+      const accLine = a => (a.kind === "bank" ? (a.stock ? "주식·투자 · 평가 " + wonS(+a.bal || 0) + " · 손익 " + signWon(stockPL(a)) : "은행 · 잔고 " + wonS(bankBal(a)))
+        : a.kind === "debit" ? "생활비·지역화폐 · 잔액 " + wonS(debitBal(a)) + (a.budget ? " · 예산 " + wonS(a.budget) : "") + (a.excl ? " · 합계 제외" : "")
+        : "카드 · " + (a.ds || 1) + "일~" + (a.de ? a.de + "일" : "말일") +
+          (tiersOf(a).length ? " · 실적 " + (tiersOf(a).length > 1 ? tiersOf(a).length + "구간 " : "") + wonS(tiersOf(a)[tiersOf(a).length - 1].amt) : ""));
+      const row = a => '<div class="acc" data-bacc="' + a.id + '">' +
+        '<div class="ic adh" data-bdrag="' + a.id + '" title="끌어서 다른 묶음으로 옮기기" style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' +
+          esc(a.kind === "bank" && curOf(a) ? CURS[curOf(a)].sym : (a.name || "?").slice(0, 1)) + '</div>' +
+        '<div class="grow"><div class="nm ell">' + esc(a.name) +
+          (a.to ? ' <span class="pill tiny muted" style="padding:1px 7px">해지 ' + esc(a.to) + '</span>' : '') + '</div>' +
+          '<div class="tiny muted ell">' + accLine(a) + '</div></div>' +
+        '<button class="btn sm gho" data-edit="' + a.id + '" style="flex:none">수정</button>' +
+      '</div>';
+      const bins = books().map(b => ({ id: b.id, name: b.name })).concat([{ id: "", name: "묶지 않음 (개인)" }]);
+      if (!books().length) return sortAccs(D.accounts).map(row).join("");
+      return '<p class="tiny muted" style="margin:0;padding:0 14px 8px;line-height:1.6">' +
+          '아이콘을 잡고 <b>다른 묶음으로 끌어다 놓으면</b> 그 묶음으로 옮겨집니다.</p>' +
+        bins.map(b => {
+          const mine = sortAccs(D.accounts.filter(a => (a.book || "") === b.id));
+          return '<div class="bookbin" data-bookbin="' + esc(b.id) + '">' +
+            '<div class="bookhd">' + esc(b.name) +
+              '<span class="tiny muted"> · ' + mine.length + '개</span>' +
+              (b.id ? '<button class="lnk tiny" data-bookedit="' + esc(b.id) + '">이름</button>' : '') + '</div>' +
+            (mine.length ? mine.map(row).join("")
+              : '<div class="tiny muted" style="padding:10px 14px">여기로 끌어다 놓으세요</div>') +
+          '</div>';
+        }).join("");
+    })() : '<div class="empty">등록된 계정이 없습니다.</div>') +
     '<div class="bd row" style="gap:6px">' +
       '<button class="btn grow" data-add="bank">+ 은행</button>' +
       '<button class="btn grow" data-add="debit">+ 생활비</button>' +
       '<button class="btn grow" data-add="card">+ 카드</button>' +
-    '</div></div>';
+    '</div>' +
+    '<div class="bd" style="padding-top:0"><button class="btn wide" data-newbook>+ 용도 묶음 만들기 (사업용 등)</button>' +
+      '<p class="tiny muted" style="margin:7px 0 0;line-height:1.6">사업용 통장·카드를 따로 묶으면 ' +
+      '요약 맨 위에서 <b>그 묶음만</b> 골라 볼 수 있습니다 — 사업 지출·수입만 따로 보입니다.</p></div></div>';
 
   h += '<div class="card"><div class="hd"><h2>백업</h2></div><div class="bd">' +
     '<p class="tiny muted" style="margin:0 0 10px;line-height:1.6">데이터는 이 기기에만 저장됩니다. 사파리 기록을 지우면 사라질 수 있으니 가끔 백업 파일을 받아두세요.</p>' +
@@ -2389,6 +2578,13 @@ function editAccount(kind, id) {
     '<div class="field"><label>색상</label><div class="chips" id="ePal">' +
       PAL.map(c => '<button class="chip" data-c="' + c + '" style="background:' + c + ';border-color:' + c + ';width:34px;height:34px;padding:0;border-radius:10px"></button>').join("") +
     '</div></div>' +
+    '<div class="field"><label>용도 묶음</label><select id="eBook" class="inp">' +
+      '<option value="">묶지 않음 (개인)</option>' +
+      books().map(b => '<option value="' + b.id + '"' + (cur.book === b.id ? " selected" : "") + '>' + esc(b.name) + '</option>').join("") +
+      '<option value="__new">+ 새 묶음 만들기…</option>' +
+    '</select>' +
+    '<p class="tiny muted" style="margin:6px 0 0;line-height:1.6">사업용 통장·카드를 따로 묶어 두면 ' +
+      '요약 맨 위에서 <b>그 묶음만</b> 골라 볼 수 있습니다. 잔액·지출·실적·분류가 모두 그 묶음 기준이 됩니다.</p></div>' +
     (k === "bank" ? '<div class="field"><label>통화</label><select id="eCur" class="inp">' +
         '<option value="">원화 (₩)</option>' +
         Object.keys(CURS).map(c => '<option value="' + c + '"' + (cur.cur === c ? " selected" : "") + '>' +
@@ -2423,6 +2619,18 @@ function editAccount(kind, id) {
       $$("[data-c]", el).forEach(b => b.onclick = () => { color = b.dataset.c; paint(); });
       commaOn($("#eBal", el)); commaOn($("#eBud", el));
       $$(".tamt", el).forEach(x => commaOn(x));
+      const bk = $("#eBook", el);
+      if (bk) bk.onchange = () => {
+        if (bk.value !== "__new") return;
+        bk.value = cur.book || "";
+        askText("새 묶음", "이름", "", nm => {
+          const o = { id: uid(), name: String(nm).slice(0, 14) };
+          books().push(o); persist();
+          bk.innerHTML = '<option value="">묶지 않음 (개인)</option>' +
+            books().map(b2 => '<option value="' + b2.id + '"' + (b2.id === o.id ? " selected" : "") + '>' + esc(b2.name) + '</option>').join("") +
+            '<option value="__new">+ 새 묶음 만들기…</option>';
+        }, "예: 사업, 뉴타입");
+      };
       const nOn = $("#eNewOn", el), eOn = $("#eEndOn", el);
       if (nOn) nOn.onchange = () => $("#eNewBox", el).classList.toggle("hidden", !nOn.checked);
       if (eOn) eOn.onchange = () => $("#eEndBox", el).classList.toggle("hidden", !eOn.checked);
@@ -2431,6 +2639,8 @@ function editAccount(kind, id) {
         if (!name) return toast("이름을 입력하세요");
         const o = a || { id: uid(), kind: k };
         o.name = name; o.color = color;
+        const bv = ($("#eBook", el) || {}).value || "";
+        if (bv && bv !== "__new") o.book = bv; else delete o.book;
         const cv = ($("#eCur", el) || {}).value || "";
         if (cv && CURS[cv]) o.cur = cv; else delete o.cur;
         if (nOn && nOn.checked && $("#eFrom", el).value) o.from = $("#eFrom", el).value; else delete o.from;
@@ -2693,7 +2903,6 @@ function rebuildV() {
     AL.forEach(x => { SP = SP.concat((+x.inst || 1) > 1 ? instSlices(x, f, t) : [x]); });
   } else SP = AL.slice();
 }
-function ALL() { return AL; }
 const RULE = id => (D.rules || []).find(r => r.id === id);
 
 /* 기간별로 쪼개진 같은 항목을 한 줄로 묶는다 — 중복인 줄 알고 지우는 일이 없게 */
@@ -2747,6 +2956,34 @@ function ruleEndLabel(r) {
   if (e.type === "count") return e.count + "회 반복" + cut;
   if (e.type === "date") return e.date + "까지" + cut;
   return "종료 없음" + cut;
+}
+
+/* 이 반복에서 지금까지 만들어진 건 */
+function ruleMade(r, from, to) {
+  try {
+    return ruleTxns(r, from || r.start, to || todayISO())
+      .filter(t => !(t.xfer && t.flow === "in"))
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  } catch (e) { return []; }
+}
+/* 지워지는(또는 남는) 기록 미리보기 */
+function madeHTML(list, title, tone, note) {
+  if (!list.length) return '<div class="card" style="margin:0 0 10px"><div class="bd" style="padding:9px 11px">' +
+    '<div class="tiny muted">' + esc(title) + ' — 만들어진 기록이 없습니다.</div></div></div>';
+  const rows = list.slice(-8).reverse();
+  const sum = list.reduce((s2, t) => s2 + (t.flow === "in" ? t.amt : -t.amt), 0);
+  return '<div class="card" style="margin:0 0 10px"><div class="bd" style="padding:9px 11px">' +
+    '<div class="row" style="align-items:baseline;margin:0 0 5px">' +
+      '<span class="tiny b grow ' + (tone || "muted") + '">' + esc(title) + ' ' + list.length + '건</span>' +
+      '<span class="tiny muted num">' + signWon(sum) + '</span></div>' +
+    (rows.length < list.length ? '<div class="tiny muted" style="margin:0 0 3px">최근 ' + rows.length + '건만 보입니다</div>' : '') +
+    rows.map(t => '<div class="row tiny" style="padding:2px 0">' +
+      '<span class="muted" style="flex:none;width:58px">' + esc(String(t.date).slice(5)) + '</span>' +
+      '<span class="grow ell">' + esc(t.desc || "(내용 없음)") + '</span>' +
+      '<span class="num b ' + (t.flow === "in" ? "c-inc" : "") + '" style="flex:none">' +
+        (t.flow === "in" ? "+" : "\u2212") + won(t.amt) + '</span></div>').join("") +
+    (note ? '<p class="tiny muted" style="margin:6px 0 0;line-height:1.6">' + note + '</p>' : '') +
+  '</div></div>';
 }
 
 /* 적용 범위 선택 */
@@ -2884,9 +3121,19 @@ function editTxn(txId, presetAcc, forceRep, preset) {
     '<label class="tog" style="border-top:1.5px solid var(--line);margin-top:6px;padding-top:12px">' +
       '<input type="checkbox" id="rOn"' + (repOn0 ? " checked" : "") + (mode === "occ" ? " disabled" : "") + '>' +
       '<span class="grow"><span class="b sm">🔁 반복 설정</span>' +
-      '<span class="tiny muted" style="display:block">' + (mode === "occ" ? "이 항목은 반복 일정에서 나온 건입니다" : "월급·월세·구독료처럼 되풀이되는 항목") + '</span></span></label>' +
+      '<span class="tiny muted" style="display:block">' + (mode === "occ" ? "이 항목은 반복 일정에서 나온 건입니다"
+        : mode === "rule" ? "체크를 끄고 저장하면 <b>오늘까지는 그대로 두고</b> 앞으로만 멈춥니다"
+        : "월급·월세·구독료처럼 되풀이되는 항목") + '</span></span></label>' +
 
     '<div id="rBox" class="' + (repOn0 ? "" : "hidden") + '" style="background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0 4px">' +
+      ((mode === "rule" && r && r.until) ? '<div class="card" style="margin:0 0 12px;border-color:var(--accent)">' +
+        '<div class="bd" style="padding:10px 11px">' +
+        '<p class="sm b" style="margin:0 0 3px">이 반복은 <span class="num">' + esc(r.until) + '</span> 에 끝나 있습니다</p>' +
+        '<p class="tiny muted" style="margin:0 0 8px;line-height:1.6">그 뒤로는 새로 만들어지지 않습니다. 지난 기록은 그대로 있습니다.</p>' +
+        '<label class="tog" style="border:0;padding:0"><input type="checkbox" id="rResume">' +
+        '<span class="grow"><span class="b sm">다시 반복하기</span>' +
+        '<span class="tiny muted" style="display:block">켜고 저장하면 오늘부터 다시 만들어집니다</span></span></label>' +
+        '</div></div>' : '') +
       '<div class="two">' +
         '<div class="field" style="margin-bottom:8px"><label>주기</label>' +
           sel("rFreq", [["day", "매일"], ["week", "매주"], ["month", "매월"], ["year", "매년"]], rep0.freq) + '</div>' +
@@ -3137,8 +3384,39 @@ function editTxn(txId, presetAcc, forceRep, preset) {
           return;
         }
         if (mode === "rule") {
-          const q = buildRule(); q.ex = r.ex || []; q.ov = r.ov || {}; q.until = r.until || null;
-          Object.assign(r, q); return done();
+          if (!rOn.checked) {                 /* 반복을 껐다 — 지금까지는 남기고 앞으로만 멈춘다 */
+            const T = todayISO();
+            const past = (() => { try { return occDates(r, r.start, T).length; } catch (e) { return 0; } })();
+            const keep = ruleMade(r, r.start, T);
+            const gone = ruleMade(r, addDays(T, 1), addMonth(D.anchor || thisMonth(), 12) + "-28");
+            return modal({
+              title: "반복 끝내기",
+              body: '<p class="sm" style="line-height:1.7;margin:2px 0 10px"><b>' + esc(r.desc || "반복 일정") + '</b> ' +
+                '을(를) 오늘(' + T + ')까지만 두고 <b>앞으로는 만들지 않습니다</b>.</p>' +
+                madeHTML(keep, "그대로 남는 기록", "c-ok",
+                  "이미 만들어진 것이라 지워지지 않습니다. 금액·분류도 그대로입니다.") +
+                madeHTML(gone, "앞으로 안 생길 예정", "c-bad",
+                  "오늘 이후로는 이 항목이 더 이상 뜨지 않습니다. 다시 켜려면 설정 → 반복 일정에서 <b>“다시 반복”</b>을 켜세요.") +
+                '<p class="tiny muted" style="margin:0;line-height:1.6">실수로 눌러도 기록은 사라지지 않습니다.</p>',
+              foot: '<button class="btn" id="roNo">취소</button><button class="btn pri" id="roOk">반복 끝내기</button>',
+              onOpen(e2, c2) {
+                $("#roNo", e2).onclick = c2;
+                $("#roOk", e2).onclick = () => {
+                  c2();
+                  const q = buildRule();
+                  q.ex = r.ex || []; q.ov = r.ov || {};
+                  Object.assign(r, q);
+                  r.until = T;                   /* 오늘까지만 */
+                  done("앞으로는 반복하지 않습니다 — 지난 " + past + "건은 그대로입니다");
+                };
+              }
+            });
+          }
+          const q = buildRule(); q.ex = r.ex || []; q.ov = r.ov || {};
+          const rs2 = $("#rResume", el);
+          q.until = (rs2 && rs2.checked) ? null : (r.until || null);
+          Object.assign(r, q);
+          return done((rs2 && rs2.checked) ? "다시 반복합니다" : "저장했습니다");
         }
         if (rOn.checked) {                       // 새 반복 규칙
           if (mode === "txn") D.txns = D.txns.filter(x => x.id !== t.id);
@@ -3289,12 +3567,17 @@ function editTxn(txId, presetAcc, forceRep, preset) {
             body: '<p class="sm" style="line-height:1.7;margin:2px 0 8px"><b>' + esc(r.desc || "반복") + '</b>' +
               (sibs.length ? ' <span class="num muted">(' + esc(r.start) + ' ~ ' + esc(r.until || "지금까지") + ' · ' + wonS(r.amt) + ')</span>' : '') +
               ' 을(를) 지웁니다. 과거 기록도 함께 사라집니다.</p>' +
+              madeHTML(ruleMade(r), "함께 사라지는 기록", "c-bad",
+                "이 기간에서 만들어진 것입니다. 삭제하면 요약·내역·분류에서 모두 빠집니다. " +
+                "<b>기록은 남기고 앞으로만 멈추려면</b> 취소하고 반복 일정을 열어 <b>“반복”을 꺼 주세요</b>.") +
               (sibs.length ? '<div class="card" style="margin:0 0 10px;border-color:var(--accent)"><div class="bd" style="padding:10px 11px">' +
                 '<p class="sm b" style="margin:0 0 4px">이 항목은 금액이 바뀌며 기간이 나뉘어 있습니다</p>' +
                 '<p class="tiny muted" style="margin:0;line-height:1.6">' +
                 ch.list.map(x => esc(x.start) + " ~ " + esc(x.until || "지금") + " " + wonS(x.amt)).join("<br>") +
                 '</p></div></div>' +
-                '<p class="tiny muted" style="margin:0 0 4px;line-height:1.6">한 기간만 지울지, 이 항목을 통째로 지울지 고르세요.</p>' : '') +
+                '<p class="tiny muted" style="margin:0 0 4px;line-height:1.6">한 기간만 지울지, 이 항목을 통째로 지울지 고르세요. ' +
+                '<b>전부</b>를 고르면 위 목록에 더해 다른 기간의 기록도 같이 사라집니다 — 모두 ' +
+                ch.list.reduce((n2, x) => n2 + ruleMade(x).length, 0) + '건입니다.</p>' : '') +
               '<p class="tiny muted" style="margin:0"><b>설정 → 휴지통</b>에서 되돌릴 수 있습니다.</p>',
             foot: '<button class="btn" id="rdNo">취소</button>' +
               (sibs.length ? '<button class="btn dan" id="rdOne">이 기간만</button>' +
@@ -3335,8 +3618,9 @@ function editTxn(txId, presetAcc, forceRep, preset) {
    은행 잔액 수정 — 기존 잔액과의 차액을 기록으로 남긴다
    ============================================================ */
 /* 잔액이 어떻게 나왔는지 — 못(마지막 잔액 수정) 이후로 무엇이 더해지고 빠졌나 */
-function foldNote2(id, label, html) {
-  return '<details style="margin:-4px 0 12px"><summary class="tiny b" style="cursor:pointer;color:var(--accent);padding:4px 0">' +
+function foldNote2(id, label, html, open) {
+  return '<details' + (open ? " open" : "") + ' style="margin:-4px 0 12px">' +
+    '<summary class="tiny b" style="cursor:pointer;color:var(--accent);padding:4px 0">' +
     esc(label) + '</summary><div style="margin-top:8px">' + html + '</div></details>';
 }
 function balWhy(a) {
@@ -3392,7 +3676,7 @@ function editBal(accId) {
       '<div class="card" style="margin:0 0 12px"><div class="bd row">' +
         '<div class="grow"><div class="tiny muted b">' + (stk ? "지금 기록된 평가금액" : deb ? "현재 자동 계산된 잔액" : "현재 기록된 잔액") + '</div>' +
         '<div class="num b" style="font-size:20px">' + wonS(old) + '</div></div></div></div>' +
-      (stk ? '' : foldNote2("balwhy", "이 금액이 어떻게 나왔는지 보기", balWhyHTML(a))) +
+      (stk ? '' : foldNote2("balwhy", "이 금액이 어떻게 나왔는지 보기", balWhyHTML(a), true)) +
       '<div class="field"><label>' + (stk ? "오늘 기준 평가금액 (증권 앱에서 본 금액)" : deb ? "실제 잔액 (카드 앱에서 본 금액)" : "실제 잔액 (통장·앱에서 본 금액)") + '</label>' +
         '<input id="bNew" class="inp" inputmode="numeric" value="' + old + '"></div>' +
       (stk ? '<div class="field"><label>이번 변동은 무엇인가요?</label>' +
@@ -3429,9 +3713,24 @@ function editBal(accId) {
         const nv = +String(inp.value).replace(/[^\d-]/g, "") || 0;
         const d = nv - old;
         if (!d) { close(); return toast("변경된 금액이 없습니다"); }
+        const dt0 = $("#bDate", el).value || todayISO();
+        const W = stk ? null : balWhy(a);
+        const go = () => save(nv, d, dt0);
+        if (!W) return go();
+        return ask('<b>' + esc(a.name) + '</b> — <span class="num b">' + wonS(old) + '</span> → ' +
+          '<span class="num b">' + wonS(nv) + '</span> <span class="num ' + (d > 0 ? "c-inc" : "c-bad") + '">(' + signWon(d) + ')</span><br><br>' +
+          (W.list.length
+            ? (W.an ? esc(W.an.date) + ' 기준점' : '시작 잔액') + ' <span class="num">' + wonS(W.base) + '</span> 에 ' +
+              '그 뒤 <b>' + W.list.length + '건</b>을 더하면 <span class="num b">' + wonS(W.now) + '</span> 입니다.<br>'
+            : (W.an ? esc(W.an.date) + ' 기준점 뒤로 적은 기록이 없습니다.<br>' : '')) +
+          '<span class="tiny muted">빠뜨린 기록이 있어서 어긋난 것일 수도 있습니다. ' +
+          '여기서 맞추면 <b>' + esc(dt0) + '</b> 이 새 기준점이 되고, 이 날짜보다 <b>앞선 날짜</b>로 적는 기록은 ' +
+          '앞으로 잔액을 움직이지 않습니다.</span>', go, "그래도 맞추기");
+      };
+      const save = (nv, d, dt0) => {
         D.txns.push({
           id: uid(), acc: a.id, adj: true,
-          date: $("#bDate", el).value || todayISO(), time: "",
+          date: dt0, time: "",
           desc: stk ? (princ ? "원금 입출금" : "평가 변동") : "잔액 수정",
           memo: $("#bMemo", el).value.trim(),
           amt: Math.abs(d), flow: d > 0 ? "in" : "out", cat: "",
@@ -3557,6 +3856,25 @@ function varyDue() {                       /* 오늘까지 왔는데 아직 확�
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 function askVary() { return (D.settings || {}).askVary !== false; }
+/* 같은 건을 이미 손으로 적어 두진 않았나 — 반복에서 나온 줄과 겹치는 기록 찾기 */
+function dayGap(a, b) { return Math.round((dParse(a) - dParse(b)) / 86400000); }
+function varyDup(t) {
+  const key = shopKey(t.desc);
+  return D.txns.filter(x => {
+    if (x.virt || x.adj || x.xfer || x.cpay) return false;
+    if (x.acc !== t.acc || x.flow !== t.flow) return false;
+    if (Math.abs(dayGap(x.date, t.date)) > 10) return false;
+    const sameName = key && shopKey(x.desc) === key;
+    const close = Math.abs(x.amt - t.amt) <= Math.max(5000, t.amt * 0.4);
+    return sameName || close;
+  }).sort((a, b) => Math.abs(dayGap(a.date, t.date)) - Math.abs(dayGap(b.date, t.date)));
+}
+function dupNote(t) {
+  const d = varyDup(t)[0];
+  if (!d) return '';
+  return '<div class="tiny c-warn b" style="margin-top:3px;line-height:1.5">⚠ 이미 적어 두신 것 같습니다 — ' +
+    esc(String(d.date).slice(5)) + ' ' + esc(d.desc || "") + ' ' + wonS(d.amt) + '</div>';
+}
 function fixVary(rid, occ, amt) {
   const r = (D.rules || []).find(x => x.id === rid); if (!r) return;
   r.ov = r.ov || {};
@@ -3577,9 +3895,17 @@ function varyFix(rid, occ) {
       '<div class="field"><label>이번 달 실제 금액</label>' +
         '<input id="vfAmt" class="inp" inputmode="numeric" value="' + guess + '"></div>' +
       '<div id="vfD" class="tiny muted" style="margin:-4px 0 10px"></div>' +
+      (varyDup({ acc: r.acc, flow: r.flow, desc: r.desc, amt: r.amt, date: occ }).length
+        ? (() => { const d = varyDup({ acc: r.acc, flow: r.flow, desc: r.desc, amt: r.amt, date: occ })[0];
+            return '<div class="card" style="margin:0 0 12px;border-color:var(--warn,#e2822f)"><div class="bd" style="padding:10px 11px">' +
+              '<p class="tiny b c-warn" style="margin:0 0 4px">⚠ 이미 적어 두신 것 같습니다</p>' +
+              '<p class="tiny muted" style="margin:0;line-height:1.6">' + esc(d.date) + ' · ' + esc(d.desc || "") + ' · ' +
+              wonS(d.amt) + '<br>같은 돈이면 확정하지 말고 <b>「이번엔 빼기」</b>를 누르세요 — 이 달 반복 건만 사라지고 ' +
+              '직접 적으신 기록이 남습니다. 다음 달은 다시 뜹니다.</p></div></div>'; })()
+        : '') +
       '<p class="tiny muted" style="line-height:1.6;margin:0">이 달 것만 바뀝니다. ' +
         '다음 달은 다시 어림값 ' + wonS(r.amt) + '으로 잡힙니다.</p>',
-    foot: '<button class="btn" id="vfSkip">이번엔 건너뛰기</button><button class="btn pri" id="vfOk">확정</button>',
+    foot: '<button class="btn" id="vfSkip">이번엔 빼기</button><button class="btn pri" id="vfOk">확정</button>',
     onOpen(el, close) {
       const inp = $("#vfAmt", el), dd = $("#vfD", el);
       commaOn(inp); inp.focus(); inp.select();
@@ -3591,7 +3917,7 @@ function varyFix(rid, occ) {
       inp.oninput = upd; upd();
       $("#vfSkip", el).onclick = () => {
         r.ex = (r.ex || []).concat([occ]);
-        persist(); close(); render(); toast("이번 달은 건너뜁니다");
+        persist(); close(); render(); toast("이 달 반복 건을 뺐습니다 — 다음 달은 다시 뜹니다");
       };
       $("#vfOk", el).onclick = () => {
         const v = +String(inp.value).replace(/[^\d]/g, "") || 0;
@@ -3601,6 +3927,20 @@ function varyFix(rid, occ) {
       };
     }
   });
+}
+
+/* 이 카드대금을 손으로 이미 적어 두진 않았나 */
+function billDup(accId, date, amt, cardName) {
+  const key = shopKey(cardName || "");
+  return D.txns.filter(x => {
+    if (x.virt || x.adj || x.cpay || x.flow === "in") return false;
+    if (x.acc !== accId) return false;
+    if (Math.abs(dayGap(x.date, date)) > 12) return false;
+    const d2 = String(x.desc || "");
+    const named = /카드|대금|청구|결제/.test(d2) || (key && shopKey(d2) === key);
+    const close = amt && Math.abs(x.amt - amt) <= Math.max(10000, amt * 0.25);
+    return named || close;
+  }).sort((a, b) => Math.abs(dayGap(a.date, date)) - Math.abs(dayGap(b.date, date)));
 }
 
 /* 카드대금 확정 — 금액·통장·날짜를 그때그때 바꿀 수 있다 */
@@ -3627,6 +3967,7 @@ function billFix(cardId, period) {
         '</select></div>' +
         '<div class="field"><label>날짜</label><input id="bfDate" class="inp" type="date" value="' + payDateOf(a, period) + '"></div>' +
       '</div>' +
+      '<div id="bfDup"></div>' +
       '<div id="bfWarn"></div>' +
       '<p class="tiny muted" style="line-height:1.6;margin:0">자동이체가 아니라 직접 넣으셨다면 통장을 바꿔 주세요. ' +
         '이 건만 바뀌고 <b>카드 설정이나 지난 건은 그대로</b>입니다. 카드대금은 지출 합계에 또 더해지지 않습니다 — ' +
@@ -3658,10 +3999,31 @@ function billFix(cardId, period) {
             '<b>그 뒤에 빠졌다면</b> 지금 그대로 두시면 됩니다.</p></div></div>'
           : '';
       };
-      inp.oninput = upd; upd(); warn();
+      /* 같은 돈을 이미 손으로 적어 두진 않았나 */
+      const dup = () => {
+        const box = $("#bfDup", el); if (!box) return;
+        const v = +String(inp.value).replace(/[^\d]/g, "") || 0;
+        const d = billDup($("#bfAcc", el).value, $("#bfDate", el).value || payDateOf(a, period), v, a.name)[0];
+        box.innerHTML = d
+          ? '<div class="card" style="margin:0 0 12px;border-color:var(--warn,#e2822f)"><div class="bd" style="padding:10px 11px">' +
+            '<p class="tiny b c-warn" style="margin:0 0 4px">⚠ 이미 적어 두신 것 같습니다</p>' +
+            '<p class="tiny muted" style="margin:0;line-height:1.6">' + esc(d.date) + ' · ' + esc(d.desc || "(내용 없음)") + ' · ' +
+            wonS(d.amt) + '<br>같은 돈이면 <b>취소</b>하고 그 기록을 지운 뒤 확정하거나, 그 기록을 그대로 두고 여기서는 확정하지 마세요. ' +
+            '둘 다 두면 통장에서 <b>두 번 빠집니다</b>.</p>' +
+            '<button class="btn sm dan" id="bfDel" style="margin-top:8px">그 기록 지우고 확정하기</button>' +
+            '</div></div>'
+          : '';
+        const db = $("#bfDel", el);
+        if (db) db.onclick = () => {
+          recycle("카드대금 중복 정리 — " + (d.desc || "기록"), { txns: [d] });
+          D.txns = D.txns.filter(x => x.id !== d.id);
+          persist(); rebuildV(); dup(); toast("지웠습니다 — 휴지통에서 되돌릴 수 있습니다");
+        };
+      };
+      inp.oninput = () => { upd(); dup(); }; upd(); warn(); dup();
       inp.onfocus = () => inp.select();
-      $("#bfAcc", el).onchange = warn;
-      $("#bfDate", el).onchange = warn;
+      $("#bfAcc", el).onchange = () => { warn(); dup(); };
+      $("#bfDate", el).onchange = () => { warn(); dup(); };
       $("#bfOk", el).onclick = () => {
         const v = +String(inp.value).replace(/[^\d]/g, "") || 0;
         if (!v) return toast("금액을 넣어주세요");
@@ -3688,6 +4050,10 @@ function editCat(id) {
         PAL.map(x => '<button class="chip" data-c="' + x + '" style="background:' + x + ';border-color:' + x + ';width:34px;height:34px;padding:0;border-radius:10px"></button>').join("") +
       '</div></div>' +
       '<div class="field"><label>직접 색 고르기</label><input id="cPick" class="inp" type="color" value="' + esc(cur.color) + '" style="height:46px;padding:4px"></div>' +
+      '<label class="tog" style="border:0"><input type="checkbox" id="cNoSum"' + (cur.noSum ? " checked" : "") + '>' +
+        '<span class="grow"><span class="b sm">지출 합계에서 빼기</span>' +
+        '<span class="tiny muted" style="display:block">카드대금처럼 <b>이미 지출로 잡은 돈</b>이 통장에서 나가는 것에 쓰세요. ' +
+        '내역에는 그대로 보이고 <b>통장 잔액에서도 그대로 빠지지만</b>, 지출 합계와 분류별 집계·실적에는 안 들어갑니다.</span></span></label>' +
       '<div class="field"><label>대분류 (선택)</label><select id="cGid" class="inp">' +
         '<option value="">묶지 않음</option>' +
         groups().map(g => '<option value="' + g.id + '"' + (cur.gid === g.id ? " selected" : "") + '>' + esc(g.name) + '</option>').join("") +
@@ -3710,12 +4076,15 @@ function editCat(id) {
         const name = $("#cNm", el).value.trim();
         if (!name) return toast("이름을 입력하세요");
         const gv = ($("#cGid", el) || {}).value || "";
+        const ns = !!($("#cNoSum", el) || {}).checked;
         if (c) {
           c.name = name; c.color = color;
+          if (ns) c.noSum = true; else delete c.noSum;
           if (gv) c.gid = gv; else delete c.gid;
           if (c.off && $("#cBack", el) && $("#cBack", el).checked) { delete c.off; delete c.offFrom; }
         } else {
           const o = { id: uid(), name, color };
+          if (ns) o.noSum = true;
           if (gv) o.gid = gv;
           D.cats.push(o);
         }
@@ -3999,7 +4368,8 @@ function normRows(arr, accId) {
       cat: shopLearnOn() ? shopCat(r.desc || r.memo || "") : "",
       inst: Math.max(1, Math.min(36, +r.inst || 1)), instN: 1,
       xfer: accX.kind !== "card" && isMine(r.desc),
-      xcand: accX.kind !== "card" && isMine(r.desc)
+      xcand: accX.kind !== "card" && isMine(r.desc),
+      dguess: !!r.dguess
     });
   });
   return out;
@@ -4328,10 +4698,77 @@ function isNoise(line) {
   return false;
 }
 
+/* 금액만 있는 줄인가 — "-208,440원", "63,285원", "556000" */
+function moneyVal(l) {
+  const s2 = String(l).replace(/\s/g, "").replace(/원$/, "").replace(/\u2212/g, "-");
+  if (!/^[-+]?\d{1,3}(,\d{3})+$/.test(s2) && !/^[-+]?\d{3,12}$/.test(s2)) return null;
+  const v = Math.abs(+s2.replace(/[^\d]/g, ""));
+  if (!isFinite(v) || v < 10) return null;
+  return { v, neg: /^-/.test(s2) };
+}
+/* 내용·시간이 쭉 나오고 그 아래에 금액·잔액만 쭉 나오는 형식 (토스·뱅크샐러드 등) */
+function parseBlock(lines, year) {
+  let i = lines.length;
+  while (i > 0 && moneyVal(lines[i - 1])) i--;
+  const V = lines.slice(i).map(moneyVal);
+  const head = lines.slice(0, i);
+  if (V.length < 4 || head.length < 2) return null;
+  if (head.some(l => moneyVal(l))) return null;        /* 섞여 있으면 이 형식이 아니다 */
+
+  /* 머리 블록 — 날짜 구분선 / 시간 / 내용 */
+  const ent = []; let dt = null, first = null;
+  head.forEach(l0 => {
+    const l = deboiler(l0).replace(/\s{2,}/g, " ").trim();
+    if (!l || isNoise(l)) return;
+    const onlyNum = !l.replace(/[0-9년월일.\-\/\s]/g, "");
+    const d = findDate(l, year);
+    if (d && onlyNum) { dt = d; if (!first) first = d; return; }
+    const tm = findTime(l);
+    if (tm && !l.replace(/[0-9:\s시분]|오전|오후|AM|PM/gi, "")) {
+      if (ent.length && !ent[ent.length - 1].time) ent[ent.length - 1].time = tm;
+      return;
+    }
+    const txt = l.replace(/(\d{1,2})\s*[:시]\s*\d{2}\s*(분)?/, " ").replace(/\s{2,}/g, " ").trim();
+    if (txt.length < 2) return;
+    ent.push({ desc: txt.slice(0, 40), time: tm || "", date: dt, guess: !dt });
+  });
+  if (ent.length < 2) return null;
+  ent.forEach(e => { if (!e.date) e.date = first; });
+  if (ent.some(e => !e.date)) return null;
+
+  /* (금액, 잔액) 번갈아인지 — 잔액 흐름이 맞아떨어지는지로 본다 */
+  let hit = 0, tryN = 0;
+  for (let k = 0; 2 * k + 3 < V.length; k++) {
+    tryN++; if (Math.abs(V[2 * k + 1].v - V[2 * k + 3].v) === V[2 * k].v) hit++;
+  }
+  const paired = tryN >= 2 && hit / tryN >= 0.6;
+
+  const n = Math.min(ent.length, paired ? Math.floor(V.length / 2) : V.length);
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    const e = ent[k];
+    let amt = null, flow = null;
+    if (paired) {
+      const a = V[2 * k], b = V[2 * k + 1], nb = V[2 * k + 3];
+      if (nb && Math.abs(b.v - nb.v) === a.v) { amt = a.v; flow = (b.v - nb.v) > 0 ? "in" : "out"; }
+      if (amt == null) { amt = a.v; flow = a.neg ? "out" : (IN_RE.test(e.desc) ? "in" : "out"); }
+    } else {
+      amt = V[k].v; flow = V[k].neg ? "out" : (OUT_RE.test(e.desc) ? "out" : "in");
+    }
+    out.push({ date: e.date, time: e.time || "", desc: e.desc, amount: amt, flow, inst: 1, dguess: !!e.guess });
+  }
+  if (!out.length) return null;
+  if (ent.length > n) out.cut = ent.length - n;         /* 금액이 모자라 뺀 줄 수 */
+  return out;
+}
+
 function parsePaste(text, year) {
   const raw = String(text).replace(/\u00a0/g, " ").replace(/\r/g, "");
   const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
   if (!lines.length) return [];
+
+  const blk = parseBlock(lines, year);
+  if (blk) return blk;
 
   if (/\t/.test(raw) || lines.filter(l => (l.match(/,/g) || []).length >= 3).length > 2) {
     const sep = /\t/.test(raw) ? "\t" : ",";
@@ -4459,14 +4896,14 @@ function pasteFlow(presetAcc) {
             '<span class="muted" style="font-weight:400">날짜와 금액이 같이 있는 줄이 필요합니다. 표 전체를 복사하거나 “09.18 스타벅스 5,600” 형태로 적어주세요.</span></p>';
           return;
         }
-        showPreview(el, prev, run, found, accId, close);
+        showPreview(el, prev, run, found, accId, close, { cut: rows.cut || 0 });
       };
     }
   });
 }
 
 /* ---------- 중복 확인 + 직접 정정 미리보기 ---------- */
-function showPreview(el, prev, run, found, accId, closeAll) {
+function showPreview(el, prev, run, found, accId, closeAll, note) {
   const exist = new Set(AL.filter(t => t.acc === accId).map(dkey));
   const items = found.map(t => ({ t, dup: false, on: true }));
 
@@ -4497,8 +4934,14 @@ function showPreview(el, prev, run, found, accId, closeAll) {
     });
   };
 
+  const cut = (note && note.cut) || 0;
+  const gs = items.filter(i => i.t.dguess).length;
   prev.innerHTML =
     '<div class="stat" id="pvStat" style="margin-top:14px"></div>' +
+    (cut ? '<p class="tiny b c-warn" style="margin:0 0 8px;line-height:1.6">\u26a0 금액이 모자라서 <b>' + cut +
+      '줄</b>을 빼고 읽었습니다. 복사한 내용의 끝이 잘린 것 같습니다 \u2014 끝부분을 다시 복사해 한 번 더 붙여넣어 주세요.</p>' : '') +
+    (gs ? '<p class="tiny b c-warn" style="margin:0 0 8px;line-height:1.6">\u26a0 맨 위 <b>' + gs +
+      '건</b>은 날짜 줄이 복사되지 않아 아래 날짜로 임시로 맞췄습니다. 날짜 칸을 눌러 확인해 주세요.</p>' : '') +
     (items.some(i => i.t.xcand) ? '<p class="tiny b" style="margin:0 0 8px;line-height:1.6;color:var(--accent)">내 이름(' +
       esc(myNames().join(", ")) + ')이 적힌 이체 ' + items.filter(i => i.t.xcand).length + '건을 <b>내 계좌이동</b>으로 표시했습니다. ' +
       '다른 사람에게 보낸 거라면 버튼을 눌러 끄세요.</p>' : '') +
@@ -4607,6 +5050,13 @@ function bind() {
   $$("[data-add]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editAccount(b.dataset.add); });
   $$("[data-edit]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editAccount(null, b.dataset.edit); });
   $$("[data-light]", v).forEach(b => b.onclick = e => { e.stopPropagation(); showLight(b.dataset.light); });
+  $$("[data-jump]", v).forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    const k = b.dataset.jump;
+    if (k === "bill" && folded("bill")) { D.settings.fold = D.settings.fold || {}; delete D.settings.fold.bill; persist(); render(); }
+    setTimeout(() => { const el = document.getElementById("jmp-" + k);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }, 40);
+  });
   $$("[data-bal]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editBal(b.dataset.bal); });
   $$("[data-stock]", v).forEach(b => b.onclick = () => showStock(b.dataset.stock));
   $$("[data-pay]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editPay(b.dataset.pay); });
@@ -4645,6 +5095,14 @@ function bind() {
   const cf = $("#catFut", v);
   if (cf) cf.onchange = () => { D.settings.catIncFuture = cf.checked; persist(); render(); };
   $$("[data-newcat]", v).forEach(b => b.onclick = () => editCat(null));
+  $$("[data-varyskip]", v).forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    const [rid, occ] = b.dataset.varyskip.split("|");
+    const r = (D.rules || []).find(x => x.id === rid); if (!r) return;
+    ask("이 달 <b>" + esc(r.desc || "고정비") + "</b> 반복 건을 뺍니다.<br>직접 적어 두신 기록은 그대로 남고, 다음 달은 다시 뜹니다.", () => {
+      r.ex = (r.ex || []).concat([occ]); persist(); render(); toast("뺐습니다");
+    }, "빼기");
+  });
   $$("[data-vary]", v).forEach(b => b.onclick = e => {
     e.stopPropagation();
     const [rid, occ] = b.dataset.vary.split("|");
@@ -4682,12 +5140,25 @@ function bind() {
   $$("#swVaryThis", v).forEach(x => x.onchange = () => {
     D.settings.varyThisMonth = x.checked; persist(); render();
   });
+  $$("[data-bdrag]", v).forEach(hd => {
+    hd.addEventListener("pointerdown", e => bDragStart(e, hd));
+    hd.addEventListener("pointermove", bDragMove);
+    hd.addEventListener("pointerup", bDragEnd);
+    hd.addEventListener("pointercancel", bDragEnd);
+  });
+  $$("[data-bookedit]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editBook(b.dataset.bookedit); });
+  $$("[data-newbook]", v).forEach(b => b.onclick = () => askText("새 묶음", "이름", "", nm => {
+    books().push({ id: uid(), name: String(nm).slice(0, 14) });
+    persist(); render(); toast("묶음을 만들었습니다");
+  }, "예: 사업, 뉴타입"));
+  $$("[data-book]", v).forEach(b => b.onclick = () => {
+    D.settings.book = b.dataset.book; persist(); render();
+  });
   $$("[data-adrag]", v).forEach(hd => {
     hd.addEventListener("pointerdown", e => aDragStart(e, hd));
     hd.addEventListener("pointermove", aDragMove);
     hd.addEventListener("pointerup", aDragEnd);
     hd.addEventListener("pointercancel", aDragEnd);
-    hd.addEventListener("click", e => { e.stopPropagation(); e.preventDefault(); });
   });
   $$("[data-undo]", v).forEach(b => b.onclick = () => restoreTrash(b.dataset.undo));
   $$("[data-trashclr]", v).forEach(b => b.onclick = () => ask(
@@ -4759,20 +5230,6 @@ async function doExport() {
   const name = "가계부백업_" + todayISO() + ".json";
   offerFile(name, payload, "application/json",
     D.home + " · 내역 " + D.txns.length + "건 · 계정 " + D.accounts.length + "개");
-  return;
-  modal({
-    title: "백업 내용",
-    body: '<p class="tiny muted">아래 내용을 전체 복사해서 메모앱 등에 보관하세요. 나중에 “백업 불러오기”에 붙여넣으면 됩니다.</p>' +
-          '<textarea class="inp" id="bkTa" style="min-height:220px;font-size:11px">' + esc(payload) + '</textarea>',
-    foot: '<button class="btn pri" id="bkCopy">복사하기</button>',
-    onOpen(el, close) {
-      $("#bkCopy", el).onclick = async () => {
-        const ta = $("#bkTa", el); ta.select();
-        try { await navigator.clipboard.writeText(payload); } catch (e) { document.execCommand("copy"); }
-        toast("복사했습니다"); close();
-      };
-    }
-  });
 }
 
 function doImportJSON() {
