@@ -402,7 +402,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.10.15.0900";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.10.15.1210";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -1030,7 +1030,8 @@ function aDragEnd() {
   const seen = {};
   $$("[data-accgrp]").forEach(g => {
     Array.prototype.slice.call(g.children).forEach(x => {
-      if (x.classList && x.classList.contains("acc") && x.dataset.open) seen[x.dataset.open] = Object.keys(seen).length;
+      const id2 = x.dataset.open || x.dataset.stock;
+      if (x.classList && x.classList.contains("acc") && id2) seen[id2] = Object.keys(seen).length;
     });
   });
   const shown = sortAccs(D.accounts.filter(a => seen[a.id] != null))
@@ -1530,6 +1531,7 @@ function go(tab) {
   $("#btnHome").innerHTML = '<b>' + esc(D.home) + '</b> ▾ · ' + D.anchor.replace("-", "년 ") + "월 기준";
   $("#btnPeriod").classList.toggle("hidden", tab === "set");
   $("#btnMemo").classList.toggle("hidden", tab !== "home");
+  $("#btnMemo").innerHTML = D.memo ? '\ud83d\udcdd<span style="color:var(--warn)">\u2022</span>' : '\ud83d\udcdd';
   render();
 }
 $("#btnPeriod").onclick = pickPeriod;
@@ -1624,24 +1626,10 @@ function viewHome() {
       todo.map(x => '<button class="chip" data-jump="' + x[0] + '">' + esc(x[1]) + '</button>').join("") + '</div>';
   }
 
-  /* 메모 */
-  {
-    const mOpen = D.settings.memoOpen !== false;
-    h += '<div class="card" style="border-left:4px solid var(--warn)"><div class="bd" style="padding-bottom:' + (mOpen ? 13 : 11) + 'px">' +
-      '<div class="row"' + (mOpen && D.memo ? ' style="margin-bottom:8px"' : '') + '>' +
-        '<span class="tiny b grow" data-memotog style="color:var(--warn)">\ud83d\udcdd 메모</span>' +
-        (mOpen ? '<span class="tiny muted" data-memo style="padding:2px 6px">' +
-          (D.memo ? "눌러서 고치기" : "눌러서 메모 적기") + '</span>' : '') +
-        '<button class="memotog" data-memotog>' + (mOpen ? "\u2212" : "+") + '</button></div>' +
-      (!mOpen ? '' :
-        (D.memo ? '<div class="sm" data-memo style="white-space:pre-wrap;line-height:1.65">' + esc(D.memo) + '</div>'
-                : '<div class="tiny muted" data-memo>장 볼 것, 넣을 돈, 잊으면 안 되는 것을 적어 두세요.</div>')) +
-    '</div></div>';
-  }
 
   /* 총괄 */
   h += '<div class="card">' +
-    secHd("top", "이번 달 한눈에",
+    secHd("top", "이번 달 요약",
       (D.settings.hideBal ? "잔고 ••••" : "잔고 " + won(bankSum)) + " · 카드 " + won(cardSum)) +
     (folded("top") ? '' : '<div class="bd" style="padding-top:4px">' +
     '<div class="row" style="gap:0">' +
@@ -1706,9 +1694,7 @@ function viewHome() {
       h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
         '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
         '<div class="grow"><div class="nm ell wrap">' + esc(a.name) + endTag(a) + recTag(a.id) + '</div>' +
-          '<div class="tiny num"><span class="c-inc b">입금 ' + won(F.inc) + '</span>' +
-          '<span class="c-bad b"> · 출금 ' + won(F.out) + '</span>' +
-          '<span class="muted"> · 눌러서 자세히</span></div></div>' +
+          '<div class="tiny muted">자세히</div></div>' +
         '<div class="rt"><div class="v num">' + mb(bankBal(a)) + '</div>' +
           '<div class="tiny num ' + (F.net >= 0 ? "c-inc" : "muted") + '">' + (F.net >= 0 ? "+" : "") + won(F.net) + '</div></div>' +
         '<button class="btn sm gho" data-bal="' + a.id + '" style="flex:none;padding:6px 9px;font-weight:800">수</button>' +
@@ -1731,8 +1717,7 @@ function viewHome() {
         '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc(CURS[c].sym) + '</div>' +
         '<div class="grow"><div class="nm ell wrap">' + esc(a.name) + endTag(a) +
           ' <span class="pill tiny" style="padding:1px 7px">' + esc(c) + '</span>' + recTag(a.id) + '</div>' +
-          '<div class="tiny num"><span class="c-inc b">받음 ' + CURS[c].sym + won(F.inc) + '</span>' +
-          '<span class="c-bad b"> · 나감 ' + CURS[c].sym + won(F.out) + '</span></div></div>' +
+          '<div class="tiny muted">자세히</div></div>' +
         '<div class="rt"><div class="v num">' + (D.settings.hideBal ? "••••••" : CURS[c].sym + won(b2)) + '</div>' +
           '<div class="tiny muted num">≈ ' + won(fx(b2, c)) + '원</div></div>' +
         '<button class="btn sm gho" data-bal="' + a.id + '" style="flex:none;padding:6px 9px;font-weight:800">수</button>' +
@@ -1754,13 +1739,14 @@ function viewHome() {
          '<button class="btn sm" data-add="bank">+ 추가</button>');
     if (folded("stock")) h += '</div>';
     else {
-    h += '<div style="margin-top:10px">';
+    h += '<div style="margin-top:10px" data-accgrp="stock">';
     stocks.forEach(a => {
       const pl = stockPL(a), seed = stockSeed(a);
       const rate = seed ? (pl / seed * 100) : 0;
       const last = stockLog(a).find(t => !t.princ);
-      h += '<div class="acc" data-stock="' + a.id + '">' +
-        '<div class="ic" style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
+      void last;
+      h += '<div class="acc" data-stock="' + a.id + '"">' +
+        '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
         '<div class="grow"><div class="nm ell wrap">' + esc(a.name) + recTag(a.id) + '</div>' +
           '<div class="tiny num"><span class="muted">원금 ' + won(seed) + '</span>' +
             '<span class="' + (pl >= 0 ? "c-inc" : "c-bad") + ' b"> · ' + signWon(pl) +
@@ -3392,7 +3378,7 @@ function editTxn(txId, presetAcc, forceRep, preset) {
         '<span class="grow"><span class="b sm">다시 반복하기</span>' +
         '<span class="tiny muted" style="display:block">켜고 저장하면 오늘부터 다시 만들어집니다</span></span></label>' +
         '</div></div>' : '') +
-      '<div class="field" style="margin-bottom:10px"><label>아이콘 색</label>' +
+      '<div class="field" style="margin-bottom:10px"><label>아이콘 색 <span class="muted" style="font-weight:600">(눌러서 고르세요)</span></label>' +
         '<div class="chips" id="rPal">' +
           '<button type="button" class="chip" data-rc="" style="width:34px;height:34px;padding:0;border-radius:10px;' +
             'background:' + esc((D.accounts.find(x => x.id === rep0.acc) || {}).color || "#9fb0c2") + ';' +
@@ -3480,7 +3466,13 @@ function editTxn(txId, presetAcc, forceRep, preset) {
       const xOn = $("#tXfer", el), xBox = $("#tXBox", el), xBoth = $("#tXBoth", el);
       const xFrom = $("#tXFrom", el), xTo = $("#tXTo", el), xHint = $("#tXHint", el);
       const nm = id => (D.accounts.find(a => a.id === id) || {}).name || "";
-      const xUp = () => {
+      /* 한쪽만 기록할 때, 통장은 고른 구분에 맞춰 준다 — 손으로 바꿨으면 건드리지 않는다 */
+      const xPick = () => {
+        if (!xOn.checked || xBoth.checked) return;
+        if (xOn.dataset.touched) return;
+        $("#tAcc", el).value = ($("#tFlow", el).value === "in") ? xTo.value : xFrom.value;
+      };
+      const xUp = () => {                       /* 보여주기만 한다 — 값은 건드리지 않는다 */
         const on = xOn.checked, both = on && xBoth.checked;
         xBox.classList.toggle("hidden", !on);
         $("#tAccF", el).classList.toggle("hidden", both);
@@ -3488,18 +3480,24 @@ function editTxn(txId, presetAcc, forceRep, preset) {
         $("#tInstL", el).classList.toggle("hidden", on);
         if (on) $("#tInstBox", el).classList.add("hidden"); else iUp();
         const amt = String($("#tAmt", el).value || "0");
-        xHint.textContent = xBoth.checked
-          ? nm(xFrom.value) + " −" + amt + " / " + nm(xTo.value) + " +" + amt + " 두 건이 생깁니다"
-          : "아래 은행·카드와 구분에서 고른 한 곳에만 기록합니다";
-        if (on && !xBoth.checked && !xOn.dataset.touched) {
-          $("#tAcc", el).value = xFrom.value; $("#tFlow", el).value = "out";
-        }
+        if (!on) { xHint.textContent = ""; return; }
+        if (both) { xHint.textContent = nm(xFrom.value) + " −" + amt + " / " + nm(xTo.value) + " +" + amt + " 두 건이 생깁니다"; return; }
+        const inn = $("#tFlow", el).value === "in";
+        xHint.textContent = nm($("#tAcc", el).value) + " 한 곳에만 " + (inn ? "+" : "−") + amt +
+          " 기록합니다 (" + (inn ? "받은 쪽" : "보낸 쪽") + ")";
       };
-      xOn.onchange = () => { if (xOn.checked && !$("#tDesc", el).value.trim()) $("#tDesc", el).placeholder = "비워두면 ‘내 계좌간 이동’"; xUp(); };
-      xBoth.onchange = xUp;
-      xFrom.onchange = () => { if (xFrom.value === xTo.value) { const o2 = moveAccs.find(a => a.id !== xFrom.value); if (o2) xTo.value = o2.id; } xUp(); };
-      xTo.onchange = xUp;
-      $("#tAcc", el).addEventListener("change", () => { xOn.dataset.touched = "1"; });
+      xOn.onchange = () => {
+        if (xOn.checked) {
+          if (!$("#tDesc", el).value.trim()) $("#tDesc", el).placeholder = "비워두면 ‘내 계좌간 이동’";
+          if (!xOn.dataset.touched) { $("#tFlow", el).value = "out"; $("#tAcc", el).value = xFrom.value; }
+        }
+        xUp();
+      };
+      xBoth.onchange = () => { xPick(); xUp(); };
+      xFrom.onchange = () => { if (xFrom.value === xTo.value) { const o2 = moveAccs.find(a => a.id !== xFrom.value); if (o2) xTo.value = o2.id; } xPick(); xUp(); };
+      xTo.onchange = () => { xPick(); xUp(); };
+      $("#tAcc", el).addEventListener("change", () => { xOn.dataset.touched = "1"; xUp(); });
+      $("#tFlow", el).addEventListener("change", () => { xPick(); xUp(); });
       $("#tAmt", el).addEventListener("input", xUp);
       xUp();
       $("#tAmt", el).addEventListener("input", iUp);
@@ -3537,9 +3535,15 @@ function editTxn(txId, presetAcc, forceRep, preset) {
       {
         const pal = $("#rPal", el);
         if (pal) {
-          const mark = () => $$("[data-rc]", pal).forEach(b2 =>
-            b2.classList.toggle("on", (b2.dataset.rc || "") === rCol));
-          $$("[data-rc]", pal).forEach(b2 => b2.onclick = () => { rCol = b2.dataset.rc || ""; mark(); });
+          const mark = () => $$("[data-rc]", pal).forEach(b2 => {
+            const on = (b2.dataset.rc || "") === rCol;
+            b2.style.outline = on ? "3px solid var(--tx)" : "none";
+            b2.style.outlineOffset = "1px";
+          });
+          $$("[data-rc]", pal).forEach(b2 => b2.onclick = e2 => {
+            e2.preventDefault(); e2.stopPropagation();
+            rCol = b2.dataset.rc || ""; mark();
+          });
           mark();
         }
       }
@@ -6204,22 +6208,29 @@ function showTour(fromSettings) {
 /* ============================================================
    메모 — 마지막 기록일자 같은 걸 적어두는 칸
    ============================================================ */
+let MEMOM = null;
 function editMemo() {
-  modal({
+  if (MEMOM) { try { MEMOM(); } catch (e) {} MEMOM = null; return; }   /* 다시 누르면 닫힌다 */
+  const M = modal({
     title: "메모",
     body:
-      '<p class="tiny muted" style="margin:0 0 8px;line-height:1.6">계정별 마지막 기록 날짜는 앱이 알아서 보여줍니다. 여기에는 그 밖에 적어둘 것을 쓰세요. 요약 화면 맨 위에 그대로 보입니다.</p>' +
+      '<p class="tiny muted" style="margin:0 0 8px;line-height:1.6">장 볼 것, 넣을 돈, 잊으면 안 되는 것을 적어 두세요. 여기에만 남고 합계에는 영향이 없습니다.</p>' +
       '<textarea id="mTa" class="inp" style="min-height:150px;line-height:1.7" placeholder="예)&#10;지역화폐 10월 1일에 충전하기&#10;현대카드 실적 이번 달 아슬아슬함&#10;보험료 인상 확인할 것">' +
         esc(D.memo || "") + '</textarea>',
     foot: (D.memo ? '<button class="btn dan" id="mDel">비우기</button>' : '') + '<button class="btn pri" id="mOk">저장</button>',
     onOpen(el, close) {
       const ta = $("#mTa", el);
       ta.focus();
-      $("#mOk", el).onclick = () => { D.memo = ta.value.trim(); persist(); close(); render(); };
+      const shut = () => { MEMOM = null; close(); };
+      MEMOM = shut;
+      el.addEventListener("click", e => { if (e.target === el) MEMOM = null; });
+      $(".x", el).addEventListener("click", () => { MEMOM = null; });
+      $("#mOk", el).onclick = () => { D.memo = ta.value.trim(); persist(); shut(); render(); };
       const d = $("#mDel", el);
-      if (d) d.onclick = () => { D.memo = ""; persist(); close(); render(); };
+      if (d) d.onclick = () => { D.memo = ""; persist(); shut(); render(); };
     }
   });
+  void M;
 }
 
 /* ============================================================
