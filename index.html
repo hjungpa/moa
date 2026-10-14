@@ -382,7 +382,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.10.15.0120";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.10.15.0300";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -700,6 +700,12 @@ function billFixed(a, ym) {
   return D.txns.find(t => t.cpay && t.card === a.id && t.period === ym) || null;
 }
 /* 아직 확정 안 된 카드대금 — 예약으로만 보인다 */
+/* 요약에서 끌어 옮긴 차례 — id → 번호 */
+function accRankMap() {
+  const m = {}; sortAccs(D.accounts.slice()).forEach((a, i) => { m[a.id] = i; });
+  return m;
+}
+function rankOf(m, id) { return m[id] == null ? 999 : m[id]; }
 function billsDue(ym) {
   const out = [];
   D.accounts.forEach(a => {
@@ -716,7 +722,8 @@ function billsDue(ym) {
       break;
     }
   });
-  return out.sort((x, y) => x.date.localeCompare(y.date));
+  const R = accRankMap();
+  return out.sort((x, y) => rankOf(R, x.card.id) - rankOf(R, y.card.id) || x.date.localeCompare(y.date));
 }
 /* 확정 — 예약을 진짜 기록으로 만든다 */
 function fixBill(cardId, period, opt) {
@@ -894,12 +901,34 @@ function accLive(a, ym) {
 }
 /* 요약에서 끌어 옮긴 차례 — 정해 둔 적 없으면 만든 순서 */
 function accOrd(a, i) { const v = +a.ord; return isFinite(v) && a.ord != null ? v : 1000 + i; }
+/* 끌다가 화면 위·아래 끝에 닿으면 저절로 밀려 올라간다(내려간다) */
+let DSC = null;
+function edgeScroll(y, cb) {
+  const H = window.innerHeight || document.documentElement.clientHeight || 0;
+  const Z = Math.min(110, Math.round(H * 0.18));
+  let v = 0;
+  if (y < Z) v = -Math.max(4, Math.ceil((Z - y) / 4));
+  else if (y > H - Z) v = Math.max(4, Math.ceil((y - (H - Z)) / 4));
+  if (!v) return stopScroll();
+  if (DSC) { DSC.v = v; DSC.cb = cb; return; }
+  DSC = { v, cb, t: setInterval(() => {
+    if (!DSC) return;
+    const y0 = window.scrollY || window.pageYOffset || 0;
+    window.scrollBy(0, DSC.v);
+    const d = (window.scrollY || window.pageYOffset || 0) - y0;
+    if (!d) return stopScroll();                 /* 더 갈 데가 없다 */
+    if (DSC.cb) DSC.cb(d);
+  }, 16) };
+}
+function stopScroll() { if (DSC) { clearInterval(DSC.t); DSC = null; } }
+
 let ADG = null;
 const ADG_SLOP = 7;                 /* 이만큼 움직여야 '끄는 것'으로 본다 — 그냥 누르면 열린다 */
 function aDragStart(e, hd) {
   const row = hd.closest(".acc"); if (!row) return;
   const box = row.closest("[data-accgrp]"); if (!box) return;
   ADG = { row, box, hd, pid: e.pointerId, y0: e.clientY, startY: e.clientY, on: false, moved: false };
+  try { hd.setPointerCapture(e.pointerId); } catch (x) {}   /* 빨리 움직여도 끌기가 끊기지 않게 */
 }
 function aDragOn() {
   if (!ADG || ADG.on) return;
@@ -917,8 +946,14 @@ function aDragMove(e) {
     ADG.startY = ADG.y0;
   }
   e.preventDefault();
+  ADG.lastY = e.clientY;
+  edgeScroll(e.clientY, d => { ADG.startY -= d; aDragTick(ADG.lastY); });
+  aDragTick(e.clientY);
+}
+function aDragTick(cy) {
+  if (!ADG || !ADG.on) return;
   const { row, box } = ADG;
-  row.style.transform = "translateY(" + (e.clientY - ADG.startY) + "px)";
+  row.style.transform = "translateY(" + (cy - ADG.startY) + "px)";
   const rr = row.getBoundingClientRect();
   const mid = rr.top + rr.height / 2;
   const sibs = Array.prototype.slice.call(box.children).filter(x => x !== row && x.classList && x.classList.contains("acc"));
@@ -931,13 +966,14 @@ function aDragMove(e) {
       if (below) box.insertBefore(s2, row); else box.insertBefore(row, s2);
       const vAfter = row.getBoundingClientRect().top;
       ADG.startY += (vAfter - vBefore);        /* 손가락 밑에 그대로 있게 기준점을 옮긴다 */
-      row.style.transform = "translateY(" + (e.clientY - ADG.startY) + "px)";
+      row.style.transform = "translateY(" + (cy - ADG.startY) + "px)";
       ADG.moved = true;
       return;
     }
   }
 }
 function aDragEnd() {
+  stopScroll();
   if (!ADG) return;
   const { row, on, moved } = ADG;
   ADG = null;
@@ -968,6 +1004,7 @@ let BDG = null;
 function bDragStart(e, hd) {
   const row = hd.closest(".acc"); if (!row) return;
   BDG = { row, hd, pid: e.pointerId, y0: e.clientY, x0: e.clientX, on: false, id: hd.dataset.bdrag };
+  try { hd.setPointerCapture(e.pointerId); } catch (x) {}
 }
 function bDragMove(e) {
   if (!BDG) return;
@@ -979,19 +1016,25 @@ function bDragMove(e) {
     try { BDG.hd.setPointerCapture(BDG.pid); } catch (x) {}
   }
   e.preventDefault();
-  BDG.row.style.transform = "translateY(" + (e.clientY - BDG.y0) + "px)";
-  const bins = $$("[data-bookbin]");
+  BDG.lastY = e.clientY;
+  edgeScroll(e.clientY, d => { BDG.y0 -= d; bDragTick(BDG.lastY); });
+  bDragTick(e.clientY);
+}
+function bDragTick(cy) {
+  if (!BDG || !BDG.on) return;
+  BDG.row.style.transform = "translateY(" + (cy - BDG.y0) + "px)";
   let hit = null;
-  bins.forEach(b => {
+  $$("[data-bookbin]").forEach(b => {
     const r = b.getBoundingClientRect();
     b.classList.remove("over");
-    if (e.clientY >= r.top && e.clientY <= r.bottom) hit = b;
+    if (cy >= r.top && cy <= r.bottom) hit = b;
   });
   const curBin = BDG.row.closest("[data-bookbin]");
   if (hit && (!curBin || hit !== curBin)) hit.classList.add("over");
   BDG.hit = hit;
 }
 function bDragEnd() {
+  stopScroll();
   if (!BDG) return;
   const { row, on, hit, id } = BDG;
   BDG = null;
@@ -1552,8 +1595,8 @@ function viewHome() {
   h += '<div class="card">' + secHd("bank", "은행", mb(bankSum),
        '<button class="btn sm" data-add="bank">+ 은행 추가</button>');
   if (folded("bank")) h += '';
-  else if (!banks.length) h += '<div class="empty"><b>등록된 은행이 없습니다</b>은행을 추가하고 잔고를 적어두세요.</div>';
-  else {
+  else if (!banks.length && !fxBanks.length) h += '<div class="empty"><b>등록된 은행이 없습니다</b>은행을 추가하고 잔고를 적어두세요.</div>';
+  else if (banks.length) {
     h += '<div style="margin-top:10px" data-accgrp="bank">';
     let tInc = 0, tOut = 0, tNet = 0, tCp = 0;
     banks.forEach(a => {
@@ -1580,6 +1623,32 @@ function viewHome() {
           (tCp ? ' · 카드대금 ' + won(tCp) : '') + ' · 순 ' + (tNet >= 0 ? "+" : "") + won(tNet) + '</div>' +
         '<div class="tiny muted" style="margin-top:2px">카드대금은 통장에서 진짜로 빠지지만, 쓴 날에 이미 지출로 잡았기 때문에 지출 합계에는 더하지 않습니다</div></div>' +
         '<div class="v num">' + mb(bankSum) + '</div></div>';
+    h += '</div>';
+  }
+
+  /* 외화 통장도 은행이다 — 같은 칸 안에, 원화 합계와는 따로 */
+  if (!folded("bank") && fxBanks.length) {
+    const fxSumW = fxBanks.reduce((s2, a) => s2 + fx(bankBal(a), curOf(a)), 0);
+    h += '<div style="margin-top:' + (banks.length ? 4 : 10) + 'px" data-accgrp="fx">';
+    if (banks.length) h += '<div class="tiny muted b" style="padding:9px 2px 2px;border-top:1px solid var(--line)">🌐 외화 통장</div>';
+    fxBanks.forEach(a => {
+      const c = curOf(a), b2 = bankBal(a), F = bankFlow(a.id, D.anchor);
+      h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
+        '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc(CURS[c].sym) + '</div>' +
+        '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) +
+          ' <span class="pill tiny" style="padding:1px 7px">' + esc(c) + '</span></div>' +
+          '<div class="tiny num"><span class="c-inc b">받음 ' + CURS[c].sym + won(F.inc) + '</span>' +
+          '<span class="c-bad b"> · 나감 ' + CURS[c].sym + won(F.out) + '</span></div></div>' +
+        '<div class="rt"><div class="v num">' + (D.settings.hideBal ? "••••••" : CURS[c].sym + won(b2)) + '</div>' +
+          '<div class="tiny muted num">≈ ' + won(fx(b2, c)) + '원</div></div>' +
+        '<button class="btn sm gho" data-bal="' + a.id + '" style="flex:none;padding:6px 9px;font-weight:800">수</button>' +
+      '</div>';
+    });
+    h += '<div class="sumrow"><div class="grow"><div class="b sm">외화 합계 (원화 어림값)</div>' +
+        '<div class="tiny muted">' + fxBanks.map(a => CURS[curOf(a)].sym + " " + won(rateOf(curOf(a))) + "원").join(" · ") +
+        ' 기준 · 설정에서 고칠 수 있습니다</div>' +
+        '<div class="tiny muted" style="margin-top:2px">환율이 움직이니 어림값입니다 — 위 <b>은행 잔고 합계</b>에는 더하지 않습니다</div></div>' +
+        '<div class="v num">' + mb(fxSumW) + '</div></div>';
     h += '</div>';
   }
   h += '</div>';
@@ -1613,34 +1682,6 @@ function viewHome() {
         '<div class="tiny ' + (stockPLSum >= 0 ? "c-inc" : "c-bad") + ' b num">누적 손익 ' + signWon(stockPLSum) + '</div></div>' +
         '<div class="v num">' + mb(stockSum) + '</div></div>';
     h += '</div></div>';
-    }
-  }
-
-  /* 외화 통장 */
-  if (fxBanks.length) {
-    const fxSumW = fxBanks.reduce((s2, a) => s2 + fx(bankBal(a), curOf(a)), 0);
-    h += '<div class="card">' + secHd("fx", "🌐 외화", mb(fxSumW),
-         '<button class="btn sm" data-add="bank">+ 추가</button>');
-    if (folded("fx")) h += '</div>';
-    else {
-      h += '<div style="margin-top:10px" data-accgrp="fx">';
-      fxBanks.forEach(a => {
-        const c = curOf(a), b2 = bankBal(a), F = bankFlow(a.id, D.anchor);
-        h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
-          '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc(CURS[c].sym) + '</div>' +
-          '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) +
-            ' <span class="pill tiny" style="padding:1px 7px">' + esc(c) + '</span></div>' +
-            '<div class="tiny num"><span class="c-inc b">받음 ' + CURS[c].sym + won(F.inc) + '</span>' +
-            '<span class="c-bad b"> · 나감 ' + CURS[c].sym + won(F.out) + '</span></div></div>' +
-          '<div class="rt"><div class="v num">' + (D.settings.hideBal ? "••••••" : CURS[c].sym + won(b2)) + '</div>' +
-            '<div class="tiny muted num">≈ ' + won(fx(b2, c)) + '원</div></div>' +
-        '</div>';
-      });
-      h += '<div class="sumrow"><div class="grow"><div class="b sm">외화 합계 (원화 어림값)</div>' +
-          '<div class="tiny muted">' + fxBanks.map(a => CURS[curOf(a)].sym + " " + won(rateOf(curOf(a))) + "원").join(" · ") +
-          ' 기준 · 설정에서 고칠 수 있습니다</div></div>' +
-          '<div class="v num">' + mb(fxSumW) + '</div></div>';
-      h += '</div></div>';
     }
   }
 
@@ -1732,31 +1773,36 @@ function viewHome() {
   if (askVary()) {
     const VD = varyDue();
     if (VD.length) {
-      h += '<div class="card" id="jmp-vary" style="border-color:var(--accent)"><div class="bd">' +
-        '<div class="row" style="margin-bottom:8px"><span class="b sm grow">🔔 금액을 확인해 주세요</span>' +
-        '<span class="tiny muted b">' + VD.length + '건</span></div>' +
+      h += '<div class="card" id="jmp-vary" style="border-color:var(--accent)">' +
+        secHd("vary", "🔔 금액을 확인해 주세요", VD.length + "건");
+      if (folded("vary")) h += '</div>';
+      else {
+      h += '<div class="bd" style="padding-top:8px">' +
         '<p class="tiny muted" style="margin:0 0 10px;line-height:1.6">매달 금액이 달라지는 항목입니다. ' +
-          '지금은 <b>어림값</b>으로 잡혀 있습니다.</p>' +
+          '지금은 <b>어림값</b>으로 잡혀 있습니다. <b class="c-warn">중복?</b> 표시는 ' +
+          '<b>확정</b>을 눌렀을 때 어떤 기록과 겹치는지 알려줍니다.</p>' +
         VD.map(t => {
           const dup = varyDup(t).length;
-          return '<div class="acc" style="padding:9px 0;border-top:1px solid var(--line);flex-wrap:wrap">' +
-          '<div class="grow" style="min-width:0"><div class="nm ell">' + esc(t.desc || "고정비") + '</div>' +
+          return '<div class="acc" style="padding:9px 0;border-top:1px solid var(--line)">' +
+          '<div class="grow" style="min-width:0"><div class="nm ell">' + esc(t.desc || "고정비") +
+            (dup ? ' <span class="pill tiny b c-warn" style="padding:1px 6px;border-color:var(--warn)">중복?</span>' : '') + '</div>' +
             '<div class="tiny muted ell">' + esc(t.date) + ' · ' +
-            esc((D.accounts.find(a => a.id === t.acc) || {}).name || "") + '</div>' + dupNote(t) + '</div>' +
+            esc((D.accounts.find(a => a.id === t.acc) || {}).name || "") + '</div></div>' +
           '<div class="rt"><div class="v num" style="color:var(--tx2)">' + wonS(t.amt) + '</div>' +
             '<div class="tiny muted">어림값</div></div>' +
-          (dup ? '<button class="btn sm" data-varyskip="' + esc(t.rid) + '|' + esc(t.occ) + '" style="flex:none">빼기</button>' : '') +
           '<button class="btn sm pri" data-vary="' + esc(t.rid) + '|' + esc(t.occ) + '" style="flex:none">확정</button>' +
         '</div>'; }).join("") +
       '</div></div>';
+      }
     }
   }
 
   /* 카드대금 — 이 달에 빠져나갈 것 */
   {
     const due = billsDue(D.anchor);
+    const CR = accRankMap();
     const fixedL = D.txns.filter(t => t.cpay && (t.date || "").slice(0, 7) === D.anchor)
-      .sort((x, y) => x.date.localeCompare(y.date));
+      .sort((x, y) => rankOf(CR, x.card) - rankOf(CR, y.card) || x.date.localeCompare(y.date));
     if (due.length || fixedL.length) {
       const dueSum = due.reduce((s2, x) => s2 + x.amt, 0);
       const fixSum = fixedL.reduce((s2, t) => s2 + t.amt, 0);
@@ -2392,9 +2438,12 @@ function viewSet() {
       const many = ch.list.length > 1;
       return '<div class="acc" data-editrule="' + r.id + '">' +
         '<div class="ic" style="background:' + esc(acc.color || "#9fb0c2") + ';color:' + onColor(acc.color || "#9fb0c2") + '">🔁</div>' +
-        '<div class="grow" style="min-width:0"><div class="nm ell">' + esc(r.desc || "(내용 없음)") +
-          (r.vary ? ' <span class="pill tiny" style="padding:1px 7px">변동</span>' : '') + '</div>' +
-          '<div class="tiny muted ell">' + esc(ruleLabel(r)) + ' · ' + esc(ruleEndLabel(r)) + '</div>' +
+        '<div class="grow" style="min-width:0"><div class="nm ell' + (ruleOver(r, ch.next) && r.until <= todayISO() ? ' muted' : '') + '">' +
+          esc(r.desc || "(내용 없음)") +
+          (r.vary ? ' <span class="pill tiny" style="padding:1px 7px">변동</span>' : '') +
+          (ruleOver(r, ch.next) && r.until <= todayISO()
+            ? ' <span class="pill tiny b" style="padding:1px 7px;color:var(--tx2)">끝남</span>' : '') + '</div>' +
+          '<div class="tiny muted ell">' + esc(ruleLabel(r)) + ' · ' + esc(ruleEndLabel(r, ch.next)) + '</div>' +
           (many ? '<div class="tiny muted ell num">금액이 바뀌어 왔습니다 — ' +
             amts.map(won).join(" → ") + '</div>' : '') +
           (ch.next ? '<div class="tiny b ell num" style="color:var(--accent)">' + esc(ch.next.start) +
@@ -2950,9 +2999,12 @@ function ruleLabel(r) {
   if (r.freq === "year") return (g === 1 ? "매년 " : g + "년마다 ") + (r.ymon || +r.start.slice(5, 7)) + "월 " + core;
   return (g === 1 ? "매월 " : g + "개월마다 ") + core;
 }
-function ruleEndLabel(r) {
+/* 이 반복이 끝난(또는 끝낼 날이 정해진) 상태인가 — 기간이 나뉜 경우 뒤 기간이 없을 때만 */
+function ruleOver(r, next) { return !!r.until && !next; }
+function ruleEndLabel(r, next) {
   const e = r.end || { type: "none" };
-  const cut = r.until ? " · " + r.until + "까지(수정됨)" : "";
+  if (ruleOver(r, next)) return r.until + (r.until <= todayISO() ? " 에 끝냄" : " 까지만");
+  const cut = r.until ? " · " + r.until + "까지(이후는 다음 기간)" : "";
   if (e.type === "count") return e.count + "회 반복" + cut;
   if (e.type === "date") return e.date + "까지" + cut;
   return "종료 없음" + cut;
@@ -3868,12 +3920,6 @@ function varyDup(t) {
     const close = Math.abs(x.amt - t.amt) <= Math.max(5000, t.amt * 0.4);
     return sameName || close;
   }).sort((a, b) => Math.abs(dayGap(a.date, t.date)) - Math.abs(dayGap(b.date, t.date)));
-}
-function dupNote(t) {
-  const d = varyDup(t)[0];
-  if (!d) return '';
-  return '<div class="tiny c-warn b" style="margin-top:3px;line-height:1.5">⚠ 이미 적어 두신 것 같습니다 — ' +
-    esc(String(d.date).slice(5)) + ' ' + esc(d.desc || "") + ' ' + wonS(d.amt) + '</div>';
 }
 function fixVary(rid, occ, amt) {
   const r = (D.rules || []).find(x => x.id === rid); if (!r) return;
@@ -5053,7 +5099,7 @@ function bind() {
   $$("[data-jump]", v).forEach(b => b.onclick = e => {
     e.stopPropagation();
     const k = b.dataset.jump;
-    if (k === "bill" && folded("bill")) { D.settings.fold = D.settings.fold || {}; delete D.settings.fold.bill; persist(); render(); }
+    if (folded(k)) { D.settings.fold = D.settings.fold || {}; delete D.settings.fold[k]; persist(); render(); }
     setTimeout(() => { const el = document.getElementById("jmp-" + k);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }, 40);
   });
