@@ -176,6 +176,7 @@ textarea.inp{min-height:64px;resize:vertical;font-size:15px}
 .acc:first-child{border-top:0}
 .acc .ic{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:14px;font-weight:800;color:#fff}
 .acc .nm{font-weight:700;font-size:14.5px}
+.acc .nm.wrap{white-space:normal;overflow:visible;line-height:1.45}
 .acc .grow .tiny.num{word-break:keep-all;line-height:1.5}
 .acc .rt{text-align:right;flex:none}
 .acc .rt .v{font-weight:800;font-size:15px}
@@ -401,7 +402,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.10.15.0740";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.10.15.0900";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -1118,6 +1119,79 @@ function editBook(id) {
   });
 }
 function icDrag(a) { return ' data-adrag="' + a.id + '" title="꾹 눌러 끌면 차례가 바뀝니다"'; }
+/* 요약에서 이름을 누르면 뜨는 계정 한눈에 보기 */
+function accPop(accId) {
+  const a = D.accounts.find(x => x.id === accId); if (!a) return;
+  const F = bankFlow(a.id, D.anchor);
+  const c = curOf(a), sym = c ? CURS[c].sym : "";
+  const W = v => (c ? sym + won(v) : wonS(v));
+  const an = lastAdj(a.id), lr = lastRec(a.id);
+  const soon = txnsOf(a.id, D.anchor).filter(isFut)
+    .sort((x, y) => String(x.date).localeCompare(String(y.date)));
+  const row = (nm, val, cls, note) => '<div class="row" style="padding:6px 0;border-top:1px solid var(--line)">' +
+    '<span class="sm grow ell">' + nm + (note ? ' <span class="tiny muted">' + note + '</span>' : '') + '</span>' +
+    '<span class="num b ' + (cls || "") + '">' + val + '</span></div>';
+  const bal = a.stock ? (+a.bal || 0) : a.kind === "debit" ? debitBal(a) : bankBal(a);
+  modal({
+    title: a.name,
+    body:
+      '<div class="card" style="margin:0 0 12px"><div class="bd">' +
+        '<div class="row"><span class="tiny muted b grow">' +
+          (a.stock ? "평가금액" : a.kind === "debit" ? "충전 잔액" : a.kind === "card" ? "이 기간 사용액" : "지금 잔고") + '</span>' +
+          '<span class="tiny muted">' + esc(D.anchor.replace("-", "년 ")) + '월</span></div>' +
+        '<div class="num b" style="font-size:26px;letter-spacing:-.03em;margin-top:2px">' +
+          (a.kind === "card" ? wonS(spendOf(a.id, D.anchor)) : W(bal)) + '</div>' +
+        (c ? '<div class="tiny muted num">\u2248 ' + won(fx(bal, c)) + '원 (환율 ' + won(rateOf(c)) + '원 기준)</div>' : '') +
+      '</div></div>' +
+      '<div class="card" style="margin:0 0 12px"><div class="bd" style="padding-top:4px">' +
+        row('<b class="c-inc">' + (c ? "받음" : "입금") + '</b>', '<span class="c-inc">+' + W(F.inc) + '</span>') +
+        row('<b class="c-bad">' + (c ? "나감" : "출금") + '</b>', '<span class="c-bad">\u2212' + W(F.out) + '</span>') +
+        (F.cp ? row("카드대금", "\u2212" + W(F.cp), "", "지출 합계에는 안 들어감") : "") +
+        (F.xin || F.xout ? row("내 계좌간 이동", signWon(F.xin - F.xout), "",
+          "받은 " + won(F.xin) + " · 보낸 " + won(F.xout)) : "") +
+        (F.adj ? row("잔액 수정", signWon(F.adj), "c-dim",
+          an ? esc(an.date) + " 에 맞춤" : "") : "") +
+        row("<b>이 달 순증감</b>", '<b class="' + (F.net >= 0 ? "c-inc" : "c-bad") + '">' + signWon(F.net) + "</b>") +
+      '</div></div>' +
+      (soon.length ? '<div class="card" style="margin:0 0 12px"><div class="bd" style="padding-top:9px">' +
+        '<div class="tiny b" style="color:var(--accent);margin-bottom:3px">앞으로 예정 ' + soon.length + '건</div>' +
+        soon.slice(0, 6).map(t => '<div class="row tiny" style="padding:3px 0">' +
+          '<span class="muted" style="flex:none;width:58px">' + esc(String(t.date).slice(5)) + '</span>' +
+          '<span class="grow ell">' + (t.virt ? "\ud83d\udd01 " : "") + esc(t.desc || "(내용 없음)") + '</span>' +
+          '<span class="num b" style="flex:none">' + (t.flow === "in" ? "+" : "\u2212") + won(t.amt) + '</span></div>').join("") +
+        (soon.length > 6 ? '<div class="tiny muted" style="margin-top:4px">그 밖에 ' + (soon.length - 6) + '건 더</div>' : '') +
+      '</div></div>' : '') +
+      '<div class="card" style="margin:0"><div class="bd" style="padding-top:9px">' +
+        '<div class="row tiny" style="padding:2px 0"><span class="muted grow">마지막 기록</span>' +
+          '<span class="b num">' + (lr ? esc(lr) : "없음") + '</span></div>' +
+        '<div class="row tiny" style="padding:2px 0"><span class="muted grow">마지막 잔액 수정</span>' +
+          '<span class="b num">' + (an ? esc(an.date) + " · " + wonS(+an.b1 || 0) : "없음") + '</span></div>' +
+        '<div class="row tiny" style="padding:2px 0"><span class="muted grow">이 달 기록 수</span>' +
+          '<span class="b num">' + F.n + '건</span></div>' +
+      '</div></div>',
+    foot: '<button class="btn" id="apBal">잔액 수정</button>' +
+          '<button class="btn pri" id="apList">내역 보기</button>',
+    onOpen(el, close) {
+      $("#apBal", el).onclick = () => { close(); a.stock ? showStock(a.id) : editBal(a.id); };
+      $("#apList", el).onclick = () => { close(); LF.accs = [a.id]; LF.cats = []; LF.q = ""; go("list"); };
+    }
+  });
+}
+
+/* 이 계정에 마지막으로 뭔가 적힌 날 */
+function lastRec(accId) {
+  const T = todayISO(); let d = null;
+  D.txns.forEach(t => { if (t.acc === accId && t.date <= T && (!d || t.date > d)) d = t.date; });
+  return d;
+}
+function recTag(accId) {
+  const d = lastRec(accId);
+  if (!d) return ' <span class="pill tiny" style="padding:1px 6px;color:var(--warn)">기록 없음</span>';
+  const n = Math.round((dParse(todayISO()) - dParse(d)) / 86400000);
+  const col = n >= 14 ? "var(--bad)" : n >= 7 ? "var(--warn)" : "var(--tx3)";
+  return ' <span class="pill tiny" style="padding:1px 6px;color:' + col + '">' +
+    esc(String(d).slice(5)) + (n === 0 ? " 오늘" : n === 1 ? " 어제" : " · " + n + "일 전") + '</span>';
+}
 function endTag(a) {
   if (!a.to) return '';
   const M = D.anchor || thisMonth();
@@ -1550,35 +1624,18 @@ function viewHome() {
       todo.map(x => '<button class="chip" data-jump="' + x[0] + '">' + esc(x[1]) + '</button>').join("") + '</div>';
   }
 
-  /* 계정별 마지막 기록 날짜 */
-  if (D.accounts.length) {
-    const T0 = todayISO();
-    const last = {};
-    D.txns.forEach(t => { if (t.date <= T0 && (!last[t.acc] || t.date > last[t.acc])) last[t.acc] = t.date; });
-    const ago = iso => Math.round((dParse(T0) - dParse(iso)) / 86400000);
-    const stale = D.accounts.filter(a => !last[a.id] || ago(last[a.id]) >= 7).length;
+  /* 메모 */
+  {
     const mOpen = D.settings.memoOpen !== false;
-    h += '<div class="card" style="border-left:4px solid var(--warn)"><div class="bd" style="padding-bottom:' + (mOpen ? 14 : 11) + 'px">' +
-      '<div class="row"' + (mOpen ? ' style="margin-bottom:8px"' : '') + '>' +
-        '<span class="tiny b grow" data-memotog style="color:var(--warn)">📝 마지막 기록일자' +
-          (!mOpen && stale ? ' <span class="c-warn">· ' + stale + '곳 밀림</span>' : '') + '</span>' +
-        (mOpen ? '<span class="tiny muted" data-memo style="padding:2px 6px">눌러서 메모</span>' : '') +
-        '<button class="memotog" data-memotog>' + (mOpen ? "−" : "+") + '</button></div>' +
+    h += '<div class="card" style="border-left:4px solid var(--warn)"><div class="bd" style="padding-bottom:' + (mOpen ? 13 : 11) + 'px">' +
+      '<div class="row"' + (mOpen && D.memo ? ' style="margin-bottom:8px"' : '') + '>' +
+        '<span class="tiny b grow" data-memotog style="color:var(--warn)">\ud83d\udcdd 메모</span>' +
+        (mOpen ? '<span class="tiny muted" data-memo style="padding:2px 6px">' +
+          (D.memo ? "눌러서 고치기" : "눌러서 메모 적기") + '</span>' : '') +
+        '<button class="memotog" data-memotog>' + (mOpen ? "\u2212" : "+") + '</button></div>' +
       (!mOpen ? '' :
-      D.accounts.map(a => {
-        const d = last[a.id];
-        const n = d ? ago(d) : null;
-        const c = n == null ? "c-bad" : n >= 14 ? "c-bad" : n >= 7 ? "c-warn" : n >= 3 ? "" : "muted";
-        return '<div class="row" style="padding:3px 0">' +
-          '<span class="dot" style="background:' + esc(a.color) + ';width:8px;height:8px"></span>' +
-          '<span class="sm grow ell">' + esc(a.name) + '</span>' +
-          '<span class="tiny num ' + c + ' b">' + (d ? fmtDate(d) + ' · ' +
-            (n === 0 ? "오늘" : n === 1 ? "어제" : n + "일 전") : "기록 없음") + '</span>' +
-        '</div>';
-      }).join("") +
-      (stale ? '<div class="tiny c-warn b" style="margin-top:7px">' + stale + '곳이 일주일 넘게 비어 있습니다.</div>' : '') +
-      (D.memo ? '<div class="sm" data-memo style="white-space:pre-wrap;line-height:1.65;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)">' +
-        esc(D.memo) + '</div>' : '')) +
+        (D.memo ? '<div class="sm" data-memo style="white-space:pre-wrap;line-height:1.65">' + esc(D.memo) + '</div>'
+                : '<div class="tiny muted" data-memo>장 볼 것, 넣을 돈, 잊으면 안 되는 것을 적어 두세요.</div>')) +
     '</div></div>';
   }
 
@@ -1648,15 +1705,10 @@ function viewHome() {
       tInc += F.inc; tOut += F.out; tNet += F.net; tCp += F.cp;
       h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
         '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
-        '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) +
-          (lastAdj(a.id) ? ' <span class="pill tiny muted" style="padding:1px 6px">' +
-            esc(String(lastAdj(a.id).date).slice(5)) + ' 맞춤</span>' : '') + '</div>' +
+        '<div class="grow"><div class="nm ell wrap">' + esc(a.name) + endTag(a) + recTag(a.id) + '</div>' +
           '<div class="tiny num"><span class="c-inc b">입금 ' + won(F.inc) + '</span>' +
           '<span class="c-bad b"> · 출금 ' + won(F.out) + '</span>' +
-          (F.cp ? '<span class="muted"> · 카드대금 ' + won(F.cp) + '</span>' : '') +
-          (F.xin || F.xout ? '<span class="muted"> · 이체 ' + won(F.xin - F.xout) + '</span>' : '') +
-          (F.adj ? '<span class="c-dim b"> · (수정 ' + signWon(F.adj) + ')</span>' : '') +
-          (F.soon ? '<span class="muted"> · 예정 ' + F.soon + '건</span>' : '') + '</div></div>' +
+          '<span class="muted"> · 눌러서 자세히</span></div></div>' +
         '<div class="rt"><div class="v num">' + mb(bankBal(a)) + '</div>' +
           '<div class="tiny num ' + (F.net >= 0 ? "c-inc" : "muted") + '">' + (F.net >= 0 ? "+" : "") + won(F.net) + '</div></div>' +
         '<button class="btn sm gho" data-bal="' + a.id + '" style="flex:none;padding:6px 9px;font-weight:800">수</button>' +
@@ -1677,8 +1729,8 @@ function viewHome() {
       const c = curOf(a), b2 = bankBal(a), F = bankFlow(a.id, D.anchor);
       h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
         '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc(CURS[c].sym) + '</div>' +
-        '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) +
-          ' <span class="pill tiny" style="padding:1px 7px">' + esc(c) + '</span></div>' +
+        '<div class="grow"><div class="nm ell wrap">' + esc(a.name) + endTag(a) +
+          ' <span class="pill tiny" style="padding:1px 7px">' + esc(c) + '</span>' + recTag(a.id) + '</div>' +
           '<div class="tiny num"><span class="c-inc b">받음 ' + CURS[c].sym + won(F.inc) + '</span>' +
           '<span class="c-bad b"> · 나감 ' + CURS[c].sym + won(F.out) + '</span></div></div>' +
         '<div class="rt"><div class="v num">' + (D.settings.hideBal ? "••••••" : CURS[c].sym + won(b2)) + '</div>' +
@@ -1709,9 +1761,7 @@ function viewHome() {
       const last = stockLog(a).find(t => !t.princ);
       h += '<div class="acc" data-stock="' + a.id + '">' +
         '<div class="ic" style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
-        '<div class="grow"><div class="nm ell">' + esc(a.name) +
-          (last ? ' <span class="pill tiny muted" style="padding:1px 6px">' +
-            esc(String(last.date).slice(5)) + ' ' + (last.flow === "in" ? "+" : "\u2212") + won(last.amt) + '</span>' : '') + '</div>' +
+        '<div class="grow"><div class="nm ell wrap">' + esc(a.name) + recTag(a.id) + '</div>' +
           '<div class="tiny num"><span class="muted">원금 ' + won(seed) + '</span>' +
             '<span class="' + (pl >= 0 ? "c-inc" : "c-bad") + ' b"> · ' + signWon(pl) +
             (seed ? ' (' + (rate >= 0 ? "+" : "") + rate.toFixed(1) + '%)' : '') + '</span></div>' +
@@ -1747,9 +1797,10 @@ function viewHome() {
       const k = bud ? (left < 0 ? "bad" : left / bud < 0.2 ? "warn" : "ok") : null;
       h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
         '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
-        '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) +
+        '<div class="grow"><div class="nm ell wrap">' + esc(a.name) + endTag(a) +
           (bud ? ' <span class="pill tiny" style="padding:1px 7px">예산</span>' : '') +
-          (a.excl ? ' <span class="pill tiny muted" style="padding:1px 7px">합계 제외</span>' : '') + '</div>' +
+          (a.excl ? ' <span class="pill tiny muted" style="padding:1px 7px">합계 제외</span>' : '') +
+          recTag(a.id) + '</div>' +
           '<div class="tiny num" style="margin-bottom:4px">' +
             (bud ? '<span class="muted">예산 ' + won(bud) + ' · 사용 ' + won(us) + '</span>'
                  : '<span class="c-inc b">충전 ' + won(ch) + '</span><span class="muted"> · 사용 ' + won(us) + '</span>') + '</div>' +
@@ -1788,7 +1839,7 @@ function viewHome() {
       if (pay != null) { paySum += pay; payAny = true; }
       h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
         '<div class="ic adh"' + icDrag(a) + ' style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
-        '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) + '</div>' +
+        '<div class="grow"><div class="nm ell wrap">' + esc(a.name) + endTag(a) + recTag(a.id) + '</div>' +
           '<div class="tiny num"><span class="muted">' + periodLabel(a, D.anchor) + ' · ' + cnt + '건</span>' +
           (pay != null ? '<span class="b"> · 결제 ' + won(pay) + '</span>' +
             '<span class="' + (pay - sp > 0 ? "c-bad" : "c-ok") + ' b"> (' + signWon(pay - sp) + ')</span>' : '') + '</div></div>' +
@@ -1925,13 +1976,6 @@ function viewHome() {
     }
   }
 
-  /* 최근 입력 */
-  const recent = visibleTx(SP.filter(t => t.date <= todayISO())).sort((a, b) => (b.date + (b.time || "")).localeCompare(a.date + (a.time || ""))).slice(0, 6);
-  if (recent.length) {
-    h += '<div class="card">' + secHd("recent", "최근 기록", recent.length + "건",
-      '<button class="btn sm gho" data-tabgo="list">전체보기</button>') +
-      (folded("recent") ? '' : '<div style="margin-top:8px">' + recent.map(txRow).join("") + '</div>') + '</div>';
-  }
   return h;
 }
 
@@ -2487,7 +2531,7 @@ function secRule() {
       const amts = chainAmts(ch.list);
       const many = ch.list.length > 1;
       return '<div class="acc" data-editrule="' + r.id + '">' +
-        '<div class="ic adh" data-adrag="' + esc(r.id) + '" title="끌어서 차례 바꾸기" style="background:' + esc(acc.color || "#9fb0c2") + ';color:' + onColor(acc.color || "#9fb0c2") + '">🔁</div>' +
+        '<div class="ic adh" data-adrag="' + esc(r.id) + '" title="끌어서 차례 바꾸기" style="background:' + esc(ruleColor(r)) + ';color:' + onColor(ruleColor(r)) + '">🔁</div>' +
         '<div class="grow" style="min-width:0"><div class="nm ell' + (ruleOver(r, ch.next) && r.until <= todayISO() ? ' muted' : '') + '">' +
           esc(r.desc || "(내용 없음)") +
           (r.vary ? ' <span class="pill tiny" style="padding:1px 7px">변동</span>' : '') +
@@ -2509,10 +2553,15 @@ function secRule() {
 }
 
 function secName() {
+  const N = myNames();
+  const ph = ["예: 홍길동", "예: 홍길동(가족)", "예: 예전 이름 · 별칭"];
   let h = '<div class="card"><div class="hd"><h2>내 이름 (계좌간 이체 알아보기)</h2></div><div class="bd">' +
-    '<input id="myName" class="inp" placeholder="예: 홍길동" value="' + esc(D.settings.myName || "") + '">' +
-    '<p class="tiny muted" style="margin:8px 0 0;line-height:1.6">은행 내역을 붙여넣을 때 이 이름이 적힌 이체는 <b>내 계좌간 이동</b>으로 표시해 둡니다. ' +
-    '동명이인일 수 있으니 미리보기에서 한 번 확인하세요. 이름이 여럿이면 쉼표로 나눠 적으세요.</p>' +
+    [0, 1, 2].map(i => '<div class="field"' + (i ? ' style="margin-top:8px"' : '') + '>' +
+      '<label>이름 ' + (i + 1) + (i ? ' <span class="muted" style="font-weight:600">(없으면 비워 두세요)</span>' : '') + '</label>' +
+      '<input class="inp" data-myname="' + i + '" placeholder="' + ph[i] + '" value="' + esc(N[i] || "") + '"></div>').join("") +
+    '<p class="tiny muted" style="margin:10px 0 0;line-height:1.6">은행 내역을 붙여넣을 때 이 이름이 적힌 이체는 <b>내 계좌간 이동</b>으로 표시해 둡니다. ' +
+    '본인 이름 말고 <b>가족 이름이나 예전 이름</b>도 함께 적어두면 같이 알아봅니다. ' +
+    '동명이인일 수 있으니 미리보기에서 한 번 확인하세요.</p>' +
   '</div></div>';
   return h;
 }
@@ -2693,6 +2742,12 @@ function viewSet() {
    ============================================================ */
 /* 파스텔 팔레트 — 배경 투명도와 함께 써도 눈이 덜 피로한 중간 채도 */
 const PAL = ["#7fa9e8","#f0a68f","#8fcf9a","#e6c473","#b7a3e6","#7fc9c9","#eba3c4","#c9b79a","#9fb0c2","#a8cf85"];
+/* 반복 일정 아이콘 색 — 안 정했으면 계정 색을 쓴다 */
+function ruleColor(r) {
+  if (r && r.color) return r.color;
+  const a = D.accounts.find(x => x.id === (r || {}).acc);
+  return (a && a.color) || "#9fb0c2";
+}
 
 function editAccount(kind, id) {
   const a = id ? D.accounts.find(x => x.id === id) : null;
@@ -3337,6 +3392,15 @@ function editTxn(txId, presetAcc, forceRep, preset) {
         '<span class="grow"><span class="b sm">다시 반복하기</span>' +
         '<span class="tiny muted" style="display:block">켜고 저장하면 오늘부터 다시 만들어집니다</span></span></label>' +
         '</div></div>' : '') +
+      '<div class="field" style="margin-bottom:10px"><label>아이콘 색</label>' +
+        '<div class="chips" id="rPal">' +
+          '<button type="button" class="chip" data-rc="" style="width:34px;height:34px;padding:0;border-radius:10px;' +
+            'background:' + esc((D.accounts.find(x => x.id === rep0.acc) || {}).color || "#9fb0c2") + ';' +
+            'border-color:var(--tx3)" title="계정 색 그대로"></button>' +
+          PAL.map(x => '<button type="button" class="chip" data-rc="' + x + '" style="background:' + x +
+            ';border-color:' + x + ';width:34px;height:34px;padding:0;border-radius:10px"></button>').join("") +
+        '</div>' +
+        '<p class="tiny muted" style="margin:6px 0 0">맨 앞은 <b>계정 색 그대로</b>입니다. 설정 → 반복 일정 목록에서 이 색으로 보입니다.</p></div>' +
       '<div class="two">' +
         '<div class="field" style="margin-bottom:8px"><label>주기</label>' +
           sel("rFreq", [["day", "매일"], ["week", "매주"], ["month", "매월"], ["year", "매년"]], rep0.freq) + '</div>' +
@@ -3469,6 +3533,16 @@ function editTxn(txId, presetAcc, forceRep, preset) {
         $("#rEndDate", el).classList.toggle("hidden", rEnd.value !== "date");
         prev();
       };
+      let rCol = (mode === "rule" || mode === "occ") ? (r.color || "") : "";
+      {
+        const pal = $("#rPal", el);
+        if (pal) {
+          const mark = () => $$("[data-rc]", pal).forEach(b2 =>
+            b2.classList.toggle("on", (b2.dataset.rc || "") === rCol));
+          $$("[data-rc]", pal).forEach(b2 => b2.onclick = () => { rCol = b2.dataset.rc || ""; mark(); });
+          mark();
+        }
+      }
       const buildRule = () => ({
         id: (mode === "rule" || mode === "occ") ? r.id : uid(),
         acc: $("#tXfer", el).checked && $("#tXBoth", el).checked ? $("#tXFrom", el).value : $("#tAcc", el).value,
@@ -3483,6 +3557,7 @@ function editTxn(txId, presetAcc, forceRep, preset) {
         time: $("#tTime", el).value || "",
         start: $("#tDate", el).value || todayISO(),
         vary: !!($("#rVary", el) || {}).checked,
+        color: rCol,
         freq: rFreq.value, gap: Math.max(1, +$("#rGap", el).value || 1),
         dows: dows.slice(),
         mmode: $("#rmNth", el).checked ? "nth" : "date",
@@ -3577,7 +3652,7 @@ function editTxn(txId, presetAcc, forceRep, preset) {
               delete q.id;
               splitRule(r, occ, {
                 acc: q.acc, desc: q.desc, memo: q.memo, amt: q.amt, flow: q.flow,
-                xfer: q.xfer, cat: q.cat, time: q.time,
+                xfer: q.xfer, cat: q.cat, time: q.time, color: q.color,
                 freq: q.freq, gap: q.gap, dows: q.dows, mmode: q.mmode,
                 mday: q.mday, nth: q.nth, ndow: q.ndow, ymon: q.ymon, end: q.end
               });
@@ -5271,7 +5346,7 @@ function bind() {
   $$("[data-bal]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editBal(b.dataset.bal); });
   $$("[data-stock]", v).forEach(b => b.onclick = () => showStock(b.dataset.stock));
   $$("[data-pay]", v).forEach(b => b.onclick = e => { e.stopPropagation(); editPay(b.dataset.pay); });
-  $$("[data-open]", v).forEach(b => b.onclick = () => { LF.accs = [b.dataset.open]; LF.cats = []; LF.q = ""; go("list"); });
+  $$("[data-open]", v).forEach(b => b.onclick = () => accPop(b.dataset.open));
   $$("[data-tabgo]", v).forEach(b => b.onclick = () => go(b.dataset.tabgo));
   bindTx(v);
 
@@ -5449,8 +5524,12 @@ function bind() {
   $$("[data-inst]", v).forEach(b => b.onclick = () => {
     D.settings.instMode = b.dataset.inst; persist(); render();
   });
-  const mn = $("#myName", v);
-  if (mn) mn.onchange = () => { D.settings.myName = mn.value.trim(); persist(); toast("저장했습니다"); };
+  const mns = $$("[data-myname]", v);
+  if (mns.length) mns.forEach(x => x.onchange = () => {
+    const vals = mns.map(y => y.value.trim()).filter(Boolean);
+    D.settings.myName = vals.join(", ");
+    persist(); toast(vals.length ? "이름 " + vals.length + "개를 저장했습니다" : "이름을 비웠습니다");
+  });
   const lx = $("#lsXfer", v);
   if (lx) lx.onchange = () => { D.settings.xferExcl = lx.checked; persist(); KEEPSCROLL = true; render(); };
   const sx = $("#swXfer", v);
@@ -6062,13 +6141,16 @@ function tourArt(k) {
 
 const TOUR = [
   { art: "hi", t: "우리집 가계부에 오신 걸 환영합니다", d: "기록은 <b>이 폰 안에만</b> 저장됩니다. 서버로 올라가지 않아서 다른 사람이 볼 수 없습니다. 대신 폰을 바꾸면 안 따라오니 가끔 백업을 받아두세요." },
-  { art: "acc", t: "먼저 은행과 카드를 등록하세요", d: "요약 화면의 <b>+ 버튼</b>으로 추가합니다. 은행은 지금 잔고를 한 번만 적어두면, 그 뒤로 입력한 입금·출금·이체가 <b>잔고에 알아서 반영</b>됩니다. 카드는 정산 기간과 실적 목표를, 지역화폐는 생활비 예산을 같이 넣을 수 있습니다." },
-  { art: "paste", t: "카드 내역은 복사해서 붙여넣으면 끝", d: "카드사·은행 앱에서 이용내역을 복사한 뒤, 내역 화면의 <b>📋 붙여넣기</b>에 그대로 넣으세요. 날짜·가맹점·금액을 알아서 나눠 담고, 잘못 읽힌 곳은 눌러서 바로 고칩니다. 설정에 <b>내 이름</b>을 적어두면 내 계좌로 보낸 이체도 알아봅니다." },
+  { art: "acc", t: "먼저 은행과 카드를 등록하세요", d: "요약 화면의 <b>+ 버튼</b>으로 추가합니다. 은행은 지금 잔고를 한 번만 적어두면, 그 뒤로 입력한 입금·출금·이체가 <b>잔고에 알아서 반영</b>됩니다. 카드는 정산 기간과 실적 목표를, 지역화폐는 생활비 예산을 같이 넣을 수 있습니다. 페이팔처럼 달러가 쌓이는 곳은 <b>외화 통장</b>으로 만들면 환율로 바꾼 원화도 같이 보입니다." },
+  { art: "acc", t: "이름을 누르면 한눈에, 아이콘을 끌면 차례가 바뀝니다", d: "요약에서 <b>이름을 누르면</b> 입금·출금·카드대금·이체·예정·잔액 수정까지 한 창에 모아 보여줍니다. 네모 아이콘을 <b>잡고 위아래로 끌면</b> 차례가 바뀌고, 화면 끝까지 가면 저절로 밀려 올라갑니다. 이름 옆 회색 딱지는 <b>마지막으로 기록한 날</b>입니다." },
+  { art: "paste", t: "카드 내역은 복사해서 붙여넣으면 끝", d: "카드사·은행 앱에서 이용내역을 복사한 뒤, 내역 화면의 <b>📋 붙여넣기</b>에 그대로 넣으세요. 날짜·가맹점·금액을 알아서 나눠 담고, 내용과 금액이 따로 떨어져 나오는 형식도 잔액 흐름을 보고 맞춥니다. 잘못 읽힌 곳은 눌러서 바로 고치면, 그 가맹점은 <b>고친 대로 기억</b>합니다." },
   { art: "voice", t: "음성으로도 넣을 수 있습니다", d: "<b>🎤 음성</b>을 누르고 “커피값 3000원”처럼 말하면 입력 화면이 바로 채워져 열립니다. “어제 점심 만이천원”처럼 날짜를 붙여도 되고, 빼면 오늘로 들어갑니다. “우리에서 토스로 계좌이체 30만원”도 알아듣습니다." },
-  { art: "xfer", t: "내 통장끼리 옮긴 돈은 ‘내 계좌간 이동’", d: "입력할 때 <b>↔ 내 계좌간 이동</b>을 체크하고 보낸 곳과 받은 곳을 고르세요. <b>양쪽 모두 반영</b>을 켜두면 한 번에 두 통장에 기록되고 잔고도 둘 다 바뀝니다. 내역 화면의 체크박스로 수입·지출 합계에서 뺄지 넣을지 정할 수 있습니다." },
-  { art: "cat", t: "색으로 분류하면 한눈에 보입니다", d: "내역을 눌러 분류를 지정하면 그 색이 줄에 깔립니다. <b>분류 탭</b>에서 어디에 얼마를 썼는지, 지난달보다 늘었는지 줄었는지 바로 보입니다." },
-  { art: "goal", t: "카드 실적은 신호등으로", d: "카드마다 실적 목표를 넣어두면 초록·노랑·빨강으로 표시됩니다. 눌러보면 얼마가 남았는지 알려줍니다. 할부는 월 납입액으로 나눠서 잡힙니다." },
-  { art: "backup", t: "한 달에 한 번, 백업만 챙기세요", d: "<b>설정 → 백업 내보내기</b>로 파일을 받아 메일이나 클라우드에 보관하세요. 폰을 바꾸거나 기록이 지워져도 그대로 되살릴 수 있습니다. 연말정산용 엑셀도 여기서 받습니다." }
+  { art: "xfer", t: "내 통장끼리 옮긴 돈은 ‘내 계좌간 이동’", d: "입력할 때 <b>↔ 내 계좌간 이동</b>을 체크하고 보낸 곳과 받은 곳을 고르세요. <b>양쪽 모두 반영</b>을 켜두면 한 번에 두 통장에 기록되고 잔고도 둘 다 바뀝니다. 설정 → <b>내 이름</b>에 이름을 최대 3개까지 적어두면 붙여넣을 때 알아서 찾아 표시합니다." },
+  { art: "goal", t: "카드대금은 쓴 날에 이미 지출로 잡습니다", d: "카드로 쓴 날 지출로 잡고, 다음 달 결제일에 통장에서 빠지는 것은 <b>💳 카드대금</b>으로 따로 표시합니다. 통장 잔고에서는 진짜로 빠지지만 <b>지출 합계에는 두 번 더하지 않습니다.</b> 결제일에 <b>확정</b>을 눌러 실제 청구액을 넣으면, 쓴 금액보다 적게 나온 만큼 <b>얼마를 아꼈는지</b> 계산해 줍니다." },
+  { art: "goal", t: "매달 다른 고정비는 어림값으로 두세요", d: "도시가스·수도요금처럼 매달 달라지는 것은 반복 일정에서 <b>변동</b>으로 두면 어림값으로 잡혀 있다가, 그날이 되면 요약 맨 위에서 실제 금액을 묻습니다. 같은 것을 이미 손으로 적어 두었으면 <b>중복?</b> 표시로 알려줍니다. 알뜰폰처럼 가끔 바뀌는 것은 <b>확정</b>으로 두고, 바뀐 달에 금액만 고쳐 「이후 전부」를 고르면 그 달부터 쭉 바뀝니다." },
+  { art: "cat", t: "색으로 분류하면 한눈에 보입니다", d: "내역을 눌러 분류를 지정하면 그 색이 줄에 깔립니다. <b>분류 탭</b>에서 어디에 얼마를 썼는지, 지난달보다 늘었는지 줄었는지 바로 보입니다. 분류를 <b>대분류</b>로 묶어 두면 「고정비」처럼 크게 묶어서 볼 수 있고, 그 줄을 누르면 묶인 것이 전부 내역으로 펼쳐집니다." },
+  { art: "backup", t: "지운 것은 휴지통에 남습니다", d: "지우기 전에 <b>무엇이 사라지는지</b> 먼저 보여주고, 지운 뒤에도 <b>설정 → 휴지통</b>에서 되돌릴 수 있습니다. 반복 일정은 <b>지우기</b>와 <b>끄기</b>가 다릅니다 — 끄면 지난 기록은 그대로 두고 앞으로만 멈춥니다." },
+  { art: "backup", t: "한 달에 한 번, 백업만 챙기세요", d: "<b>설정 → 백업 · 엑셀</b>에서 파일을 받아 메일이나 클라우드에 보관하세요. 폰을 바꾸거나 기록이 지워져도 그대로 되살릴 수 있습니다. 연말정산용 엑셀도 여기서 받습니다." }
 ];
 
 function showTour(fromSettings) {
