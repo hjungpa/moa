@@ -139,10 +139,14 @@ textarea.inp{min-height:64px;resize:vertical;font-size:15px}
 
 /* ---------- account cards ---------- */
 .acc{display:flex;align-items:center;gap:11px;padding:12px 14px;border-top:1px solid var(--line)}
-.ahand{flex:none;width:16px;margin-left:-4px;color:var(--tx3);font-size:13px;line-height:1;
-  cursor:grab;touch-action:none;user-select:none;text-align:center;opacity:.55}
-.acc.adrag{opacity:.7;background:var(--panel2);border-radius:12px}
+.ahand{flex:none;width:26px;margin:-10px 0 -10px -8px;padding:10px 5px;color:var(--tx3);font-size:15px;
+  line-height:1;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
+  text-align:center;opacity:.5;-webkit-tap-highlight-color:transparent}
+.acc.adrag{background:var(--panel2);border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.18);
+  transition:none}
 .acc.adrag .ahand{cursor:grabbing;opacity:1;color:var(--accent)}
+[data-accgrp] > .acc{transition:transform .14s ease}
+[data-accgrp] > .acc.adrag{transition:none}
 .acc:first-child{border-top:0}
 .acc .ic{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:14px;font-weight:800;color:#fff}
 .acc .nm{font-weight:700;font-size:14.5px}
@@ -370,7 +374,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.10.14.2105";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.10.14.2240";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -871,41 +875,56 @@ let ADG = null;
 function aDragStart(e, hd) {
   const row = hd.closest(".acc"); if (!row) return;
   const box = row.closest("[data-accgrp]"); if (!box) return;
-  ADG = { row, box, moved: false };
+  ADG = { row, box, startY: e.clientY, moved: false };
   row.classList.add("adrag");
+  row.style.position = "relative";
+  row.style.zIndex = "5";
+  row.style.transform = "translateY(0px)";
   try { hd.setPointerCapture(e.pointerId); } catch (x) {}
   e.preventDefault(); e.stopPropagation();
 }
 function aDragMove(e) {
   if (!ADG) return;
+  e.preventDefault();
   const { row, box } = ADG;
-  const y = e.clientY;
-  const sibs = Array.from(box.querySelectorAll(":scope > .acc")).filter(x => x !== row);
+  row.style.transform = "translateY(" + (e.clientY - ADG.startY) + "px)";
+  const rr = row.getBoundingClientRect();
+  const mid = rr.top + rr.height / 2;
+  const sibs = Array.prototype.slice.call(box.children).filter(x => x !== row && x.classList.contains("acc"));
   for (const s2 of sibs) {
-    const r = s2.getBoundingClientRect();
-    const mid = r.top + r.height / 2;
-    if (y < mid && s2.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING) {
-      box.insertBefore(row, s2); ADG.moved = true; break;
-    }
-    if (y > mid && s2.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_PRECEDING) {
-      box.insertBefore(row, s2.nextSibling); ADG.moved = true; break;
+    const b = s2.getBoundingClientRect();
+    const sm = b.top + b.height / 2;
+    /* s2 가 아래쪽 줄인가 */
+    const below = !!(row.compareDocumentPosition(s2) & Node.DOCUMENT_POSITION_FOLLOWING);
+    if ((below && mid > sm) || (!below && mid < sm)) {
+      const vBefore = row.getBoundingClientRect().top;
+      if (below) box.insertBefore(s2, row); else box.insertBefore(row, s2);
+      const vAfter = row.getBoundingClientRect().top;
+      ADG.startY += (vAfter - vBefore);          /* 손가락 밑에 그대로 있게 기준점을 옮긴다 */
+      row.style.transform = "translateY(" + (e.clientY - ADG.startY) + "px)";
+      ADG.moved = true;
+      return;                                     /* 한 번에 한 칸씩만 — 다음 move 가 이어서 한다 */
     }
   }
-  e.preventDefault();
 }
 function aDragEnd() {
   if (!ADG) return;
   const { row, box, moved } = ADG;
-  row.classList.remove("adrag");
   ADG = null;
+  row.classList.remove("adrag");
+  row.style.transform = ""; row.style.position = ""; row.style.zIndex = "";
   if (!moved) return;
-  const ids = Array.from(box.querySelectorAll(":scope > .acc")).map(x => x.dataset.open).filter(Boolean);
-  /* 이 묶음이 쓰고 있던 번호대를 그대로 다시 나눠 준다 — 다른 묶음은 안 건드린다 */
-  const mine = ids.map(id => D.accounts.find(a => a.id === id)).filter(Boolean);
-  if (!mine.length) return;
-  const base = Math.min.apply(null, mine.map(a => accOrd(a, D.accounts.indexOf(a))));
-  const b0 = isFinite(base) ? base : 0;
-  mine.forEach((a, i) => { a.ord = b0 + i; });
+  /* 화면에 보이는 차례 그대로 번호를 다시 매긴다 — 번호가 겹쳐 뒤죽박죽되는 일이 없게 */
+  const seen = {};
+  $$("[data-accgrp]").forEach(g => {
+    Array.prototype.slice.call(g.children).forEach(x => {
+      if (x.classList && x.classList.contains("acc") && x.dataset.open) seen[x.dataset.open] = Object.keys(seen).length;
+    });
+  });
+  const shown = sortAccs(D.accounts.filter(a => seen[a.id] != null))
+    .sort((a, b) => seen[a.id] - seen[b.id]);
+  const rest = sortAccs(D.accounts.filter(a => seen[a.id] == null));
+  shown.concat(rest).forEach((a, i) => { a.ord = i; });
   persist(); render(); toast("차례를 바꿨습니다");
 }
 function ahand(a) { return '<div class="ahand" data-adrag="' + a.id + '" title="끌어서 차례 바꾸기">⣿</div>'; }
@@ -1410,7 +1429,9 @@ function viewHome() {
       tInc += F.inc; tOut += F.out; tNet += F.net; tCp += F.cp;
       h += '<div class="acc" data-open="' + a.id + '">' + ahand(a) +
         '<div class="ic" style="background:' + esc(a.color) + ';color:' + onColor(a.color) + '">' + esc((a.name || "?").slice(0, 1)) + '</div>' +
-        '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) + '</div>' +
+        '<div class="grow"><div class="nm ell">' + esc(a.name) + endTag(a) +
+          (lastAdj(a.id) ? ' <span class="pill tiny muted" style="padding:1px 6px">' +
+            esc(String(lastAdj(a.id).date).slice(5)) + ' 맞춤</span>' : '') + '</div>' +
           '<div class="tiny num"><span class="c-inc b">입금 ' + won(F.inc) + '</span>' +
           '<span class="muted"> · 출금 ' + won(F.out) + '</span>' +
           (F.cp ? '<span class="muted"> · 카드대금 ' + won(F.cp) + '</span>' : '') +
@@ -2844,6 +2865,14 @@ function editTxn(txId, presetAcc, forceRep, preset) {
     '</div>' +
 
     '<div class="field"><label>메모</label><input id="tMemo" class="inp" value="' + esc(base.memo || "") + '" placeholder="자유 메모"></div>' +
+    /* 손으로 적어 둔 카드값을 한 번에 카드대금으로 바꾼다 */
+    ((mode === "txn" && t && !t.cpay && !t.adj && !t.xfer && t.flow !== "in" &&
+      (D.accounts.find(a => a.id === t.acc) || {}).kind !== "card" &&
+      D.accounts.some(a => a.kind === "card"))
+      ? '<button class="btn wide" id="tToCpay" style="margin:-2px 0 6px">💳 이건 카드대금입니다</button>' +
+        '<p class="tiny muted" style="margin:0 0 12px;line-height:1.6">통장에서 빠진 카드값을 직접 적어 두셨다면 눌러주세요. ' +
+        '통장에서는 그대로 빠지고 <b>지출 합계에서는 빠집니다</b> — 쓴 날에 이미 지출로 잡았으니까요.</p>'
+      : '') +
     '<div class="field"><label>분류 (색상)</label><div class="chips" id="tCat">' +
       '<button class="chip" data-cat="">없음</button>' +
       D.cats.filter(c => !c.off || c.id === (base.cat || "")).map(c =>
@@ -3163,6 +3192,69 @@ function editTxn(txId, presetAcc, forceRep, preset) {
         done("저장했습니다" + learned);
       };
 
+      /* ---------- 카드대금으로 바꾸기 ---------- */
+      const tc = $("#tToCpay", el);
+      if (tc) tc.onclick = () => {
+        const cards = D.accounts.filter(a => a.kind === "card");
+        const d = t.date || todayISO();
+        const guess = c => {
+          for (let k = 1; k <= 3; k++) {
+            const src = addMonth(d.slice(0, 7), -k);
+            if (payDateOf(c, src).slice(0, 7) === d.slice(0, 7)) return src;
+          }
+          return addMonth(d.slice(0, 7), -1);
+        };
+        modal({
+          title: "카드대금으로 바꾸기",
+          body:
+            '<div class="card" style="margin:0 0 12px"><div class="bd">' +
+              '<div class="b sm">' + esc(t.desc || "(내용 없음)") + '</div>' +
+              '<div class="num b" style="font-size:19px">' + wonS(t.amt) + '</div>' +
+              '<div class="tiny muted">' + esc(t.date) + ' · ' +
+                esc((D.accounts.find(a => a.id === t.acc) || {}).name || "") + '</div>' +
+            '</div></div>' +
+            '<div class="field"><label>어느 카드의 대금인가요</label><select id="tcCard" class="inp">' +
+              cards.map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join("") +
+            '</select></div>' +
+            '<div class="field"><label>어느 달에 쓴 것인가요</label><select id="tcPer" class="inp">' +
+              [1, 2, 3].map(k => { const ym = addMonth(d.slice(0, 7), -k);
+                return '<option value="' + ym + '">' + ym.replace("-", "년 ") + '월 사용분</option>'; }).join("") +
+            '</select></div>' +
+            '<div id="tcInfo" class="tiny muted" style="margin:-4px 0 10px;line-height:1.6"></div>' +
+            '<p class="tiny muted" style="margin:0;line-height:1.6">바꾸면 이 기록은 <b>지출 합계와 분류별 집계에서 빠지고</b>, ' +
+            '통장에서는 지금처럼 그대로 빠집니다. 쓴 금액과 차이가 나면 그만큼 <b>카드로 아낀 돈</b>으로 잡힙니다.</p>',
+          foot: '<button class="btn" id="tcNo">취소</button><button class="btn pri" id="tcOk">바꾸기</button>',
+          onOpen(el2, close2) {
+            const cs = $("#tcCard", el2), ps = $("#tcPer", el2), inf = $("#tcInfo", el2);
+            const sync = () => {
+              const c = D.accounts.find(a => a.id === cs.value);
+              if (!c) return;
+              const used = spendOf(c.id, ps.value);
+              const b = used - t.amt;
+              inf.innerHTML = '그 달 ' + esc(c.name) + ' 사용 합계 <b class="num">' + wonS(used) + '</b>' +
+                (used ? (b > 0 ? ' · <b class="c-ok">' + won(b) + '원 아낀 것으로</b>'
+                       : b < 0 ? ' · <b class="c-bad">' + won(-b) + '원 더 나간 것으로</b>' : ' · 같습니다')
+                      : ' <span class="c-warn">— 그 달 사용 기록이 없습니다. 달을 다시 골라보세요.</span>');
+            };
+            const c0 = D.accounts.find(a => a.id === cs.value);
+            if (c0) ps.value = guess(c0);
+            sync();
+            cs.onchange = () => { const c = D.accounts.find(a => a.id === cs.value); if (c) ps.value = guess(c); sync(); };
+            ps.onchange = sync;
+            $("#tcNo", el2).onclick = close2;
+            $("#tcOk", el2).onclick = () => {
+              const c = D.accounts.find(a => a.id === cs.value); if (!c) return;
+              t.cpay = true; t.card = c.id; t.period = ps.value;
+              t.used = spendOf(c.id, ps.value);
+              t.cat = "";
+              if (!/카드대금/.test(t.desc || "")) t.desc = c.name + " 카드대금";
+              persist(); close2(); close(); render();
+              toast("카드대금으로 바꿨습니다");
+            };
+          }
+        });
+      };
+
       /* ---------- 삭제 ---------- */
       const del = $("#tDel", el);
       if (del) del.onclick = () => {
@@ -3242,6 +3334,52 @@ function editTxn(txId, presetAcc, forceRep, preset) {
 /* ============================================================
    은행 잔액 수정 — 기존 잔액과의 차액을 기록으로 남긴다
    ============================================================ */
+/* 잔액이 어떻게 나왔는지 — 못(마지막 잔액 수정) 이후로 무엇이 더해지고 빠졌나 */
+function foldNote2(id, label, html) {
+  return '<details style="margin:-4px 0 12px"><summary class="tiny b" style="cursor:pointer;color:var(--accent);padding:4px 0">' +
+    esc(label) + '</summary><div style="margin-top:8px">' + html + '</div></details>';
+}
+function balWhy(a) {
+  const T = todayISO();
+  const an = lastAdj(a.id);
+  const base = an ? (+an.b1 || 0) : (+(a.kind === "debit" ? a.bal : a.seed) || 0);
+  const list = [];
+  D.txns.forEach(t => { if (t.acc === a.id && t.date <= T && afterAdj(t, an)) list.push(t); });
+  (D.rules || []).forEach(r => {
+    if (r.acc !== a.id && r.xfrom !== a.id && r.xto !== a.id) return;
+    try { ruleTxns(r, r.start, T).forEach(t => { if (t.acc === a.id && t.date <= T && afterAdj(t, an)) list.push(t); }); } catch (e) {}
+  });
+  list.sort((x, y) => String(x.date).localeCompare(String(y.date)));
+  const sum = list.reduce((s2, t) => s2 + (t.flow === "in" ? t.amt : -t.amt), 0);
+  return { an, base, list, sum, now: base + sum };
+}
+function balWhyHTML(a) {
+  const W = balWhy(a);
+  const rows = W.list.slice(-12);
+  return '<div class="card" style="margin:0 0 12px"><div class="bd" style="padding:11px 12px">' +
+    '<div class="row" style="align-items:baseline">' +
+      '<span class="tiny muted b grow">' + (W.an ? "마지막 잔액 수정 " + esc(W.an.date) : "시작 잔액") + '</span>' +
+      '<span class="num b">' + wonS(W.base) + '</span></div>' +
+    (W.list.length
+      ? '<div class="tiny muted" style="margin:7px 0 3px">' + (W.an ? "그 뒤로 적은 것 " : "그 뒤 기록 ") + W.list.length + '건' +
+          (rows.length < W.list.length ? ' (마지막 ' + rows.length + '건만)' : '') + '</div>' +
+        rows.map(t => '<div class="row tiny" style="padding:2px 0">' +
+          '<span class="muted" style="flex:none;width:62px">' + esc(String(t.date).slice(5)) + '</span>' +
+          '<span class="grow ell">' + (t.cpay ? "💳 " : t.xfer ? "↔ " : t.virt ? "🔁 " : "") + esc(t.desc || "(내용 없음)") + '</span>' +
+          '<span class="num b ' + (t.flow === "in" ? "c-inc" : "") + '" style="flex:none">' +
+            (t.flow === "in" ? "+" : "−") + won(t.amt) + '</span></div>').join("") +
+        '<div class="row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--line)">' +
+          '<span class="tiny muted b grow">더하고 빼면</span>' +
+          '<span class="num b ' + (W.sum >= 0 ? "c-inc" : "") + '">' + signWon(W.sum) + '</span></div>'
+      : '<div class="tiny muted" style="margin:7px 0 0">그 뒤로 적은 것이 없습니다.</div>') +
+    '<div class="row" style="margin-top:6px;padding-top:6px;border-top:1.5px solid var(--line)">' +
+      '<span class="b sm grow">지금 잔액</span>' +
+      '<span class="num b" style="font-size:17px">' + wonS(W.now) + '</span></div>' +
+    (W.an ? '<p class="tiny muted" style="margin:8px 0 0;line-height:1.6">' +
+      esc(W.an.date) + ' <b>이전</b> 날짜로 적은 기록은 이미 이 금액 안에 들어 있어서 잔액을 다시 움직이지 않습니다. ' +
+      '그 전에 빠진 돈을 <b>이 날짜 뒤로</b> 적으면 <b>두 번 빠집니다</b> — 날짜를 맞추거나 잔액을 다시 맞춰주세요.</p>' : '') +
+  '</div></div>';
+}
 function editBal(accId) {
   const a = D.accounts.find(x => x.id === accId); if (!a) return;
   const deb = a.kind === "debit";
@@ -3254,6 +3392,7 @@ function editBal(accId) {
       '<div class="card" style="margin:0 0 12px"><div class="bd row">' +
         '<div class="grow"><div class="tiny muted b">' + (stk ? "지금 기록된 평가금액" : deb ? "현재 자동 계산된 잔액" : "현재 기록된 잔액") + '</div>' +
         '<div class="num b" style="font-size:20px">' + wonS(old) + '</div></div></div></div>' +
+      (stk ? '' : foldNote2("balwhy", "이 금액이 어떻게 나왔는지 보기", balWhyHTML(a))) +
       '<div class="field"><label>' + (stk ? "오늘 기준 평가금액 (증권 앱에서 본 금액)" : deb ? "실제 잔액 (카드 앱에서 본 금액)" : "실제 잔액 (통장·앱에서 본 금액)") + '</label>' +
         '<input id="bNew" class="inp" inputmode="numeric" value="' + old + '"></div>' +
       (stk ? '<div class="field"><label>이번 변동은 무엇인가요?</label>' +
@@ -3488,6 +3627,7 @@ function billFix(cardId, period) {
         '</select></div>' +
         '<div class="field"><label>날짜</label><input id="bfDate" class="inp" type="date" value="' + payDateOf(a, period) + '"></div>' +
       '</div>' +
+      '<div id="bfWarn"></div>' +
       '<p class="tiny muted" style="line-height:1.6;margin:0">자동이체가 아니라 직접 넣으셨다면 통장을 바꿔 주세요. ' +
         '이 건만 바뀌고 <b>카드 설정이나 지난 건은 그대로</b>입니다. 카드대금은 지출 합계에 또 더해지지 않습니다 — ' +
         '쓴 날에 이미 지출로 잡았기 때문입니다.</p>',
@@ -3502,8 +3642,26 @@ function billFix(cardId, period) {
           : d < 0 ? won(-d) + "원 더 나갑니다" : "같습니다";
         dv.className = "num b " + (d > 0 ? "c-ok" : d < 0 ? "c-bad" : "muted");
       };
-      inp.oninput = upd; upd();
+      /* 이 통장에 잔액을 맞춰 둔 날 이후로 적으면 두 번 빠질 수 있다 */
+      const warn = () => {
+        const box = $("#bfWarn", el); if (!box) return;
+        const ac = D.accounts.find(x => x.id === $("#bfAcc", el).value);
+        const an = ac ? lastAdj(ac.id) : null;
+        const dt = $("#bfDate", el).value || "";
+        box.innerHTML = (an && dt && dt > an.date)
+          ? '<div class="card" style="margin:0 0 12px;border-color:var(--warn,#e2822f)"><div class="bd" style="padding:10px 11px">' +
+            '<p class="tiny b c-warn" style="margin:0 0 4px">⚠ 두 번 빠질 수 있습니다</p>' +
+            '<p class="tiny muted" style="margin:0;line-height:1.6">' + esc(ac.name) + ' 은(는) <b>' + esc(an.date) +
+            '</b> 에 잔액을 맞춰 두셨습니다 (' + wonS(+an.b1 || 0) + '). 이 돈이 <b>그 전에 이미 빠진 것</b>이라면 ' +
+            '그 금액 안에 들어 있어서, 날짜를 그 뒤로 두면 또 빠집니다.<br>' +
+            '<b>그 전에 빠졌다면</b> 날짜를 ' + esc(an.date) + ' 이전으로 바꾸세요. ' +
+            '<b>그 뒤에 빠졌다면</b> 지금 그대로 두시면 됩니다.</p></div></div>'
+          : '';
+      };
+      inp.oninput = upd; upd(); warn();
       inp.onfocus = () => inp.select();
+      $("#bfAcc", el).onchange = warn;
+      $("#bfDate", el).onchange = warn;
       $("#bfOk", el).onclick = () => {
         const v = +String(inp.value).replace(/[^\d]/g, "") || 0;
         if (!v) return toast("금액을 넣어주세요");
