@@ -395,7 +395,7 @@ textarea.inp{min-height:150px;resize:vertical;font-size:13px;line-height:1.6}
    저장: localStorage (기기 안)
    ============================================================ */
 "use strict";
-const APP_VERSION = "2026.10.02.0505";
+const APP_VERSION = "2026.10.20.0020";
 const KEY = "insure.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -473,6 +473,7 @@ let LASTJ = null;
 function bodyOf(o) { return JSON.stringify([o.custs, o.dict, o.cats, o.labels, o.ord, o.bars, o.barGoal, o.settings]); }
 function save() {
   try {
+    (D.custs || []).forEach(c0 => (c0.prods || []).forEach(fixMode));
     const c = cust();
     if (c) {
       const j = stamp(c);
@@ -1194,6 +1195,53 @@ function splitCSV(line) {                 /* 따옴표 안의 쉼표는 그대�
   out.push(cur.trim());
   return out;
 }
+/* 「보험료 / 15,600원」처럼 항목 이름 다음 줄에 값이 오는 양식 — 삼성생명 계약조회 화면 등 */
+const LB_ITEM = /^(보험료|가입금액|보험기간|보험상태|납입기간|납입상태|보장금액|만기일|특약상태)$/;
+const LB_HEAD = /^(주보험|주계약|선택부가보험|의무부가보험|부가보험|선택특약|의무특약|특약|부가특약)$/;
+function isLabeled(lines) {
+  const n = k => lines.filter(l => l.replace(/\s/g, "") === k).length;
+  return n("보험료") >= 1 && n("가입금액") >= 1 && (n("보험기간") + n("보험상태") + n("납입상태")) >= 1;
+}
+function shortTerm(v) {                           /* "1999.10.14 ~ 2046.10.14 (47년)" → "47년" */
+  const t = String(v || "").trim();
+  const m = t.match(/\((\d{1,3}\s*[년세])\)/); if (m) return m[1].replace(/\s/g, "");
+  const d = t.match(/(\d{4})[.\-/]\d{1,2}[.\-/]\d{1,2}\s*~\s*(\d{4})[.\-/]\d{1,2}[.\-/]\d{1,2}/);
+  if (d) return (+d[2] - +d[1]) + "년";
+  return t;
+}
+function parseLabeled(lines) {
+  const L = lines.map(l => l.replace(/\s+/g, " ").trim());
+  const key = l => l.replace(/\s/g, "");
+  const items = []; const meta = {};
+  let cur = null, wantName = false;
+  for (let i = 0; i < L.length; i++) {
+    const k = key(L[i]), nx = L[i + 1], nk = nx != null ? key(nx) : "";
+    if (/^(예금자보호|꼭알아두세요)/.test(k)) break;
+    if (LB_HEAD.test(k)) { wantName = true; continue; }
+    if (k === "계약일" && nx) { meta.start = normDate(nx); i++; continue; }
+    if (LB_ITEM.test(k) && nx != null && !LB_ITEM.test(nk)) {
+      if (!cur) { if (k === "납입기간") meta.payTerm = nx; i++; continue; }
+      const v = nx;
+      if (k === "보험료") { const m = findMoney(v); cur.premium = m.length ? m[0].v : (+v.replace(/[^\d]/g, "") || 0); }
+      else if (k === "가입금액" || k === "보장금액") { const m = findMoney(v); cur.amount = m.length ? m[0].v : (+v.replace(/[^\d]/g, "") || 0); }
+      else if (k === "보험기간" || k === "만기일") cur.term = shortTerm(v);
+      else if (k === "납입기간") cur.payTerm = v.replace(/\s/g, "");
+      else if (k === "보험상태" || k === "특약상태") cur.state = v;
+      else if (k === "납입상태") cur.payState = v;
+      i++; continue;
+    }
+    /* 담보 이름: 「주보험/선택부가보험」 다음 줄, 또는 바로 다음 줄이 보험료·가입금액 */
+    if (wantName || nk === "보험료" || nk === "가입금액") {
+      if (LB_ITEM.test(k)) continue;
+      cur = { name: L[i], amount: 0, premium: 0 }; items.push(cur); wantName = false;
+    }
+  }
+  const got = items.filter(x => x.amount || x.premium);
+  if (!got.length) return null;
+  meta.items = got;
+  meta.payDone = got.every(x => /납입\s*완료|완납/.test(x.payState || ""));
+  return meta;
+}
 function parseSheet(text) {
   const raw = String(text).replace(/ /g, " ").replace(/\r/g, "");
   const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
@@ -1202,8 +1250,9 @@ function parseSheet(text) {
   /* 1,000 같은 자릿점은 빼고 세야 진짜 쉼표 구분인지 안다 */
   const bare = l => l.replace(/(\d),(?=\d{3}\b)/g, "$1");
   const csvLike = lines.filter(l => (bare(l).match(/,/g) || []).length >= 2).length > 2;
-  let items = null;
-  if (isVertical(lines)) items = parseVertical(lines);
+  let items = null, lab = null;
+  if (isLabeled(lines)) { lab = parseLabeled(lines); if (lab) items = lab.items; }
+  if (!items && isVertical(lines)) items = parseVertical(lines);
   if (!items) items = parseBlock(lines);
   if (!items && (/\t/.test(raw) || csvLike)) {
     const tabbed = /\t/.test(raw);
@@ -1232,6 +1281,8 @@ function parseSheet(text) {
   });
   /* 붙여넣기에 보험기간·납입기간이 있으면 상품에 그대로 넣는다 */
   const term = commonVal(merged, "term"), payTerm = commonVal(merged, "payTerm");
+  if (lab) return { name, items: merged, term: term || "", payTerm: payTerm || lab.payTerm || "",
+    total: merged.reduce((a, i) => a + (+i.premium || 0), 0), start: lab.start || "", payDone: !!lab.payDone };
   return { name, items: merged, term, payTerm, total: headTotal(lines) };
 }
 
@@ -1248,7 +1299,7 @@ function buildRows(list) {
   const ps = list || (PAIR ? sideProds("old").concat(sideProds("neu")) : prods().filter(pickOn));
   const buckets = [];
   const byKey = {};
-  ps.forEach(p => (p.items || []).forEach(it => {
+  ps.filter(p => !payOnly(p)).forEach(p => (p.items || []).reduce((a, it) => a.concat([it], subObjs(it)), []).forEach(it => {
     if (it.on === false) return;            /* 잘못 들어온 담보 — 어디에도 나오지 않는다 */
     const n = normName(it.name);
     /* 손으로 떼어 둔 담보는 제 열쇠를 그대로 쓴다 */
@@ -1366,7 +1417,7 @@ function rowCell(b, s, pick, raw) {
     if (!isOn(it)) return;
     n++;
     if (!use(it)) { drop++; return; }
-    amt += raw ? baseAmt(it) : effAmt(it);
+    if (!hasSubs(it)) amt += raw ? baseAmt(it) : effAmt(it);
     if (isCut(it)) cut++;
     const f = raw ? itemFeeRaw(p, it) : itemFee(p, it);
     fee += f;
@@ -1578,6 +1629,97 @@ function amtLine(it) {
 }
 
 /* ---------- 살아있는 담보 · 감액 · 유지 ---------- */
+/* 세부 보장 — 보험료는 담보(특약)에, 보장금액은 그 안의 항목별로 */
+const hasSubs = it => !!(it && it.hasSub && (it.subs || []).length);
+const SUBC = new WeakMap();
+function subObjs(it) {
+  if (!hasSubs(it)) return [];
+  const key = JSON.stringify(it.subs);
+  const c = SUBC.get(it); if (c && c.key === key) return c.list;
+  const list = it.subs.map((sb, k) => {
+    const o = { id: it.id + "_s" + k, name: sb.name, amount: +sb.amt || 0, premium: 0, cov: sb.cov || "", covAmt: 0, renew: !!it.renew, _sub: true };
+    Object.defineProperty(o, "_par", { value: it, enumerable: false });
+    Object.defineProperty(o, "on", { get: () => it.on, set: v => { it.on = v; }, enumerable: true, configurable: true });
+    Object.defineProperty(o, "keep", { get: () => it.keep, set: v => { it.keep = v; }, enumerable: true, configurable: true });
+    Object.defineProperty(o, "cut", { get: () => isCut(it) ? Math.round((+sb.amt || 0) * cutRatio(it)) : 0, set: () => {}, enumerable: true, configurable: true });
+    Object.defineProperty(o, "rowKey", { get: () => (it.subKeys || {})[k],
+      set: v => { it.subKeys = it.subKeys || {}; if (v === undefined) delete it.subKeys[k]; else it.subKeys[k] = v; }, enumerable: true, configurable: true });
+    return o;
+  });
+  SUBC.set(it, { key, list }); return list;
+}
+/* "암진단 1,000만" 한 줄씩 → [{name, amt}] */
+function parseSubs(txt) {
+  return String(txt || "").split("\n").map(l => l.trim()).filter(Boolean).map(l => {
+    const sg = l.split(/\s+[|｜]\s+/);
+    if (sg.length > 1) { const a = sg.pop(); const mm = findMoney(a);
+      return { name: sg.join(" | "), amt: mm.length ? mm[mm.length - 1].v : (/^[\d,]+$/.test(a.trim()) ? Math.round(+a.replace(/,/g, "") * 10000) : 0) }; }
+    const m = findMoney(l);
+    if (!m.length) { const n = l.match(/([\d,.]+)\s*$/); return { name: l.replace(/([\d,.]+)\s*$/, "").trim() || l, amt: n ? Math.round(parseFloat(n[1].replace(/,/g, "")) * 10000) : 0 }; }
+    const last = m[m.length - 1];
+    const nm = l.replace(/[\d,.]+\s*(억|천만|백만|만)?\s*원?\s*$/, "").trim();
+    return { name: nm || l, amt: last.v };
+  }).filter(x => x.name);
+}
+/* 보장내용 화면 글(사진 글자 읽기 포함)을 세부 보장으로 — 설명이 먼저, 금액이 화면 끝에 몰려 나와도 순서대로 짝짓는다 */
+function looksCover(txt) {
+  const L = String(txt || "").split("\n").map(l => l.trim()).filter(Boolean);
+  const amtOnly = L.filter(l => /^[\d,]+\s*원$/.test(l)).length;
+  return amtOnly >= 1 && (/급여금|자금|치료비|진단확정|\d\s*\.\s*[가-힣]/.test(txt) || /^\s*[*＊]/m.test(txt));
+}
+function parseCover(txt) {
+  const L = String(txt || "").replace(/\r/g, "").split("\n").map(l => l.replace(/(\d)\s+(?=\d)/g, "$1").replace(/\s+/g, " ").trim()).filter(Boolean);
+  const slots = [], pend = [], lead = [];
+  let sec = null, cur = null, note = false;
+  const clean = t => t.replace(/\([^)]*\)?/g, " ").replace(/[•·]\s*/g, "·").replace(/\s+/g, " ")
+    .replace(/\s*(으로)?\s*진단\s*확정\s*시\s*$/, " 진단").replace(/[,，]\s*$/, "").replace(/(\d)\s+(회|일|개월|년)/g, "$1$2").replace(/([가-힣])\s+(환|증)(?=[\s,·]|$)/g, "$1$2").trim();
+  const add = (detail) => { cur = { sec, detail: detail || "", amt: 0 }; slots.push(cur); pend.push(cur); if (sec) sec.has = true; };
+  L.forEach(l => {
+    if (/^[\d,]+\s*원$/.test(l)) {                       /* 금액만 있는 줄 → 기다리는 칸에 차례로 */
+      const sl = (sec && !sec.has && !sec.done) ? (add(""), pend.shift()) : pend.shift();
+      if (sl) sl.amt = +l.replace(/[^\d]/g, "");
+      else if (!sec) lead.push(+l.replace(/[^\d]/g, ""));   /* 앞 화면에서 잘린 금액 — 「?」 줄을 채운다 */
+      cur = null; if (sec) sec.done = true; return;
+    }
+    if (!/[가-힣]/.test(l)) return;                       /* 「74」「LE」 같은 화면 글자 */
+    const sm = l.match(/^(\d{1,2})\s*\.\s*([가-힣][^:：(]*)/);
+    if (sm) {
+      if (sec && !sec.has) add("");                     /* 앞 항목에 *줄이 없었으면 항목 자체가 한 칸 */
+      sec = { title: sm[2].trim(), has: false, done: false }; cur = null; note = false;
+      const rest = l.slice(l.indexOf(sm[2]) + sm[2].length);
+      const st = rest.indexOf("*") >= 0 ? rest.indexOf("*") : rest.indexOf("＊");
+      if (st >= 0) add(rest.slice(st + 1));
+      return;
+    }
+    if (!sec) return;
+    const star = l.search(/[*＊]/);
+    if (star >= 0) { note = false; add(l.slice(star + 1)); return; }
+    if (/^\(\s*단/.test(l)) { note = true; cur = null; return; }
+    if (note) { if (/\)\s*$|^함\)?$/.test(l)) note = false; return; }
+    if (sec.has && /^\d+일\s*이상$/.test(l)) { add(l); return; }  /* 「121일이상」 같은 단계 */
+    if (cur && cur.detail) cur.detail += " " + l;
+  });
+  if (sec && !sec.has) add("");
+  const out = slots.map(x => {
+    const d = clean(x.detail);
+    return { name: (x.sec ? x.sec.title.replace(/\s+/g, "") : "") + (d ? " · " + d : ""), amt: x.amt };
+  }).filter(x => x.name);
+  out.lead = lead;
+  return out;
+}
+/* 세부 보장 칸에 붙여넣을 때 — 이미 정리된 줄(「이름 | 금액」)은 그대로, 새로 붙인 글만 정리해서 아래에 */
+function mergeCover(val) {
+  const lines = String(val || "").split("\n");
+  const done = l => /\s[|｜]\s/.test(l);
+  const kept = lines.filter(done), raw = lines.filter(l => !done(l)).join("\n");
+  if (!looksCover(raw)) return null;
+  const C = parseCover(raw);
+  const lead = (C.lead || []).slice();
+  const k2 = kept.map(l => (lead.length && /[|｜]\s*\?\s*$/.test(l)) ? l.replace(/[|｜]\s*\?\s*$/, "| " + manwon(lead.shift()) + "원") : l);
+  const filled = kept.length - k2.filter((l, i) => l === kept[i]).length;
+  return { text: k2.concat(C.map(subLine)).join("\n"), add: C.length, filled, miss: C.filter(x => !x.amt).length };
+}
+const subLine = sb => sb.name + " | " + (sb.amt ? manwon(sb.amt) + "원" : "?");
 const isOn   = it => it && it.on !== false;                 /* 이 담보가 실제로 있는가 */
 const isKept = it => isOn(it) && it.keep !== false;          /* 유지(기존) · 가입(신규) 하는가 */
 /* 감액은 "가입금액"을 기준으로 적는다 — 보장금액(400/800 같은 표기)은 그 비율만큼 같이 줄어든다 */
@@ -1601,23 +1743,56 @@ function scaleCov(txt, ratio) {
 function prodFee(p) { return feeSum(p, isOn); }
 /* 감액하기 전, 설계서 그대로의 월 보험료 */
 function prodFeeRaw(p) {
-  if (p.feeMode === "total") return +p.totalFee || 0;
+  if (!feeOn(p)) return 0;
   const s = (p.items || []).filter(isOn).reduce((a, i) => a + (+i.premium || 0), 0);
+  if (p.feeMode === "total") return (+p.totalFee || 0) || s;
   return s || (+p.totalFee || 0);
+}
+/* 납입이 끝났는지 — 직접 고른 값이 먼저, 없으면 가입일 + 납입기간으로 */
+function payDone(p) {
+  if (p.payDone === true) return true;
+  if (p.payDone === false) return false;
+  const pm = termMonths(p.payTerm, p.age, termMonths(p.term, p.age, null));
+  const el = monthsSince(p.start);
+  return pm != null && pm > 0 && el != null && el >= pm;
+}
+/* 피보험자 상이 — 이 고객이 계약자면 돈만 내고(보장 X), 피보험자면 보장만 받는다(보험료 X) */
+const insOnly = p => !!(p && p.diffIns) && p.role === "ins";
+const payOnly = p => !!(p && p.diffIns) && p.role !== "ins";
+let FEEALL = 0;                                    /* 낸 돈 계산처럼 상태와 상관없이 원래 보험료가 필요할 때 */
+function feeOn(p) { return FEEALL > 0 || (!payDone(p) && !insOnly(p)); }
+function feeAll(fn) { FEEALL++; try { return fn(); } finally { FEEALL--; } }
+/* 담보에 직접 넣은 보험료가 전부 있으면 "담보별" 방식으로 돌린다 */
+function fixMode(p) {
+  if (!p || p.feeMode !== "total") return;
+  const on = (p.items || []).filter(isOn);
+  if (on.length && on.every(i => +i.premium > 0)) p.feeMode = "item";
+}
+/* 총보험료 방식에서 담보 하나의 몫 — 직접 넣은 값은 그대로, 나머지는 남은 돈을 보장금액 비율로 */
+function totShare(p, it, force, eff) {
+  if (it._sub) return 0;
+  const own = +it.premium || 0;
+  if (own > 0) return (eff && isCut(it)) ? Math.round(own * cutRatio(it)) : own;
+  if (!force && !p.spread) return 0;
+  const on = (p.items || []).filter(isOn);
+  const known = on.reduce((a, i) => a + (+i.premium || 0), 0);
+  const rest = Math.max(0, (+p.totalFee || 0) - known);
+  const unk = on.filter(i => !(+i.premium > 0));
+  const tot = unk.reduce((a, i) => a + baseAmt(i), 0);
+  if (!tot || !baseAmt(it)) return 0;
+  return Math.round(rest * (eff ? effAmt(it) : baseAmt(it)) / tot);
 }
 /* 유지하기로 한 담보만 모은 월 보험료 */
 function prodFeeKept(p) { return feeSum(p, isKept); }
 function feeSum(p, pick) {
+  if (!feeOn(p)) return 0;
   const list = (p.items || []).filter(pick);
   if (p.feeMode === "total") {
     const all = (p.items || []).filter(isOn);
-    const tot = +p.totalFee || 0;
+    const tot = (+p.totalFee || 0) || all.reduce((a, i) => a + (+i.premium || 0), 0);
     if (!all.length) return tot;
     if (list.length === all.length && !all.some(isCut)) return tot;
-    const base = all.reduce((a, i) => a + baseAmt(i), 0);
-    if (!base) return list.length === all.length ? tot : 0;
-    const part = list.reduce((a, i) => a + effAmt(i), 0);
-    return Math.round(tot * part / base);
+    return list.reduce((a, i) => a + totShare(p, i, true, true), 0);
   }
   const s = list.reduce((a, i) => a + itemFee(p, i), 0);
   return s || ((list.length && list.length === (p.items || []).filter(isOn).length) ? (+p.totalFee || 0) : 0);
@@ -1627,28 +1802,18 @@ function prodCut(p) { return Math.max(0, prodFeeRaw(p) - prodFee(p)); }
 
 /* 담보 하나의 보험료 — 총액만 아는 상품은 보장금액 비례로 나눠 본다(추정) · 감액 반영 */
 function itemFee(p, it) {
-  if (p.feeMode === "total") {
-    if (!p.spread) return 0;
-    const on = (p.items || []).filter(isOn);
-    const tot = on.reduce((a, i) => a + baseAmt(i), 0);
-    if (!tot || !baseAmt(it)) return 0;
-    return Math.round((+p.totalFee || 0) * effAmt(it) / tot);
-  }
+  if (!feeOn(p)) return 0;
+  if (p.feeMode === "total") return totShare(p, it, false, true);
   const base = +it.premium || 0;
   return isCut(it) ? Math.round(base * cutRatio(it)) : base;
 }
 /* 감액 전 이 담보의 보험료 */
 function itemFeeRaw(p, it) {
-  if (p.feeMode === "total") {
-    if (!p.spread) return 0;
-    const on = (p.items || []).filter(isOn);
-    const tot = on.reduce((a, i) => a + baseAmt(i), 0);
-    if (!tot || !baseAmt(it)) return 0;
-    return Math.round((+p.totalFee || 0) * baseAmt(it) / tot);
-  }
+  if (!feeOn(p)) return 0;
+  if (p.feeMode === "total") return totShare(p, it, false, false);
   return +it.premium || 0;
 }
-const isEst = p => p.feeMode === "total" && !!p.spread;
+const isEst = p => p.feeMode === "total" && !!p.spread && (p.items || []).some(i => isOn(i) && !(+i.premium > 0));
 /* 기간 요약 */
 function prodTerm(p) {
   const fee = prodFeeRaw(p);       /* 지금 그대로 — 감액·해지를 넣기 전 */
@@ -1659,7 +1824,8 @@ function prodTerm(p) {
   const paid = (pm != null && el != null) ? Math.min(el, pm) : null;
   const left = (pm != null && paid != null) ? Math.max(0, pm - paid) : null;
   /* 이미 낸 돈은 지난 일이라 그대로 · 앞으로 낼 돈은 정한 대로 */
-  const paidFee = paid != null ? fee * paid : null;
+  const hist = insOnly(p) ? 0 : feeAll(() => prodFeeRaw(p));   /* 납입완료여도 그동안 낸 돈은 그대로 */
+  const paidFee = paid != null ? hist * paid : null;
   const leftFee = left != null ? kfee * left : null;
   return {
     fee, kfee, termM: tm, payM: pm, elapsed: el,
@@ -1977,13 +2143,17 @@ function prodRow(p, s2) {
       '<div class="b ell">' + esc(p.name || "(이름 없음)") + '</div>' +
       '<div class="tiny muted ell">' + (p.insurer ? esc(p.insurer) + " · " : "") + '담보 ' + on.length + '/' + (p.items || []).length + '개' +
       (p.feeMode === "total" ? ' · <b class="c-warn">총보험료만</b>' : '') +
+      (payDone(p) ? ' · <b class="muted">납입완료</b>' : '') +
+      (p.diffIns ? ' · <b style="color:var(--accent)">상이·' + (insOnly(p) ? "피보험자" : "계약자") + '</b>' : '') +
       (kindOf(p) !== "보장성" ? ' · <b style="color:var(--ok)">' + esc(kindOf(p)) + '</b>' : '') + '</div>' +
       (p.note ? '<div class="tiny muted ell" style="opacity:.85">📝 ' + esc(String(p.note).split("\n")[0]) + '</div>' : '') +
       '<div class="tiny muted ell num">' + (p.term ? '보험 ' + esc(p.term) : '보험기간 ?') + ' · ' +
         (p.payTerm ? '납입 ' + esc(p.payTerm) : '납입기간 ?') +
         (x.leftFee != null ? ' · 남은 ' + monY(x.leftM) + ' ' + won(x.leftFee) + '원' : '') + '</div></div>' +
-    '<div style="text-align:right;flex:none"><div class="b num">' + wonS(x.fee) + '</div>' +
-      '<div class="tiny muted">월 보험료</div></div>' +
+    '<div style="text-align:right;flex:none">' + (feeOn(p) ?
+      '<div class="b num">' + wonS(x.fee) + '</div><div class="tiny muted">월 보험료</div>' :
+      '<div class="b muted">' + (insOnly(p) ? "보장만" : "납입완료") + '</div>' +
+      '<div class="tiny muted num">' + (insOnly(p) ? "보험료 제외" : '<s>' + wonS(feeAll(() => prodFeeRaw(p))) + '</s>') + '</div>') + '</div>' +
   '</div>';
 }
 
@@ -3020,6 +3190,8 @@ function pasteFlow(side, editId) {
         res.autoNote = (auto.length ? "설계서에서 " + auto.join(" · ") + " 을(를) 자동으로 넣었습니다." : "") +
           (odd.length ? (auto.length ? " " : "") + "기간이 다른 담보 " + odd.length + "개는 담보별로 따로 기억합니다 (" +
             odd.slice(0, 3).map(i => i.name + " " + (i.term || "?") + "/" + (i.payTerm || "?")).join(", ") + (odd.length > 3 ? " 외" : "") + ")." : "");
+        if (res.start && /^\d{4}-\d{2}-\d{2}$/.test(res.start) && !$("#pStart", el).value) { $("#pStart", el).value = res.start; auto.push("가입일 " + res.start); }
+        if (res.payDone) auto.push("납입완료");
         if (res.total && !$("#pTotal", el).value.trim()) {
           $("#pTotal", el).value = res.total;
           auto.push("합계보험료 " + won(res.total) + "원");
@@ -3106,12 +3278,13 @@ function showItems(el, prev, run, items, side, closeAll, p0, autoNote, info) {
       start: $("#pStart", el).value, totalFee: +String($("#pTotal", el).value).replace(/[^\d]/g, "") || 0
     };
     const hasFee = keep.some(i => +i.premium);
+    const doneTxt = /납입\s*완료/.test(($("#pTxt", el) || {}).value || "");
     if (p0) { p0.name = nm; p0.insurer = $("#pIns", el).value.trim(); p0.items = keep; Object.assign(p0, extra);
-      if (!hasFee && extra.totalFee) p0.feeMode = "total"; }
+      if (!hasFee && extra.totalFee) p0.feeMode = "total"; if (doneTxt) p0.payDone = true; }
     else c.prods.push({ id: uid(), side, name: nm, insurer: $("#pIns", el).value.trim(),
       color: PAL[c.prods.length % PAL.length], items: keep, at: Date.now(), age: 0,
       term: extra.term, payTerm: extra.payTerm, start: extra.start, totalFee: extra.totalFee,
-      feeMode: hasFee ? "item" : "total", spread: false });
+      feeMode: hasFee ? "item" : "total", spread: false, payDone: doneTxt ? true : undefined });
     save(); closeAll(); go(TAB === "cmp" ? "cmp" : "prod");
     toast(keep.length + "개 담보를 넣었습니다");
   };
@@ -3272,6 +3445,20 @@ function openProd(id) {
             '<span class="grow"><span class="b sm">보장금액 비례로 나눠 보기 (추정)</span>' +
             '<span class="tiny muted" style="display:block">담보별 보험료를 모를 때, 총보험료를 보장금액 비율로 나눠 1,000만원당 단가를 어림잡습니다. 실제와 다를 수 있어 <b>추정</b>으로 표시됩니다.</span></span></label>'
           : '') +
+        (() => { const auto = (() => { const v = p.payDone; delete p.payDone; const r = payDone(p); if (v !== undefined) p.payDone = v; return r; })();
+          const cur = p.payDone === true ? "done" : p.payDone === false ? "ing" : "auto";
+          return '<div class="field" style="margin:10px 0 6px"><label>납입 상태</label><div class="seg" style="margin:0">' +
+            '<button type="button" data-pd="auto" class="' + (cur === "auto" ? "on" : "") + '">자동 (' + (auto ? "납입완료" : "납입중") + ')</button>' +
+            '<button type="button" data-pd="ing" class="' + (cur === "ing" ? "on" : "") + '">납입중</button>' +
+            '<button type="button" data-pd="done" class="' + (cur === "done" ? "on" : "") + '">납입완료</button></div>' +
+            '<p class="tiny muted" style="margin:4px 0 0">납입완료는 <b>월 보험료 합계에서 빠지고</b>, 보장은 그대로 셉니다. 자동은 가입일 + 납입기간으로 정합니다.</p></div>'; })() +
+        '<label class="tog" style="border:0;padding-bottom:4px"><input type="checkbox" id="tpDiff"' + (p.diffIns ? " checked" : "") + '>' +
+          '<span class="grow"><span class="b sm">피보험자 상이</span>' +
+          '<span class="tiny muted" style="display:block">계약자와 피보험자가 다른 계약입니다.</span></span></label>' +
+        (p.diffIns ? '<div class="field" style="margin:0 0 6px"><label>이 고객은</label><div class="seg" style="margin:0">' +
+            '<button type="button" data-role="pay" class="' + (!insOnly(p) ? "on" : "") + '">계약자 — 보험료만 냄</button>' +
+            '<button type="button" data-role="ins" class="' + (insOnly(p) ? "on" : "") + '">피보험자 — 보장만 받음</button></div>' +
+            '<p class="tiny muted" style="margin:4px 0 0">' + (insOnly(p) ? '보장 합산에 들어가고 <b>월 보험료에서는 빠집니다</b>.' : '월 보험료에 들어가고 <b>보장 합산에서는 빠집니다</b>.') + '</p></div>' : '') +
         '<div class="stat" style="margin:10px 0 0">' +
           '<div><b class="num">' + won(x.fee) + '</b><span>월 보험료</span></div>' +
           '<div><b class="num">' + (x.total != null ? won(x.total) : "—") + '</b><span>총 납입보험료</span></div>' +
@@ -3303,8 +3490,10 @@ function openProd(id) {
             '<div class="tiny num" style="line-height:1.6;margin-top:1px">' + amtLine(it) +
             (raw ? ' <span class="muted">·</span> ' + (cut ? '<s class="muted">' + won(raw) + '</s> <b class="c-down">' + won(now) + '원</b>'
               : '<span class="feex">' + won(now) + '원</span>') + (isEst(p) ? ' <span class="muted">(추정)</span>' : '')
-              : ' <span class="c-warn b">· 보험료를 넣어주세요</span>') +
-            (effAmt(it) && now ? ' <span class="muted">· 1,000만원당 ' + won(Math.round(unitFee(effAmt(it), now))) + '원</span>' : '') + '</div></div>' +
+              : (!feeOn(p) ? (+it.premium ? ' <span class="muted">· <s>' + won(+it.premium) + '원</s></span>' : '')
+                 : ' <span class="c-warn b">· 보험료를 넣어주세요</span>')) +
+            (effAmt(it) && now && !hasSubs(it) ? ' <span class="muted">· 1,000만원당 ' + won(Math.round(unitFee(effAmt(it), now))) + '원</span>' : '') + '</div>' +
+            (hasSubs(it) ? '<div class="tiny muted" style="line-height:1.6;margin-top:2px">' + it.subs.map(sb => '└ ' + esc(sb.name) + ' <b>' + (sb.amt ? manwon(sb.amt) + '원' : '<span class="c-warn">금액?</span>') + '</b>').join("<br>") + '</div>' : '') + '</div>' +
           '<button class="btn sm gho" data-oe="' + i + '" style="flex:none">수정</button>' +
         '</div>'; }).join("") + '</div>' +
       '<p class="tiny muted" style="margin:8px 0 0">잘못 읽힌 담보는 <b>수정</b>을 눌러 이름·가입금액·보험료·분류를 고치면 됩니다.</p>';
@@ -3342,19 +3531,27 @@ function openProd(id) {
     const rf = $("#tpRefund", el); if (rf) liveComma(rf);
     const tt = $("#tpTotal", el); if (tt) liveComma(tt);
     $$("[data-fm]", el).forEach(b2 => b2.onclick = () => { p.feeMode = b2.dataset.fm; save(); draw(el); });
+    $$("[data-pd]", el).forEach(b2 => b2.onclick = () => {
+      const v = b2.dataset.pd; if (v === "auto") delete p.payDone; else p.payDone = v === "done"; save(); draw(el); });
+    const df = $("#tpDiff", el);
+    if (df) df.onchange = () => { p.diffIns = df.checked; if (df.checked && !p.role) p.role = "pay"; save(); draw(el); };
+    $$("[data-role]", el).forEach(b2 => b2.onclick = () => { p.role = b2.dataset.role; save(); draw(el); });
     const sp2 = $("#tpSpread", el);
     if (sp2) sp2.onchange = () => { p.spread = sp2.checked; save(); draw(el); };
   };
   modal({
     title: p.name, wide: true,
-    body: '<div class="row" style="margin-bottom:12px">' +
+    body: '<div class="row" style="margin-bottom:12px;flex-wrap:wrap;gap:6px">' +
       '<span class="pill ' + (p.side === "old" ? "old" : "new") + '">' + (p.side === "old" ? "기존 보험" : "신규 제안") + '</span>' +
       (p.insurer ? '<span class="pill">' + esc(p.insurer) + '</span>' : '') +
       '<span class="grow"></span>' +
+      '<button class="btn sm" id="opCopy">복사</button>' +
+      '<button class="btn sm" id="opMerge">합치기</button>' +
       '<button class="btn sm" id="opSide">' + (p.side === "old" ? "신규로 옮기기" : "기존으로 옮기기") + '</button>' +
     '</div><div id="opBody"></div>',
     foot: '<button class="btn dan" id="opDel">삭제</button>' +
           '<button class="btn" id="opRe">설계서 다시 넣기</button>' +
+
           '<button class="btn" id="opAdd">+ 담보 추가</button>' +
           '<button class="btn pri wide" id="opOk">✓ 완료</button>',
     onClose() { save(); go(TAB); },
@@ -3366,7 +3563,133 @@ function openProd(id) {
         const c = cust(); c.prods = c.prods.filter(x => x.id !== p.id); save(); close(); go(TAB);
       }, "삭제", true);
       $("#opRe", el).onclick = () => { close(); pasteFlow(p.side, p.id); };
+      $("#opCopy", el).onclick = () => copyFlow(p, () => draw(el));
+      $("#opMerge", el).onclick = () => mergeFlow(p, () => { close(); go(TAB); });
       $("#opAdd", el).onclick = () => { p.items.push({ id: uid(), name: "", amount: 0, premium: 0, on: true, keep: true, cut: 0, renew: false, cov: "", covAmt: 0 }); save(); editItem(p, p.items.length - 1, () => draw(el)); };
+    }
+  });
+}
+/* ---------------- 다른 고객에게 복사 ----------------
+   복사본은 완전히 따로 노는 별개 계약 — 한쪽을 고쳐도 다른 쪽은 그대로 */
+function cloneItem(it) { const n = JSON.parse(JSON.stringify(it)); n.id = uid(); return n; }
+function custLabel(c) { return (c.name || "(이름 없음)") + (c.tag ? " · " + c.tag : ""); }
+function copyFlow(p, after) {
+  const src = cust();
+  const others = D.custs.filter(c => c !== src);
+  let mode = "all", role = p.diffIns ? (insOnly(p) ? "pay" : "ins") : "none";
+  let to = (others[0] || src || {}).id, dst = "new";
+  const pick = {}; (p.items || []).forEach(it => { pick[it.id] = it.on !== false; });
+  modal({
+    title: "복사", body: '<div id="cpB"></div>',
+    foot: '<button class="btn" id="cpNo">취소</button><button class="btn pri" id="cpOk">복사</button>',
+    onOpen(el, close) {
+      const draw = () => {
+        const tc = D.custs.find(c => c.id === to);
+        const tps = tc ? tc.prods.filter(q => q !== p) : [];
+        if (dst !== "new" && !tps.some(q => q.id === dst)) dst = "new";
+        $("#cpB", el).innerHTML =
+          '<div class="field"><label>무엇을</label><div class="seg" style="margin:0">' +
+            '<button type="button" data-cm="all" class="' + (mode === "all" ? "on" : "") + '">계약 통째로</button>' +
+            '<button type="button" data-cm="items" class="' + (mode === "items" ? "on" : "") + '">담보만 골라서</button></div></div>' +
+          '<div class="field"><label>어느 고객에게</label><select id="cpTo" class="inp">' +
+            D.custs.map(c => '<option value="' + c.id + '"' + (c.id === to ? " selected" : "") + '>' + esc(custLabel(c)) + (c === src ? " (지금 고객)" : "") + '</option>').join("") +
+          '</select></div>' +
+          (mode === "items" ?
+            '<div class="field"><label>어디에 넣을까요</label><select id="cpDst" class="inp">' +
+              '<option value="new">새 계약으로</option>' +
+              tps.map(q => '<option value="' + q.id + '"' + (q.id === dst ? " selected" : "") + '>' + esc(q.name || "(이름 없음)") + ' 에 추가</option>').join("") +
+            '</select></div>' +
+            '<div class="field"><label>담보 고르기</label><div class="card" style="margin:0;max-height:260px;overflow:auto">' +
+              (p.items || []).map(it => '<label class="prod" style="padding:7px 10px;gap:8px;cursor:pointer">' +
+                '<input type="checkbox" data-cpi="' + it.id + '"' + (pick[it.id] ? " checked" : "") + ' style="width:18px;height:18px;flex:none">' +
+                '<span class="grow sm">' + esc(bareName(it.name)) + ' <span class="tiny muted num">' + amtLine(it) + '</span></span></label>').join("") +
+            '</div></div>' : '') +
+          ((mode === "all" || dst === "new") ?
+            '<div class="field" style="margin:0"><label>복사한 계약은</label><div class="seg" style="margin:0;flex-wrap:wrap">' +
+              '<button type="button" data-cr="none" class="' + (role === "none" ? "on" : "") + '">일반 계약</button>' +
+              '<button type="button" data-cr="pay" class="' + (role === "pay" ? "on" : "") + '">상이·계약자</button>' +
+              '<button type="button" data-cr="ins" class="' + (role === "ins" ? "on" : "") + '">상이·피보험자</button></div>' +
+              '<p class="tiny muted" style="margin:5px 0 0;line-height:1.6">복사한 다음에도 계약 화면에서 언제든 바꿀 수 있습니다. 복사본은 <b>따로 저장</b>돼서 한쪽을 고쳐도 다른 쪽은 그대로입니다.</p></div>' : '');
+        $$("[data-cm]", el).forEach(b => b.onclick = () => { mode = b.dataset.cm; draw(); });
+        $$("[data-cr]", el).forEach(b => b.onclick = () => { role = b.dataset.cr; draw(); });
+        $("#cpTo", el).onchange = e => { to = e.target.value; draw(); };
+        const ds = $("#cpDst", el); if (ds) ds.onchange = e => { dst = e.target.value; draw(); };
+        $$("[data-cpi]", el).forEach(b => b.onchange = () => { pick[b.dataset.cpi] = b.checked; });
+      };
+      draw();
+      $("#cpNo", el).onclick = close;
+      $("#cpOk", el).onclick = () => {
+        const tc = D.custs.find(c => c.id === to); if (!tc) return toast("고객을 고르세요");
+        const items = (p.items || []).filter(it => mode === "all" || pick[it.id]).map(cloneItem);
+        if (!items.length) return toast("담보를 고르세요");
+        const setRole = q => { if (role === "none") { delete q.diffIns; delete q.role; } else { q.diffIns = true; q.role = role; } };
+        if (mode === "items" && dst !== "new") {
+          const q = tc.prods.find(x => x.id === dst); if (!q) return;
+          q.items = (q.items || []).concat(items);
+        } else {
+          const q = JSON.parse(JSON.stringify(p));
+          q.id = uid(); q.items = items; q.at = Date.now();
+          if (mode === "items") { q.totalFee = q.feeMode === "total" ? 0 : q.totalFee; }
+          setRole(q);
+          tc.prods.push(q);
+        }
+        save(); close();
+        toast(custLabel(tc) + " 에 " + (mode === "all" ? "계약을" : items.length + "개 담보를") + " 복사했습니다");
+        if (after) after();
+      };
+    }
+  });
+}
+/* ---------------- 보험 두 건을 한 건으로 합치기 ---------------- */
+function mergeFlow(p, after) {
+  const c = cust(); if (!c) return;
+  const others = c.prods.filter(q => q !== p);
+  if (!others.length) return toast("합칠 다른 보험이 없습니다");
+  let qid = (others.find(q => normName(q.insurer || "") === normName(p.insurer || "")) || others[0]).id;
+  let keepName = "p", feePick = "sum";
+  modal({
+    title: "보험 합치기", body: '<div id="mgB"></div>',
+    foot: '<button class="btn" id="mgNo">취소</button><button class="btn pri" id="mgOk">합치기</button>',
+    onOpen(el, close) {
+      const fq = () => others.find(q => q.id === qid);
+      const raw = x => feeAll(() => prodFeeRaw(x));
+      const draw = () => {
+        const q = fq();
+        const nP = (p.items || []).length, nQ = (q.items || []).length;
+        const fP = raw(p), fQ = raw(q);
+        $("#mgB", el).innerHTML =
+          '<div class="field"><label>이 보험과 합칠 보험</label><select id="mgQ" class="inp">' +
+            others.map(o => '<option value="' + o.id + '"' + (o.id === qid ? " selected" : "") + '>' + esc(o.name || "(이름 없음)") +
+              ' · 담보 ' + (o.items || []).length + '개</option>').join("") + '</select></div>' +
+          '<div class="field"><label>남길 이름</label><div class="seg" style="margin:0;flex-wrap:wrap">' +
+            '<button type="button" data-mn="p" class="' + (keepName === "p" ? "on" : "") + '">' + esc(p.name || "(이름 없음)") + '</button>' +
+            '<button type="button" data-mn="q" class="' + (keepName === "q" ? "on" : "") + '">' + esc(q.name || "(이름 없음)") + '</button></div></div>' +
+          '<div class="field"><label>월 보험료</label><div class="seg" style="margin:0;flex-wrap:wrap">' +
+            '<button type="button" data-mf="sum" class="' + (feePick === "sum" ? "on" : "") + '">더하기 ' + won(fP + fQ) + '원</button>' +
+            '<button type="button" data-mf="p" class="' + (feePick === "p" ? "on" : "") + '">앞 보험 것만 ' + won(fP) + '원</button>' +
+            '<button type="button" data-mf="q" class="' + (feePick === "q" ? "on" : "") + '">합칠 보험 것만 ' + won(fQ) + '원</button></div></div>' +
+          '<p class="sm" style="margin:6px 0 0;line-height:1.7">담보 <b>' + nP + '개 + ' + nQ + '개 = ' + (nP + nQ) + '개</b>인 계약 1건이 됩니다.<br>' +
+            '<span class="c-down b">「' + esc((keepName === "p" ? q : p).name || "") + '」 은(는) 목록에서 사라집니다.</span></p>';
+        $("#mgQ", el).onchange = e => { qid = e.target.value; draw(); };
+        $$("[data-mn]", el).forEach(b => b.onclick = () => { keepName = b.dataset.mn; draw(); });
+        $$("[data-mf]", el).forEach(b => b.onclick = () => { feePick = b.dataset.mf; draw(); });
+      };
+      draw();
+      $("#mgNo", el).onclick = close;
+      $("#mgOk", el).onclick = () => {
+        const q = fq(); if (!q) return;
+        const A = keepName === "p" ? p : q, B = keepName === "p" ? q : p;
+        const fA = raw(A), fB = raw(B), fP = raw(p), fQ = raw(q);
+        const want = feePick === "sum" ? fA + fB : feePick === "p" ? fP : fQ;
+        const allItem = A.feeMode !== "total" && B.feeMode !== "total";
+        A.items = (A.items || []).concat(B.items || []);
+        ["insurer", "term", "payTerm", "start", "age", "note"].forEach(k => { if (!A[k] && B[k]) A[k] = B[k]; });
+        if (!(allItem && feePick === "sum")) { A.feeMode = "total"; A.totalFee = want; A.spread = !!(A.spread || B.spread); }
+        c.prods = c.prods.filter(x => x !== B);
+        save(); close();
+        toast("두 보험을 하나로 합쳤습니다 — 담보 " + A.items.length + "개");
+        if (after) after();
+      };
     }
   });
 }
@@ -3403,6 +3726,12 @@ function editItem(p, i, after) {
       '<div class="field"><label>감액 후 <b>가입금액</b> (만원)</label>' +
         '<input id="iC" class="inp" inputmode="numeric" placeholder="줄이지 않으면 비워두세요" value="' + (isCut(it) ? toMan(+it.cut) : "") + '"></div></div>' +
       '<div class="field"><label>분류</label>' + catSelect("iG", cur) + '</div>' +
+      '<label class="tog"><input type="checkbox" id="iS"' + (it.hasSub ? " checked" : "") + '>' +
+        '<span class="grow"><span class="b sm">세부 보장 있음</span>' +
+        '<span class="tiny muted" style="display:block">옛날 보험처럼 이 담보 안에 보장이 여러 개 들어 있을 때 켭니다. 보험료는 이 담보에, 보장금액은 세부 항목별로 셉니다.</span></span></label>' +
+      '<div id="iSB" class="field"' + (it.hasSub ? '' : ' style="display:none"') + '><label>세부 보장 — 한 줄에 하나씩</label>' +
+        '<textarea id="iST" class="inp" style="min-height:96px;font-size:13px;line-height:1.7" placeholder="암 진단 | 1,000만&#10;암 수술 | 100만&#10;보장내용 화면 글을 그대로 붙여넣어도 정리됩니다">' +
+          esc((it.subs || []).map(subLine).join("\n")) + '</textarea><div id="iSP" class="tiny muted" style="margin-top:4px"></div></div>' +
       '<label class="tog"><input type="checkbox" id="iR"' + (it.renew ? " checked" : "") + '>' +
         '<span class="grow"><span class="b sm">갱신형 특약</span>' +
         '<span class="tiny muted" style="display:block">켜면 담보명 앞에 <span class="tag ren">갱</span> 으로 표시됩니다. 갱신 때 보험료가 오를 수 있는 특약입니다.</span></span></label>' +
@@ -3442,6 +3771,18 @@ function editItem(p, i, after) {
       ["iA", "iF", "iC", "iVA"].forEach(id => { const e3 = $("#" + id, el); if (e3) liveComma(e3, up); });
       $("#iV", el).oninput = up;
       up();
+      const sTog = $("#iS", el), sTa = $("#iST", el);
+      const sUp = () => { const L = parseSubs(sTa.value);
+        $("#iSP", el).innerHTML = L.length ? L.length + '개 · ' + L.map(x => esc(x.name) + ' <b>' + (x.amt ? manwon(x.amt) + '원' : '<span class="c-warn">금액?</span>') + '</b>').join(" · ") : ''; };
+      sTog.onchange = () => { $("#iSB", el).style.display = sTog.checked ? "" : "none"; };
+      sTa.oninput = () => {
+        const R = mergeCover(sTa.value);
+        if (R && (R.add || R.filled)) { sTa.value = R.text;
+          toast((R.add ? R.add + "개 추가" : "") + (R.filled ? (R.add ? " · " : "") + "비어 있던 금액 " + R.filled + "개 채움" : "") +
+            (R.miss ? " — 금액 없는 줄은 이어서 붙이거나 직접 넣어주세요" : "")); }
+        sUp();
+      };
+      sUp();
       $("#iO", el).onclick = () => {
         const nm = $("#iN", el).value.trim();
         if (!nm) return toast("담보명을 입력하세요");
@@ -3455,6 +3796,8 @@ function editItem(p, i, after) {
         it.cut = (cm > 0 && bs > 0 && cm < bs) ? cm : 0;
         it.renew = $("#iR", el).checked;
         it.keep = $("#iK", el).checked;
+        it.hasSub = $("#iS", el).checked;
+        if (it.hasSub) it.subs = parseSubs($("#iST", el).value);
         const g = $("#iG", el).value;
         D.cats[itemCatKey(it)] = g;
         save(); close(); if (after) after();
