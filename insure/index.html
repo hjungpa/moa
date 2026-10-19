@@ -395,7 +395,7 @@ textarea.inp{min-height:150px;resize:vertical;font-size:13px;line-height:1.6}
    저장: localStorage (기기 안)
    ============================================================ */
 "use strict";
-const APP_VERSION = "2026.10.20.0020";
+const APP_VERSION = "2026.10.20.0040";
 const KEY = "insure.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -1979,6 +1979,27 @@ function compareRows(rows) {
       unow: unitFee(nowAmt, nowFee), ufin: unitFee(finAmt, finFee) };
   });
 }
+/* 월 보험료는 표의 담보 줄을 더하지 않고 계약 단위로 센다 — 상품 화면과 늘 같은 숫자 */
+function feeTot() {
+  return noPick(() => {
+    const now = sideProds("old").reduce((a, p) => a + prodFeeRaw(p), 0);
+    const fin = keptFee("old") + keptFee("neu");
+    /* 표에 담보별로 나뉘지 않는 돈 — 담보별 보험료가 없는 계약, 보장에서 뺀 계약(계약자만) */
+    const gap = [];
+    sideProds("old").forEach(p => {
+      const f = prodFeeRaw(p); if (!f) return;
+      const inRow = payOnly(p) ? 0 : (p.items || []).filter(isOn).reduce((a, i) => a + itemFee(p, i), 0);
+      if (f - inRow > 0) gap.push({ p, v: f - inRow, why: payOnly(p) ? "보장 제외(계약자)" : "담보별 보험료 없음" });
+    });
+    return { now, fin, gap };
+  });
+}
+function feeGapNote(F) {
+  if (!F.gap.length) return '';
+  const sum = F.gap.reduce((a, g) => a + g.v, 0);
+  const why = Array.from(new Set(F.gap.map(g => g.why === "보장 제외(계약자)" ? "피보험자 상이" : "총보험료만")));
+  return '<p class="tiny muted" style="margin:4px 0 0">표 담보 줄에 안 나뉜 금액 <b>' + won(sum) + '원</b> (' + why.join("·") + ')</p>';
+}
 function totals(rs) {
   const t = { oFee: 0, nFee: 0, oAmt: 0, nAmt: 0, up: 0, down: 0, onlyOld: 0, onlyNew: 0, same: 0,
               nowAmt: 0, nowFee: 0, finAmt: 0, finFee: 0,
@@ -2100,11 +2121,14 @@ function viewProd() {
   return h;
 }
 /* 성격(보장성·운전자·화재·저축 …)별로 묶기 */
+/* 피보험자 상이 계약은 원래 성격과 상관없이 따로 묶는다 — 체크를 끄면 원래 성격으로 */
+const DIFFK = "피보험자 상이";
+const groupKind = p => p.diffIns ? DIFFK : kindOf(p);
 function groupByKind(ps) {
   const g = {};
-  ps.forEach(p => (g[kindOf(p)] = g[kindOf(p)] || []).push(p));
-  return KINDS.filter(k => g[k[0]] && g[k[0]].length).map(k => ({
-    key: k[0], list: g[k[0]], fee: g[k[0]].reduce((a, p) => a + prodFeeRaw(p), 0)
+  ps.forEach(p => (g[groupKind(p)] = g[groupKind(p)] || []).push(p));
+  return KINDS.map(k => k[0]).concat([DIFFK]).filter(k => g[k] && g[k].length).map(k => ({
+    key: k, list: g[k], fee: g[k].reduce((a, p) => a + prodFeeRaw(p), 0)
   }));
 }
 /* 맨 위 — 전체 합계와 종류별 합계 */
@@ -2131,6 +2155,10 @@ function kindSummary() {
         '<span class="tiny muted kpct">' + pct + '%</span>' +
       '</div>';
     }).join("") + '</div>' +
+    (ps.some(p => p.diffIns) ? '<div class="kindrow" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px">' +
+      '<span class="knm b">내 보장 보험료</span><span class="kbar" style="visibility:hidden"></span>' +
+      '<span class="num b kamt">' + won(tot - ps.filter(p => p.diffIns).reduce((a, p) => a + prodFeeRaw(p), 0)) + '원</span>' +
+      '<span class="tiny muted kpct"></span></div>' : '') +
   '</div></div>';
 }
 function prodRow(p, s2) {
@@ -2334,7 +2362,7 @@ function viewCmp() {
         '<div><b class="num c-down">' + (t.act.drop + t.act.cut) + '</b><span>해지·감액</span></div>' +
         '<div><b class="num">' + t.act.swap + '</b><span>교체</span></div>' +
       '</div>' +
-      feeLine("월 보험료", t.nowFee, t.finFee, true);
+      (() => { const F = feeTot(); return feeLine("월 보험료", F.now, F.fin, true) + feeGapNote(F); })();
   } else {
     h += '<div class="stat">' +
         '<div><b class="num c-up">' + t.up + '</b><span>보장 커짐</span></div>' +
@@ -3998,8 +4026,9 @@ async function doExcel() {
   const NC = HD.length;
   const aoa = [];
   aoa.push([c.name + " 고객님 보장 정리"]);
-  aoa.push([todayISO() + "   ·   월 보험료 " + won(t.nowFee) + "원 → " + won(t.finFee) + "원 (" +
-            (t.finFee - t.nowFee >= 0 ? "+" : "") + won(t.finFee - t.nowFee) + "원)"]);
+  const FT = feeTot();
+  aoa.push([todayISO() + "   ·   월 보험료 " + won(FT.now) + "원 → " + won(FT.fin) + "원 (" +
+            (FT.fin - FT.now >= 0 ? "+" : "") + won(FT.fin - FT.now) + "원)"]);
   aoa.push([]);
   aoa.push(HD);
 
