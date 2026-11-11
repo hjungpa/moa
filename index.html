@@ -410,7 +410,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.11.12.0230";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.11.12.0245";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -2277,7 +2277,15 @@ function viewCat() {
   const lbName = i => yearMode ? LB[i] + "년" : LB[i].replace("-", "년 ") + "월";
   /* 고정비 */
   const FX = fixCatIds();
-  S.forEach(s => { s.fix = FX.reduce((a, k) => a + (s.by[k] || 0), 0); });
+  /* 고정비는 아직 안 빠진 예정분(반복 일정 등)까지 합친다 */
+  const okFix = t => t.flow !== "in" && !t.xfer && !t.adj && !t.cpay && !catNoSum(t.cat) && !accExcl(t.acc) && bookOn(t.acc);
+  S.forEach((s, i) => {
+    s.fb = {}; s.ffut = 0;
+    SP.forEach(t => { if (!okFix(t) || !inLB(t, LB[i])) return;
+      const k = t.cat || "_none", v = amtW(t); s.fb[k] = (s.fb[k] || 0) + v;
+      if (isFut(t) && FX.indexOf(k) >= 0) s.ffut += v; });
+    s.fix = FX.reduce((a, k) => a + (s.fb[k] || 0), 0);
+  });
   const anyFix = FX.length > 0;
   CATPOP = {
     inc(i) {
@@ -2292,39 +2300,40 @@ function viewCat() {
       });
     },
     fix() {
-      const exp = D.cats.filter(c => S.some(s => s.by[c.id]) || FX.indexOf(c.id) >= 0);
+      const exp = D.cats.filter(c => S.some(s => s.fb[c.id]) || FX.indexOf(c.id) >= 0);
       let pick = FX.slice();
       modal({
         title: "고정비 항목",
-        body: '<p class="tiny muted" style="margin:0 0 8px;line-height:1.6">고정비로 셀 분류를 체크하세요. 숫자는 ' + LB.map((x, i) => lbName(i)).join(" / ") + ' 지출입니다.</p>' +
+        body: '<p class="tiny muted" style="margin:0 0 8px;line-height:1.6">고정비로 셀 분류를 체크하세요. 숫자는 ' + LB.map((x, i) => lbName(i)).join(" / ") + ' 지출이고, <b>아직 안 빠진 예정분도 포함</b>합니다.</p>' +
           '<div id="fpSum" class="row" style="margin:0 0 8px"></div>' +
           '<div class="card" style="margin:0"><div class="bd" style="padding:2px 12px">' +
           (exp.length ? exp.map(c => '<label class="row" style="padding:9px 0;border-top:1px solid var(--line);gap:9px;cursor:pointer">' +
             '<input type="checkbox" data-fc="' + c.id + '"' + (pick.indexOf(c.id) >= 0 ? " checked" : "") + ' style="width:18px;height:18px;flex:none">' +
             '<span style="width:10px;height:10px;border-radius:3px;flex:none;background:' + esc(c.color || "#ccc") + '"></span>' +
             '<span class="sm b grow ell">' + esc(c.name) + '</span>' +
-            '<span class="tiny num muted" style="flex:none;text-align:right">' + S.map(s => won(s.by[c.id] || 0)).join(" / ") + '</span></label>').join("")
+            '<span class="tiny num muted" style="flex:none;text-align:right">' + S.map(s => won(s.fb[c.id] || 0)).join(" / ") + '</span></label>').join("")
             : '<div class="empty"><b>지출 분류가 없습니다</b></div>') +
           '</div></div>' +
           '<div class="tiny b" style="margin:14px 0 6px;color:#8a6fd6">고정비 항목별 (' + LB.map((x, i) => yearMode ? x : x.slice(5) + "월").join(" / ") + ')</div>' +
           '<div class="card" style="margin:0"><div class="bd" id="fpItems" style="padding:2px 12px"></div></div>',
         foot: '<button class="btn" id="fpNo">취소</button><button class="btn pri" id="fpOk">저장</button>',
         onOpen(el, close) {
-          const up = () => { const v = S.map(s => pick.reduce((a, k) => a + (s.by[k] || 0), 0));
+          const up = () => { const v = S.map(s => pick.reduce((a, k) => a + (s.fb[k] || 0), 0));
             $("#fpSum", el).innerHTML = '<span class="tiny muted b grow">고정비 합계</span><span class="num b sm" style="color:#8a6fd6">' + v.map(won).join(" / ") + '</span>';
             /* 항목(내용)별로 — 관리비·통신비처럼 */
             const it = {};
             LB.forEach((lb, i) => SP.forEach(t => {
-              if (!okT(t) || t.flow === "in" || pick.indexOf(t.cat) < 0 || !inLB(t, lb)) return;
+              if (!okFix(t) || pick.indexOf(t.cat) < 0 || !inLB(t, lb)) return;
               const k = (t.desc || "(내용 없음)").trim();
-              (it[k] = it[k] || { v: [0, 0, 0], c: t.cat }).v[i] += amtW(t);
+              const x = (it[k] = it[k] || { v: [0, 0, 0], c: t.cat, f: [0, 0, 0] });
+              x.v[i] += amtW(t); if (isFut(t)) x.f[i] += amtW(t);
             }));
             const ks = Object.keys(it).sort((a, b) => it[b].v[2] - it[a].v[2] || it[b].v[1] - it[a].v[1]);
             $("#fpItems", el).innerHTML = ks.length ? ks.map(k => { const x = it[k].v;
               const d = x[2] - x[1];
               return '<div class="row" style="padding:8px 0;border-top:1px solid var(--line);gap:8px">' +
                 '<span style="width:8px;height:8px;border-radius:2px;flex:none;background:' + esc(CATC(it[k].c) || "#ccc") + '"></span>' +
-                '<span class="sm grow ell">' + esc(k) + '</span>' +
+                '<span class="sm grow ell">' + esc(k) + (it[k].f.some(Boolean) ? ' <span class="soon" style="font-size:10px;font-weight:700;color:var(--tx3);border:1px solid var(--line);border-radius:5px;padding:0 4px">예정</span>' : '') + '</span>' +
                 '<span class="tiny num muted" style="flex:none">' + x.map(won).join(" / ") + '</span>' +
                 '<span class="tiny num b" style="flex:none;width:52px;text-align:right;color:' + (d > 0 ? "var(--bad)" : d < 0 ? "var(--ok)" : "var(--tx3)") + '">' +
                   (x[1] ? (d ? (d > 0 ? "+" : "−") + won(Math.abs(d)) : "같음") : "") + '</span></div>'; }).join("")
@@ -2365,7 +2374,7 @@ function viewCat() {
         '<i style="width:' + (s.inc / mx * 100).toFixed(1) + '%;background:var(--inc)"></i></div>' : '') +
       '<div class="bar" style="height:' + (i === 2 ? 10 : 7) + 'px"><i style="width:' + (s.total / mx * 100).toFixed(1) + '%;background:var(--bad)"></i></div>' +
       '<div class="row" style="margin-top:4px;gap:8px"><div class="bar grow" style="height:' + (i === 2 ? 7 : 5) + 'px;margin:0"><i style="width:' + (s.fix / mx * 100).toFixed(1) + '%;background:#8a6fd6"></i></div>' +
-        '<button class="tbtn fx num b" data-fixpop style="flex:none;font-size:12px">고정비 ' + won(s.fix) + '</button>' +
+        '<button class="tbtn fx num b" data-fixpop style="flex:none;font-size:12px">고정비 ' + won(s.fix) + (s.ffut ? ' <span style="font-weight:600;opacity:.75">(예정 ' + won(s.ffut) + ' 포함)</span>' : '') + '</button>' +
         '<span class="tiny" style="width:58px;text-align:right;flex:none">' + (i && anyFix ? arrow(s.fix, S[i - 1].fix) : "") + '</span></div>' +
       (anyInc ? '<div class="tiny ' + (s.inc - s.total >= 0 ? "c-inc" : "c-bad") + ' b num" style="margin-top:4px">순 ' +
         (s.inc - s.total >= 0 ? "+" : "") + won(s.inc - s.total) + '원</div>' : '') +
