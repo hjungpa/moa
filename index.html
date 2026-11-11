@@ -211,6 +211,14 @@ textarea.inp{min-height:64px;resize:vertical;font-size:15px}
 .tx.fut .d,.tx.fut .t,.tx.fut .a,.tx.fut .m{color:var(--tx3) !important;font-weight:600}
 .tx.fut .a{font-size:14px}
 .tx .instb{font-size:10px;font-weight:800;color:#fff;background:var(--accent);border-radius:5px;padding:1px 5px;margin-right:5px;vertical-align:1px}
+.tx .autoc{display:block;margin:0 auto 3px;font-size:9.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:5px;padding:1px 4px;line-height:1.3;cursor:pointer}
+.tx .autoc i{font-style:normal;display:inline-block;width:9px;height:9px;border:1.5px solid currentColor;border-radius:2px;margin-left:3px;vertical-align:-1px}
+.ast{display:flex;align-items:baseline;gap:8px;padding:9px 0;border-top:1px solid var(--line)}
+.ast:first-child{border-top:0}
+.ast .op{width:16px;flex:none;font-weight:800;color:var(--tx3);text-align:center}
+.tbtn{background:none;border:0;padding:0;font-family:inherit;line-height:inherit;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;color:var(--tx)}
+.tbtn.c-inc{color:var(--inc)}
+.tbtn.fx{color:#8a6fd6}
 .tx .soon{font-size:10px;font-weight:700;color:var(--tx3);border:1px solid var(--line);border-radius:5px;padding:0 4px;margin-right:5px}
 .diff{font-size:11.5px;font-weight:700}
 .spark{display:inline-flex;align-items:flex-end;gap:2.5px;height:20px;width:32px;flex:none;margin-right:8px}
@@ -402,7 +410,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.10.15.1210";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.11.12.0230";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -868,7 +876,8 @@ function accFlowToDate(id) {
   let s = 0;
   D.txns.forEach(t => { if (t.acc === id && t.date <= T && afterAdj(t, an)) s += sg(t); });
   (D.rules || []).forEach(r => {
-    if (r.acc !== id && r.xfrom !== id && r.xto !== id) return;
+    if (r.acc !== id && r.xfrom !== id && r.xto !== id &&
+        !Object.keys(r.ov || {}).some(k => r.ov[k] && r.ov[k].acc === id)) return;   /* 한 건만 이 통장으로 옮긴 것도 */
     try { ruleTxns(r, r.start, T).forEach(t => { if (t.acc === id && t.date <= T && afterAdj(t, an)) s += sg(t); }); } catch (e) {}
   });
   return s;
@@ -891,6 +900,7 @@ function migrateData() {
   if (!D.trash) { D.trash = []; ch = true; }
   if (!D.settings) { D.settings = {}; ch = true; }
   if (D.settings.undoMax == null) { D.settings.undoMax = 10; ch = true; }
+  if (!D.settings.autoFrom) { D.settings.autoFrom = thisMonth() + "-01"; ch = true; }
   return ch;
 }
 function migrateBanks() {
@@ -1180,6 +1190,40 @@ function accPop(accId) {
 }
 
 /* 이 계정에 마지막으로 뭔가 적힌 날 */
+/* 전체 재산 — 은행 + 외화 − 이번 달 카드값 + 생활비·지역화폐 + 주식 */
+function assetPop() {
+  const banksAll = liveAccs("bank");
+  const banks = banksAll.filter(a => !curOf(a)), fxs = banksAll.filter(a => curOf(a));
+  const cards = liveAccs("card"), debits = liveAccs("debit").filter(a => !a.excl), stocks = liveAccs("stock");
+  const bankSum = banks.reduce((s, a) => s + bankBal(a), 0);
+  const fxSum = fxs.reduce((s, a) => s + fx(bankBal(a), curOf(a)), 0);
+  const cardDue = cards.reduce((s, a) => { const pv = payOf(a, D.anchor); return s + (pv != null ? pv : spendOf(a.id, D.anchor)); }, 0);
+  const debitSum = debits.reduce((s, a) => s + debitBal(a), 0);
+  const stockSum = stocks.reduce((s, a) => s + (+a.bal || 0), 0);
+  const total = bankSum + fxSum - cardDue + debitSum + stockSum;
+  const sub = L => L.length ? '<div class="tiny muted ell" style="margin-top:2px">' + L.join(" · ") + '</div>' : '';
+  const line = (op, nm, v, L, cls) => '<div class="ast"><span class="op">' + op + '</span>' +
+    '<div class="grow" style="min-width:0"><div class="sm b">' + nm + '</div>' + sub(L || []) + '</div>' +
+    '<span class="num b ' + (cls || "") + '" style="flex:none">' + mb(v) + '</span></div>';
+  const nmv = (a, v) => esc(a.name) + ' ' + (D.settings.hideBal ? "•••" : won(v));
+  modal({
+    title: "전체 재산",
+    body: '<div class="card" style="margin:0"><div class="bd" style="padding-top:4px">' +
+      line("", "은행 잔고 합계", bankSum, banks.map(a => nmv(a, bankBal(a)))) +
+      (fxs.length ? line("+", "외화 (원화 환산)", fxSum, fxs.map(a => esc(a.name) + ' ' + CURS[curOf(a)].sym + won(bankBal(a)) + ' ≈ ' + won(fx(bankBal(a), curOf(a))))) : '') +
+      line("−", "이번 달 카드값", cardDue, cards.map(a => { const pv = payOf(a, D.anchor); return esc(a.name) + ' ' + won(pv != null ? pv : spendOf(a.id, D.anchor)); }), "c-bad") +
+      (debits.length ? line("+", "생활비 · 지역화폐 잔고", debitSum, debits.map(a => nmv(a, debitBal(a)))) : '') +
+      (stocks.length ? line("+", "주식 · 투자 평가액", stockSum, stocks.map(a => nmv(a, +a.bal || 0))) : '') +
+      '<div class="ast" style="border-top:2px solid var(--tx);margin-top:2px"><span class="op">=</span>' +
+        '<span class="b grow">총 재산</span>' +
+        '<span class="num b ' + (total < 0 ? "c-bad" : "") + '" style="font-size:22px;letter-spacing:-.03em">' + mb(total) + '</span></div>' +
+    '</div></div>' +
+    '<p class="tiny muted" style="margin:8px 0 0;line-height:1.6">' + esc(D.anchor.replace("-", "년 ")) + '월 기준 · 카드값은 결제금액을 넣었으면 그 값, 아니면 이번 기간 사용액입니다.' +
+      (fxs.length ? ' 외화는 설정한 환율로 바꾼 값입니다.' : '') + '</p>',
+    foot: '<button class="btn pri" id="asOk">닫기</button>',
+    onOpen(el, close) { $("#asOk", el).onclick = close; }
+  });
+}
 function lastRec(accId) {
   const T = todayISO(); let d = null;
   D.txns.forEach(t => { if (t.acc === accId && t.date <= T && (!d || t.date > d)) d = t.date; });
@@ -1622,6 +1666,7 @@ function viewHome() {
     const noAcc = bd.filter(x => !x.card.payAcc).length;
     if (noAcc) todo.push(["bill", "빠질 통장을 안 정한 카드 " + noAcc + "장"]);
     if (askVary()) { const vd = varyDue(); if (vd.length) todo.push(["vary", "금액 확인할 고정비 " + vd.length + "건"]); }
+    { const au = autoList().filter(t => !(t.vary && !t.fixed)); if (au.length) todo.push(["auto", "확인할 자동 입력 " + au.length + "건"]); }
     if (todo.length) h += '<div class="todoband"><span class="tb">오늘 챙길 것</span>' +
       todo.map(x => '<button class="chip" data-jump="' + x[0] + '">' + esc(x[1]) + '</button>').join("") + '</div>';
   }
@@ -1630,7 +1675,10 @@ function viewHome() {
   /* 총괄 */
   h += '<div class="card">' +
     secHd("top", "이번 달 요약",
-      (D.settings.hideBal ? "잔고 ••••" : "잔고 " + won(bankSum)) + " · 카드 " + won(cardSum)) +
+      (D.settings.hideBal ? "잔고 ••••" : "잔고 " + won(bankSum)) + " · 카드 " + won(cardSum),
+      '<button class="btn sm gho" data-asset aria-label="전체 재산" title="전체 재산" style="flex:none;padding:5px 7px;margin-right:4px;line-height:0">' +
+        '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+        '<ellipse cx="12" cy="6" rx="7" ry="2.6"/><path d="M5 6v4.5c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6"/><path d="M5 10.5V15c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-4.5"/></svg></button>') +
     (folded("top") ? '' : '<div class="bd" style="padding-top:4px">' +
     '<div class="row" style="gap:0">' +
       '<div class="grow"><div class="tiny muted b">은행 잔고 합계 ' +
@@ -2000,7 +2048,7 @@ function txRow(t) {
       (tint ? ' style="background:' + tint + '"' : '') + '>' +
     '<div class="stripe" style="background:' + (t.xfer || t.cpay ? "transparent" : (c || "transparent")) + '"></div>' +
     '<div class="body">' +
-      '<div class="d">' + fmtDate(t.date) + '<br><span style="opacity:.7">' + esc(t.time || weekday(t.date)) + '</span></div>' +
+      '<div class="d">' + (autoNeed(t) ? '<button class="autoc" data-autochk="' + esc(t.id) + '" aria-label="자동 입력 확인">자동<i></i></button>' : '') + fmtDate(t.date) + '<br><span style="opacity:.7">' + esc(t.time || weekday(t.date)) + '</span></div>' +
       '<div class="grow">' +
         '<div class="t ell' + (isIn ? " in" : "") + '">' +
           accIcon(acc) +
@@ -2169,18 +2217,31 @@ function viewList() {
 /* ============================================================
    분류별
    ============================================================ */
+let CATPOP = null;
+/* 고정비로 볼 분류 — 직접 고른 것, 아니면 「고정비」 이름의 분류·대분류, 그것도 없으면 반복 일정에 쓰인 분류 */
+function fixCatIds() {
+  if (Array.isArray(D.settings.fixCats)) return D.settings.fixCats.filter(id => D.cats.some(c => c.id === id));
+  const g = (D.groups || []).filter(x => /고정/.test(x.name || "")).map(x => x.id);
+  let ids = D.cats.filter(c => /고정/.test(c.name || "") || (c.gid && g.indexOf(c.gid) >= 0)).map(c => c.id);
+  if (!ids.length) ids = Array.from(new Set((D.rules || []).filter(r => r.flow !== "in" && !r.xfer && r.cat).map(r => r.cat)));
+  return ids;
+}
 function viewCat() {
   const incF = !!D.settings.catIncFuture;
   const yearMode = !!D.settings.catYear;
   const okT = t => incF ? (!t.xfer && !t.adj && !t.cpay && !catNoSum(t.cat) && !accExcl(t.acc) && bookOn(t.acc)) : counts(t);
   const Y = +D.anchor.slice(0, 4);
 
+  function inLB(t, lb) {
+    if (yearMode) return (t.date || "").slice(0, 4) === String(lb);
+    const acc = D.accounts.find(a => a.id === t.acc);
+    return acc ? inPeriod(t, acc, lb) : (t.date || "").slice(0, 7) === lb;
+  }
   function sumsFor(ym) {
     const by = {}, iby = {}; let total = 0, inc = 0;
     SP.forEach(t => {
       if (!okT(t)) return;
-      const acc = D.accounts.find(a => a.id === t.acc);
-      const ok = acc ? inPeriod(t, acc, ym) : (t.date || "").slice(0, 7) === ym;
+      const ok = inLB(t, ym);
       if (!ok) return;
       const k = t.cat || "_none", a2 = amtW(t);
       if (t.flow === "in") { inc += a2; iby[k] = (iby[k] || 0) + a2; return; }
@@ -2213,6 +2274,70 @@ function viewCat() {
   const LB = yearMode ? [Y - 2, Y - 1, Y].map(String) : [addMonth(D.anchor, -2), addMonth(D.anchor, -1), D.anchor];
   const S = yearMode ? LB.map(y => sumsYear(+y)) : LB.map(sumsFor);
   const cur = S[2], total = cur.total;
+  const lbName = i => yearMode ? LB[i] + "년" : LB[i].replace("-", "년 ") + "월";
+  /* 고정비 */
+  const FX = fixCatIds();
+  S.forEach(s => { s.fix = FX.reduce((a, k) => a + (s.by[k] || 0), 0); });
+  const anyFix = FX.length > 0;
+  CATPOP = {
+    inc(i) {
+      const L = SP.filter(t => okT(t) && t.flow === "in" && inLB(t, LB[i])).sort((a, b) => b.date.localeCompare(a.date));
+      const sum = L.reduce((a, t) => a + amtW(t), 0);
+      modal({
+        title: lbName(i) + " 수입 " + L.length + "건",
+        body: '<div class="row" style="margin:0 0 8px"><span class="tiny muted b grow">합계</span><span class="num b c-inc" style="font-size:20px">+' + won(sum) + '원</span></div>' +
+          (L.length ? '<div class="list">' + L.map(txRow).join("") + '</div>' : '<div class="empty"><b>수입 기록이 없습니다</b></div>'),
+        foot: '<button class="btn pri" id="ipOk">닫기</button>',
+        onOpen(el, close) { bindTx(el, close); $("#ipOk", el).onclick = close; }
+      });
+    },
+    fix() {
+      const exp = D.cats.filter(c => S.some(s => s.by[c.id]) || FX.indexOf(c.id) >= 0);
+      let pick = FX.slice();
+      modal({
+        title: "고정비 항목",
+        body: '<p class="tiny muted" style="margin:0 0 8px;line-height:1.6">고정비로 셀 분류를 체크하세요. 숫자는 ' + LB.map((x, i) => lbName(i)).join(" / ") + ' 지출입니다.</p>' +
+          '<div id="fpSum" class="row" style="margin:0 0 8px"></div>' +
+          '<div class="card" style="margin:0"><div class="bd" style="padding:2px 12px">' +
+          (exp.length ? exp.map(c => '<label class="row" style="padding:9px 0;border-top:1px solid var(--line);gap:9px;cursor:pointer">' +
+            '<input type="checkbox" data-fc="' + c.id + '"' + (pick.indexOf(c.id) >= 0 ? " checked" : "") + ' style="width:18px;height:18px;flex:none">' +
+            '<span style="width:10px;height:10px;border-radius:3px;flex:none;background:' + esc(c.color || "#ccc") + '"></span>' +
+            '<span class="sm b grow ell">' + esc(c.name) + '</span>' +
+            '<span class="tiny num muted" style="flex:none;text-align:right">' + S.map(s => won(s.by[c.id] || 0)).join(" / ") + '</span></label>').join("")
+            : '<div class="empty"><b>지출 분류가 없습니다</b></div>') +
+          '</div></div>' +
+          '<div class="tiny b" style="margin:14px 0 6px;color:#8a6fd6">고정비 항목별 (' + LB.map((x, i) => yearMode ? x : x.slice(5) + "월").join(" / ") + ')</div>' +
+          '<div class="card" style="margin:0"><div class="bd" id="fpItems" style="padding:2px 12px"></div></div>',
+        foot: '<button class="btn" id="fpNo">취소</button><button class="btn pri" id="fpOk">저장</button>',
+        onOpen(el, close) {
+          const up = () => { const v = S.map(s => pick.reduce((a, k) => a + (s.by[k] || 0), 0));
+            $("#fpSum", el).innerHTML = '<span class="tiny muted b grow">고정비 합계</span><span class="num b sm" style="color:#8a6fd6">' + v.map(won).join(" / ") + '</span>';
+            /* 항목(내용)별로 — 관리비·통신비처럼 */
+            const it = {};
+            LB.forEach((lb, i) => SP.forEach(t => {
+              if (!okT(t) || t.flow === "in" || pick.indexOf(t.cat) < 0 || !inLB(t, lb)) return;
+              const k = (t.desc || "(내용 없음)").trim();
+              (it[k] = it[k] || { v: [0, 0, 0], c: t.cat }).v[i] += amtW(t);
+            }));
+            const ks = Object.keys(it).sort((a, b) => it[b].v[2] - it[a].v[2] || it[b].v[1] - it[a].v[1]);
+            $("#fpItems", el).innerHTML = ks.length ? ks.map(k => { const x = it[k].v;
+              const d = x[2] - x[1];
+              return '<div class="row" style="padding:8px 0;border-top:1px solid var(--line);gap:8px">' +
+                '<span style="width:8px;height:8px;border-radius:2px;flex:none;background:' + esc(CATC(it[k].c) || "#ccc") + '"></span>' +
+                '<span class="sm grow ell">' + esc(k) + '</span>' +
+                '<span class="tiny num muted" style="flex:none">' + x.map(won).join(" / ") + '</span>' +
+                '<span class="tiny num b" style="flex:none;width:52px;text-align:right;color:' + (d > 0 ? "var(--bad)" : d < 0 ? "var(--ok)" : "var(--tx3)") + '">' +
+                  (x[1] ? (d ? (d > 0 ? "+" : "−") + won(Math.abs(d)) : "같음") : "") + '</span></div>'; }).join("")
+              : '<div class="tiny muted" style="padding:10px 0">체크한 분류에 기록이 없습니다</div>'; };
+          $$("[data-fc]", el).forEach(b => b.onchange = () => {
+            pick = pick.filter(x => x !== b.dataset.fc); if (b.checked) pick.push(b.dataset.fc); up(); });
+          up();
+          $("#fpNo", el).onclick = close;
+          $("#fpOk", el).onclick = () => { D.settings.fixCats = pick; persist(); close(); render(); toast("고정비 항목을 저장했습니다"); };
+        }
+      });
+    }
+  };
 
   /* ---------- 보기 전환 ---------- */
   let h = '<div class="seg" style="margin-bottom:12px">' +
@@ -2225,19 +2350,23 @@ function viewCat() {
   const mx = Math.max(1, ...S.map(s => Math.max(s.total, s.inc)));
   h += '<div class="card"><div class="hd"><h2>' + (yearMode ? "최근 3년" : "최근 3개월") +
        (anyInc ? " 수입 · 지출 추이" : " 지출 추이") + '</h2>' +
-       (anyInc ? '<span class="tiny b"><span class="c-inc">■</span> 수입 <span class="c-bad">■</span> 지출</span>' : '') + '</div><div class="bd">';
+       '<span class="tiny b">' + (anyInc ? '<span class="c-inc">■</span> 수입 ' : '') + '<span class="c-bad">■</span> 지출 ' +
+         '<button class="tbtn fx b" data-fixpop style="font-size:inherit">■ 고정비</button></span></div><div class="bd">';
   S.forEach((s, i) => {
     h += '<div style="margin-bottom:' + (i === 2 ? 2 : 13) + 'px">' +
       '<div class="row" style="margin-bottom:5px">' +
         '<span class="sm b grow' + (i === 2 ? "" : " muted") + '">' + (yearMode ? LB[i] + "년" : LB[i].replace("-", ". ")) +
           (i === 2 ? " (기준)" : "") + '</span>' +
-        (anyInc ? '<span class="num b sm c-inc" style="margin-right:8px">+' + won(s.inc) + '</span>' : '') +
+        (anyInc ? '<button class="tbtn num b sm c-inc" data-incpop="' + i + '" style="margin-right:8px;font-size:13px">+' + won(s.inc) + '</button>' : '') +
         '<span class="num b sm c-bad">-' + won(s.total) + '</span>' +
         '<span class="tiny" style="width:58px;text-align:right">' + (i ? arrow(s.total, S[i - 1].total) : "") + '</span>' +
       '</div>' +
       (anyInc ? '<div class="bar" style="height:' + (i === 2 ? 10 : 7) + 'px;margin-bottom:3px">' +
         '<i style="width:' + (s.inc / mx * 100).toFixed(1) + '%;background:var(--inc)"></i></div>' : '') +
       '<div class="bar" style="height:' + (i === 2 ? 10 : 7) + 'px"><i style="width:' + (s.total / mx * 100).toFixed(1) + '%;background:var(--bad)"></i></div>' +
+      '<div class="row" style="margin-top:4px;gap:8px"><div class="bar grow" style="height:' + (i === 2 ? 7 : 5) + 'px;margin:0"><i style="width:' + (s.fix / mx * 100).toFixed(1) + '%;background:#8a6fd6"></i></div>' +
+        '<button class="tbtn fx num b" data-fixpop style="flex:none;font-size:12px">고정비 ' + won(s.fix) + '</button>' +
+        '<span class="tiny" style="width:58px;text-align:right;flex:none">' + (i && anyFix ? arrow(s.fix, S[i - 1].fix) : "") + '</span></div>' +
       (anyInc ? '<div class="tiny ' + (s.inc - s.total >= 0 ? "c-inc" : "c-bad") + ' b num" style="margin-top:4px">순 ' +
         (s.inc - s.total >= 0 ? "+" : "") + won(s.inc - s.total) + '원</div>' : '') +
     '</div>';
@@ -3061,8 +3190,13 @@ function occDates(r, from, to) {
 function ruleTxns(r, from, to) {
   const ex = new Set(r.ex || []);
   const out = [];
-  occDates(r, from, to).forEach(date => {
+  const dts = occDates(r, from, to);
+  /* 월·연 반복: 날짜를 바꿨어도 그 달에 확인해 둔 건이 있으면 그 달은 그것 하나만 */
+  const okMon = new Set((r.freq === "month" || r.freq === "year")
+    ? Object.keys(r.ov || {}).filter(k => r.ov[k] && r.ov[k].ok && dts.indexOf(k) < 0).map(k => k.slice(0, 7)) : []);
+  dts.forEach(date => {
     if (ex.has(date)) return;
+    if (okMon.has(date.slice(0, 7))) return;
     const o = (r.ov || {})[date] || {};
     const base = {
       id: "r:" + r.id + ":" + date, rid: r.id, occ: date, virt: true,
@@ -3080,7 +3214,60 @@ function ruleTxns(r, from, to) {
       out.push(Object.assign({}, base, { id: base.id + ":b", acc: r.xto, flow: "in", xfer: true, cat: "", pair: "r" + r.id + date }));
     } else out.push(base);
   });
+  /* 확인해 둔 건은 반복 규칙(날짜·끝)이 바뀌어도 그대로 남는다 */
+  const made = new Set(out.map(t => t.occ));
+  Object.keys(r.ov || {}).forEach(k => {
+    const o = r.ov[k];
+    if (!o || !o.ok || made.has(k) || ex.has(k) || k < from || k > to) return;
+    out.push({ id: "r:" + r.id + ":" + k, rid: r.id, occ: k, virt: true,
+      date: o.date || k, time: o.time || "", desc: o.desc != null ? o.desc : r.desc, memo: o.memo || "",
+      amt: o.amt != null ? o.amt : r.amt, flow: o.flow || r.flow, xfer: o.xfer != null ? o.xfer : !!r.xfer,
+      cat: o.cat != null ? o.cat : (r.cat || ""), vary: !!r.vary, fixed: true, acc: o.acc || r.acc });
+  });
+  out.forEach(t => { const o = (r.ov || {})[t.occ]; if (o && o.ok) t.ok = true; });
   return out;
+}
+/* ---------- 자동으로 들어간 반복 건 확인 ---------- */
+function autoFrom() { return (D.settings || {}).autoFrom || "9999-12-31"; }
+const autoNeed = t => !!(t && t.virt && !t.ok && !isFut(t) && (t.occ || t.date) >= autoFrom() && !(t.id || "").endsWith(":b"));
+/* 확인 = 그 순간의 값을 그 건에 못 박는다 — 나중에 반복 전체를 고쳐도 이 건은 안 바뀐다 */
+function freezeOcc(r, occ) {
+  if (!r) return;
+  const t = ruleTxns(r, occ, occ).find(x => x.occ === occ);
+  r.ov = r.ov || {};
+  const o = Object.assign({}, r.ov[occ] || {});
+  if (t) ["date", "time", "desc", "memo", "amt", "flow", "cat"].forEach(k => { if (t[k] != null) o[k] = t[k]; });
+  if (t && !(r.xfer && r.xboth)) o.acc = t.acc;
+  o.ok = true;
+  r.ov[occ] = o;
+}
+function autoOk(txId) {
+  const p = String(txId).split(":"); const r = RULE(p[1]); if (!r) return;
+  const t = ruleTxns(r, p[2], p[2]).find(x => x.occ === p[2]);
+  if (t && t.vary && !t.fixed) return varyFix(r.id, p[2]);       /* 금액이 매달 다른 건 — 금액부터 확인 */
+  freezeOcc(r, p[2]); persist(); render(); toast("확인했습니다");
+}
+function autoList() { return AL.filter(autoNeed).sort((a, b) => a.date.localeCompare(b.date)); }
+function autoPop() {
+  const L = autoList();
+  if (!L.length) return toast("확인할 자동 입력이 없습니다");
+  modal({
+    title: "자동으로 들어간 반복 " + L.length + "건",
+    body: '<p class="tiny muted" style="margin:0 0 8px;line-height:1.6">날짜·금액이 맞는지 보고 <b>확인</b>을 누르세요. 다르면 줄을 눌러 고친 뒤 저장하면 확인됩니다.</p>' +
+      '<div class="list">' + L.map(txRow).join("") + '</div>',
+    foot: '<button class="btn" id="apNo">닫기</button><button class="btn pri" id="apAll">모두 확인</button>',
+    onOpen(el, close) {
+      bindTx(el, close);
+      $$("[data-autochk]", el).forEach(b => b.onclick = e => { e.stopPropagation(); close(); autoOk(b.dataset.autochk); setTimeout(() => { if (autoList().length) autoPop(); }, 50); });
+      $("#apNo", el).onclick = close;
+      $("#apAll", el).onclick = () => {
+        const vary = L.filter(t => t.vary && !t.fixed).length;
+        L.forEach(t => { if (t.vary && !t.fixed) return; freezeOcc(RULE(t.rid), t.occ); });
+        persist(); close(); render();
+        toast(vary ? "확인했습니다 — 금액이 매달 다른 " + vary + "건은 금액을 먼저 확인해 주세요" : "모두 확인했습니다");
+      };
+    }
+  });
 }
 
 /* 할부를 회차별로 쪼갠다 — 월 납입액 기준 집계용 */
@@ -3629,7 +3816,14 @@ function editTxn(txId, presetAcc, forceRep, preset) {
           instN: $("#tInstOn", el).checked
             ? Math.min(Math.max(1, +$("#tInstN", el).value || 1), Math.max(2, +$("#tInst", el).value || 2)) : 1
         };
-        const done = m => { persist(); close(); render(); toast(m || "저장했습니다"); };
+        const done = m => {
+          /* 잔액 수정보다 앞선 날짜를 고치면 잔고는 그대로다 — 오류로 보이지 않게 이유를 알린다 */
+          const an = fields.acc ? lastAdj(fields.acc) : null;
+          const d0 = mode === "rule" ? null : fields.date;
+          const hint = an && d0 && d0 <= an.date && d0 <= todayISO()
+            ? " · " + an.date.slice(5).replace("-", "/") + " 잔액 수정보다 앞이라 잔고는 그대로입니다" : "";
+          persist(); close(); render(); toast((m || "저장했습니다") + hint);
+        };
 
         if (mode === "occ") {
           const patch = Object.assign({}, fields);
@@ -3650,16 +3844,17 @@ function editTxn(txId, presetAcc, forceRep, preset) {
               '이번 달만 더 나온 거라면 <b>이 건만</b>을 고르세요. 지난 달 기록은 어느 쪽이든 그대로입니다.</span>'
             : "<b>" + occ + "</b> 건을 바꿉니다. 이 날짜만 바꿀까요, 이 날짜부터 뒤의 모든 반복에도 적용할까요?";
           askScope(ttl, msg, pick => {
-            if (pick === "one") { r.ov = r.ov || {}; r.ov[occ] = patch; done("이 일정만 바꿨습니다"); }
+            if (pick === "one") { r.ov = r.ov || {}; r.ov[occ] = patch; freezeOcc(r, occ); done("이 일정만 바꿨습니다"); }
             else {
               const q = buildRule();
               delete q.id;
-              splitRule(r, occ, {
+              const nr = splitRule(r, occ, {
                 acc: q.acc, desc: q.desc, memo: q.memo, amt: q.amt, flow: q.flow,
                 xfer: q.xfer, cat: q.cat, time: q.time, color: q.color,
                 freq: q.freq, gap: q.gap, dows: q.dows, mmode: q.mmode,
                 mday: q.mday, nth: q.nth, ndow: q.ndow, ymon: q.ymon, end: q.end
               });
+              if (occ <= todayISO()) freezeOcc(nr, occ);
               done("이후 일정에 적용했습니다");
             }
           });
@@ -4163,6 +4358,7 @@ function fixVary(rid, occ, amt) {
   const r = (D.rules || []).find(x => x.id === rid); if (!r) return;
   r.ov = r.ov || {};
   r.ov[occ] = Object.assign({}, r.ov[occ] || {}, { amt: Math.abs(+amt || 0) });
+  freezeOcc(r, occ);
   persist(); rebuildV();
 }
 function varyFix(rid, occ) {
@@ -5305,6 +5501,7 @@ function showPreview(el, prev, run, found, accId, closeAll, note) {
    이벤트 바인딩
    ============================================================ */
 function bindTx(root, closeFn) {
+  $$("[data-autochk]", root).forEach(b => b.onclick = e => { e.stopPropagation(); autoOk(b.dataset.autochk); });
   $$("[data-tx]", root).forEach(r => r.onclick = () => {
     if (closeFn) closeFn();
     editTxn(r.dataset.tx);
@@ -5328,6 +5525,9 @@ function bind() {
   });
   $$("[data-tour]", v).forEach(b => b.onclick = () => showTour(true));
   $$("[data-upd]", v).forEach(b => b.onclick = () => checkUpdate(true));
+  $$("[data-asset]", v).forEach(b => b.onclick = e => { e.stopPropagation(); assetPop(); });
+  $$("[data-incpop]", v).forEach(b => b.onclick = e => { e.stopPropagation(); if (CATPOP) CATPOP.inc(+b.dataset.incpop); });
+  $$("[data-fixpop]", v).forEach(b => b.onclick = e => { e.stopPropagation(); if (CATPOP) CATPOP.fix(); });
   $$("[data-eye]", v).forEach(b => b.onclick = e => {
     e.stopPropagation(); D.settings.hideBal = !D.settings.hideBal; persist(); render();
   });
@@ -5343,6 +5543,7 @@ function bind() {
   $$("[data-jump]", v).forEach(b => b.onclick = e => {
     e.stopPropagation();
     const k = b.dataset.jump;
+    if (k === "auto") return autoPop();
     if (folded(k)) { D.settings.fold = D.settings.fold || {}; delete D.settings.fold[k]; persist(); render(); }
     setTimeout(() => { const el = document.getElementById("jmp-" + k);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }, 40);
