@@ -410,7 +410,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "2026.11.12.0245";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
+const APP_VERSION = "2026.11.12.0300";   /* 자동 갱신 확인용 — 파일을 새로 올릴 때마다 바뀝니다 */
 const KEY = "ledger.v1";
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -2218,6 +2218,13 @@ function viewList() {
    분류별
    ============================================================ */
 let CATPOP = null;
+/* 고정비 항목 묶기 — 이름이 달라도 같은 항목(예: 관리비 ← 아파트관리비) */
+function fixName(n) {
+  const A = (D.settings || {}).fixAlias || {};
+  let k = String(n || "(내용 없음)").trim(), g = 0;
+  while (A[k] && A[k] !== k && g++ < 20) k = A[k];
+  return k;
+}
 /* 고정비로 볼 분류 — 직접 고른 것, 아니면 「고정비」 이름의 분류·대분류, 그것도 없으면 반복 일정에 쓰인 분류 */
 function fixCatIds() {
   if (Array.isArray(D.settings.fixCats)) return D.settings.fixCats.filter(id => D.cats.some(c => c.id === id));
@@ -2225,6 +2232,34 @@ function fixCatIds() {
   let ids = D.cats.filter(c => /고정/.test(c.name || "") || (c.gid && g.indexOf(c.gid) >= 0)).map(c => c.id);
   if (!ids.length) ids = Array.from(new Set((D.rules || []).filter(r => r.flow !== "in" && !r.xfer && r.cat).map(r => r.cat)));
   return ids;
+}
+function fixMerge(k, all, members, after) {
+  const others = all.filter(x => x !== k);
+  const own = members.filter(n => n !== k);
+  modal({
+    title: "「" + k + "」 묶기",
+    body: '<p class="tiny muted" style="margin:0 0 10px;line-height:1.6">같은 항목인데 이름을 다르게 적은 것을 하나로 묶습니다. <b>기록 이름은 바뀌지 않고</b>, 고정비 항목별 표에서만 합쳐 보입니다.</p>' +
+      (others.length ? '<div class="tiny b" style="margin-bottom:6px">어느 항목에 합칠까요?</div>' +
+        '<div class="row" style="flex-wrap:wrap;gap:6px">' + others.map(o => '<button class="chip" data-mto="' + esc(o) + '">' + esc(o) + '</button>').join("") + '</div>'
+        : '<div class="tiny muted">합칠 다른 항목이 없습니다.</div>') +
+      (own.length ? '<div class="tiny b" style="margin:14px 0 6px">지금 묶여 있는 이름 — 눌러서 풀기</div>' +
+        '<div class="row" style="flex-wrap:wrap;gap:6px">' + own.map(o => '<button class="chip" data-mun="' + esc(o) + '">' + esc(o) + ' ✕</button>').join("") + '</div>' : ''),
+    foot: '<button class="btn pri" id="mgOk">닫기</button>',
+    onOpen(el, close) {
+      const A = () => (D.settings.fixAlias = D.settings.fixAlias || {});
+      $$("[data-mto]", el).forEach(b => b.onclick = () => {
+        const to = b.dataset.mto, a = A();
+        Object.keys(a).forEach(n => { if (fixName(n) === k) a[n] = to; });   /* 이미 k에 묶인 것도 같이 */
+        members.forEach(n => { if (n !== to) a[n] = to; });
+        if (k !== to) a[k] = to;
+        persist(); close(); after(); toast("「" + to + "」 로 묶었습니다");
+      });
+      $$("[data-mun]", el).forEach(b => b.onclick = () => {
+        delete A()[b.dataset.mun]; persist(); close(); after(); toast("묶음을 풀었습니다");
+      });
+      $("#mgOk", el).onclick = close;
+    }
+  });
 }
 function viewCat() {
   const incF = !!D.settings.catIncFuture;
@@ -2314,7 +2349,7 @@ function viewCat() {
             '<span class="tiny num muted" style="flex:none;text-align:right">' + S.map(s => won(s.fb[c.id] || 0)).join(" / ") + '</span></label>').join("")
             : '<div class="empty"><b>지출 분류가 없습니다</b></div>') +
           '</div></div>' +
-          '<div class="tiny b" style="margin:14px 0 6px;color:#8a6fd6">고정비 항목별 (' + LB.map((x, i) => yearMode ? x : x.slice(5) + "월").join(" / ") + ')</div>' +
+          '<div class="tiny b" style="margin:14px 0 6px;color:#8a6fd6">고정비 항목별 — 눌러서 같은 항목끼리 묶기 (' + LB.map((x, i) => yearMode ? x : x.slice(5) + "월").join(" / ") + ')</div>' +
           '<div class="card" style="margin:0"><div class="bd" id="fpItems" style="padding:2px 12px"></div></div>',
         foot: '<button class="btn" id="fpNo">취소</button><button class="btn pri" id="fpOk">저장</button>',
         onOpen(el, close) {
@@ -2324,20 +2359,25 @@ function viewCat() {
             const it = {};
             LB.forEach((lb, i) => SP.forEach(t => {
               if (!okFix(t) || pick.indexOf(t.cat) < 0 || !inLB(t, lb)) return;
-              const k = (t.desc || "(내용 없음)").trim();
-              const x = (it[k] = it[k] || { v: [0, 0, 0], c: t.cat, f: [0, 0, 0] });
-              x.v[i] += amtW(t); if (isFut(t)) x.f[i] += amtW(t);
+              const raw = (t.desc || "(내용 없음)").trim(), k = fixName(raw);
+              const x = (it[k] = it[k] || { v: [0, 0, 0], c: t.cat, f: [0, 0, 0], m: {} });
+              x.v[i] += amtW(t); if (isFut(t)) x.f[i] += amtW(t); x.m[raw] = 1;
             }));
             const ks = Object.keys(it).sort((a, b) => it[b].v[2] - it[a].v[2] || it[b].v[1] - it[a].v[1]);
             $("#fpItems", el).innerHTML = ks.length ? ks.map(k => { const x = it[k].v;
               const d = x[2] - x[1];
-              return '<div class="row" style="padding:8px 0;border-top:1px solid var(--line);gap:8px">' +
+              const mem = Object.keys(it[k].m).filter(n => n !== k);
+              return '<div class="row" data-fitem="' + esc(k) + '" style="padding:8px 0;border-top:1px solid var(--line);gap:8px;cursor:pointer">' +
                 '<span style="width:8px;height:8px;border-radius:2px;flex:none;background:' + esc(CATC(it[k].c) || "#ccc") + '"></span>' +
-                '<span class="sm grow ell">' + esc(k) + (it[k].f.some(Boolean) ? ' <span class="soon" style="font-size:10px;font-weight:700;color:var(--tx3);border:1px solid var(--line);border-radius:5px;padding:0 4px">예정</span>' : '') + '</span>' +
+                '<span class="sm grow" style="min-width:0"><span class="ell" style="display:block">' + esc(k) +
+                  (mem.length ? ' <span class="tiny b" style="color:#8a6fd6">묶음 ' + (mem.length + 1) + '</span>' : '') + '</span>' +
+                  (mem.length ? '<span class="tiny muted ell" style="display:block">' + mem.map(esc).join(" · ") + '</span>' : '') + '</span>' +
+                (it[k].f.some(Boolean) ? '<span style="flex:none;font-size:10px;font-weight:700;color:var(--tx3);border:1px solid var(--line);border-radius:5px;padding:0 4px">예정</span>' : '') +
                 '<span class="tiny num muted" style="flex:none">' + x.map(won).join(" / ") + '</span>' +
                 '<span class="tiny num b" style="flex:none;width:52px;text-align:right;color:' + (d > 0 ? "var(--bad)" : d < 0 ? "var(--ok)" : "var(--tx3)") + '">' +
                   (x[1] ? (d ? (d > 0 ? "+" : "−") + won(Math.abs(d)) : "같음") : "") + '</span></div>'; }).join("")
-              : '<div class="tiny muted" style="padding:10px 0">체크한 분류에 기록이 없습니다</div>'; };
+              : '<div class="tiny muted" style="padding:10px 0">체크한 분류에 기록이 없습니다</div>';
+            $$("[data-fitem]", el).forEach(r => r.onclick = () => fixMerge(r.dataset.fitem, ks, Object.keys(it[r.dataset.fitem].m), up)); };
           $$("[data-fc]", el).forEach(b => b.onchange = () => {
             pick = pick.filter(x => x !== b.dataset.fc); if (b.checked) pick.push(b.dataset.fc); up(); });
           up();
